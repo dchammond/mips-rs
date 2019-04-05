@@ -5,11 +5,12 @@
 
 use std::fmt;
 
-#[derive(Copy, Clone)]
+#[derive(Clone)]
 struct State {
     pc: u32,
     registers: [u32; 32],
     memory: [u32; std::u16::MAX as usize],
+    labels: Vec<String>,
 }
 
 impl fmt::Debug for State {
@@ -80,6 +81,22 @@ enum Reg {
     sp,
     fp,
     ra
+}
+
+#[derive(Copy, Clone, Debug)]
+enum Imm {
+    Raw(u16),
+    Label(u16), // label index in State
+}
+
+impl From<u16> for Imm {
+    fn from(n: u16) -> Imm {
+        Imm::Raw(n)
+    }
+}
+
+impl From<&str> for Imm {
+    
 }
 
 impl From<&str> for Reg {
@@ -474,7 +491,7 @@ struct IType {
     opcode: IInst,
     rs: Reg,
     rt: Reg,
-    imm: u16,
+    imm: Imm,
 }
 
 impl RType {
@@ -516,8 +533,8 @@ impl From<RType> for u32 {
 }
 
 impl IType {
-    pub fn new<T,U,Q>(opcode: IInst, rs: T, rt: U, imm: Q) -> IType where Reg: From<T> + From<U>, u16: From<Q> {
-        IType {opcode, rs: Reg::from(rs), rt: Reg::from(rt), imm: u16::from(imm)}
+    pub fn new<T,U,Q>(opcode: IInst, rs: T, rt: U, imm: Q) -> IType where Reg: From<T> + From<U>, Imm: From<Q> {
+        IType {opcode, rs: Reg::from(rs), rt: Reg::from(rt), imm: Imm::from(imm)}
     }
     pub fn perform(&self, state: &mut State) {
         let rs = state.read_reg(self.rs);
@@ -553,9 +570,11 @@ impl From<IType> for String {
             IInst::Andi  |
             IInst::Ori   |
             IInst::Slti  |
-            IInst::Sltiu => {
-                format!("{}, {}, {}, 0x{:x}", String::from(i.opcode), String::from(i.rt), String::from(i.rs), i.imm)
-            }
+            IInst::Sltiu |
+            IInst::Beq   |
+            IInst::Bne => {
+                format!("{}, {}, {}, {}", String::from(i.opcode), String::from(i.rt), String::from(i.rs), String::from(i.imm))
+            },
         }
     }
 }
