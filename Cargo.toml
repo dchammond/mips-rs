@@ -1,0 +1,7 @@
+[package]
+name = "mips-rs"
+version = "0.1.0"
+authors = ["Dillon Hammond <dillonhammond@gmail.com>"]
+edition = "2018"
+
+[dependencies]
