@@ -82,6 +82,39 @@ enum Reg {
     ra
 }
 
+impl Into<Reg> for String {
+    fn into(self) -> Reg {
+        match self.to_lowercase().as_ref() {
+            "$zero" | "$0" => Reg::zero,
+            "$at" => Reg::at,
+            "$v0" => Reg::v0, "$v1" => Reg::v1,
+            "$a0" => Reg::a0, "$a1" => Reg::a1, "$a2" => Reg::a2, "$a3" => Reg::a3, 
+            "$t0" => Reg::t0, "$t1" => Reg::t1, "$t2" => Reg::t2, "$t3" => Reg::t3, "$t4" => Reg::t4, "$t5" => Reg::t5, "$t6" => Reg::t6, "$t7" => Reg::t7, "$t8" => Reg::t8, "$t9" => Reg::t9,
+            "$s0" => Reg::s0, "$s1" => Reg::s1, "$s2" => Reg::s2, "$s3" => Reg::s3, "$s4" => Reg::s4, "$s5" => Reg::s5, "$s6" => Reg::s6, "$s7" => Reg::s7,
+            "$sp" => Reg::sp,
+            "$fp" => Reg::fp,
+            "$ra" => Reg::ra,
+            _ => unimplemented!(),
+        }
+    }
+}
+
+impl Into<String> for Reg {
+    fn into(self) -> String {
+        match self {
+            Reg::zero => "$zero",
+            Reg::at => "$at",
+            Reg::v0 => "$v0", Reg::v1 => "$v1",
+            Reg::a0 => "$a0", Reg::a1 => "$a1", Reg::a2 => "$a2", Reg::a3 => "$a3", 
+            Reg::t0 => "$t0", Reg::t1 => "$t1", Reg::t2 => "$t2", Reg::t3 => "$t3", Reg::t4 => "$t4", Reg::t5 => "$t5", Reg::t6 => "$t6", Reg::t7 => "$t7", Reg::t8 => "$t8", Reg::t9 => "$t9",
+            Reg::s0 => "$s0", Reg::s1 => "$s1", Reg::s2 => "$s2", Reg::s3 => "$s3", Reg::s4 => "$s4", Reg::s5 => "$s5", Reg::s6 => "$s6", Reg::s7 => "$s7",
+            Reg::sp => "$sp",
+            Reg::fp => "$fp",
+            Reg::ra => "$ra",
+        }.to_owned()
+    }
+}
+
 macro_rules! reg_map {
     ($type_name: ty) => (
         impl From<$type_name> for Reg {
@@ -511,7 +544,22 @@ impl IType {
         }
     }
 }
-
+/*
+impl Into<String> for IType {
+    fn into(self) -> String {
+        match self.opcode {
+            IInst::Addi  |
+            IInst::Addiu | 
+            IInst::Andi  |
+            IInst::Ori   |
+            IInst::Slti  |
+            IInst::Sltiu => {
+                format!("{}, {}, {}, {}", String::from
+            }
+        }
+    }
+}
+*/
 impl Into<u32> for IType {
     fn into(self) -> u32 {
         let mut x = 0u32;
