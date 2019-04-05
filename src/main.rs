@@ -461,6 +461,17 @@ impl IType {
     }
 }
 
+impl Into<u32> for IType {
+    fn into(self) -> u32 {
+        let mut x = 0u32;
+        x |= u32::from(self.opcode) << 26;
+        x |= u32::from(self.rs) << 21;
+        x |= u32::from(self.rt) << 16;
+        x |= u32::from(self.imm);
+        x
+    }
+}
+
 pub fn main() {
     let mut state = State::new();
     let load1 = IType::new(IInst::Li, 0u8, Reg::t0, 10u8);
