@@ -296,6 +296,57 @@ enum IInst {
     Sw,
 }
 
+impl Into<String> for IInst {
+    fn into(self) -> String {
+        match self {
+           IInst::Addi => "addi",
+           IInst::Addiu => "addiu",
+           IInst::Andi => "andi",
+           IInst::Beq => "beq",
+           IInst::Bne => "bne",
+           IInst::Lbu => "lbu",
+           IInst::Lhu => "lhu",
+           IInst::Ll => "ll",
+           IInst::Li => "li",
+           IInst::Lui => "lui",
+           IInst::Lw => "lw",
+           IInst::Ori => "ori",
+           IInst::Slti => "slti",
+           IInst::Sltiu => "sltiu",
+           IInst::Sb => "sb",
+           IInst::Sc => "sc",
+           IInst::Sh => "sh",
+           IInst::Sw => "sw"
+        }.to_owned()
+    }
+}
+
+impl Into<IInst> for &str {
+    fn into(self) -> IInst {
+        match self.to_lowercase().as_ref() {
+           "addi" => IInst::Addi,
+           "addiu" => IInst::Addiu,
+           "andi" => IInst::Andi,
+           "beq" => IInst::Beq,
+           "bne" => IInst::Bne,
+           "lbu" => IInst::Lbu,
+           "lhu" => IInst::Lhu,
+           "ll" => IInst::Ll,
+           "li" => IInst::Li,
+           "lui" => IInst::Lui,
+           "lw" => IInst::Lw,
+           "ori" => IInst::Ori,
+           "slti" => IInst::Slti,
+           "sltiu" => IInst::Sltiu,
+           "sb" => IInst::Sb,
+           "sc" => IInst::Sc,
+           "sh" => IInst::Sh,
+           "sw" => IInst::Sw,
+           _ => unimplemented!(),
+        }
+    }
+}
+
 macro_rules! iinst_map {
     ($type_name: ty) => (
         impl From<$type_name> for IInst {
