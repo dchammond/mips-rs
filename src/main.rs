@@ -82,9 +82,9 @@ enum Reg {
     ra
 }
 
-impl Into<Reg> for String {
-    fn into(self) -> Reg {
-        match self.to_lowercase().as_ref() {
+impl From<&str> for Reg {
+    fn from(s: &str) -> Reg {
+        match s.to_lowercase().as_ref() {
             "$zero" | "$0" => Reg::zero,
             "$at" => Reg::at,
             "$v0" => Reg::v0, "$v1" => Reg::v1,
@@ -99,9 +99,9 @@ impl Into<Reg> for String {
     }
 }
 
-impl Into<String> for Reg {
-    fn into(self) -> String {
-        match self {
+impl From<Reg> for String {
+    fn from(r: Reg) -> String {
+        match r {
             Reg::zero => "$zero",
             Reg::at => "$at",
             Reg::v0 => "$v0", Reg::v1 => "$v1",
@@ -329,9 +329,9 @@ enum IInst {
     Sw,
 }
 
-impl Into<String> for IInst {
-    fn into(self) -> String {
-        match self {
+impl From<IInst> for String {
+    fn from(i: IInst) -> String {
+        match i {
            IInst::Addi => "addi",
            IInst::Addiu => "addiu",
            IInst::Andi => "andi",
@@ -354,9 +354,9 @@ impl Into<String> for IInst {
     }
 }
 
-impl Into<IInst> for &str {
-    fn into(self) -> IInst {
-        match self.to_lowercase().as_ref() {
+impl From<&str> for IInst {
+    fn from(s: &str) -> IInst {
+        match s.to_lowercase().as_ref() {
            "addi" => IInst::Addi,
            "addiu" => IInst::Addiu,
            "andi" => IInst::Andi,
@@ -503,14 +503,14 @@ impl RType {
     }
 }
 
-impl Into<u32> for RType {
-    fn into(self) -> u32 {
+impl From<RType> for u32 {
+    fn from(r: RType) -> u32 {
         let mut x = 0u32;
-        x |= u32::from(self.rs) << 21;
-        x |= u32::from(self.rt) << 16;
-        x |= u32::from(self.rd) << 11;
-        x |= (self.shamt as u32) << 6;
-        x |= u32::from(self.funct);
+        x |= u32::from(r.rs) << 21;
+        x |= u32::from(r.rt) << 16;
+        x |= u32::from(r.rd) << 11;
+        x |= (r.shamt as u32) << 6;
+        x |= u32::from(r.funct);
         x
     }
 }
@@ -544,29 +544,29 @@ impl IType {
         }
     }
 }
-/*
-impl Into<String> for IType {
-    fn into(self) -> String {
-        match self.opcode {
+
+impl From<IType> for String {
+    fn from(i: IType) -> String {
+        match i.opcode {
             IInst::Addi  |
             IInst::Addiu | 
             IInst::Andi  |
             IInst::Ori   |
             IInst::Slti  |
             IInst::Sltiu => {
-                format!("{}, {}, {}, {}", String::from
+                format!("{}, {}, {}, 0x{:x}", String::from(i.opcode), String::from(i.rt), String::from(i.rs), i.imm)
             }
         }
     }
 }
-*/
-impl Into<u32> for IType {
-    fn into(self) -> u32 {
+
+impl From<IType> for u32 {
+    fn from(i: IType) -> u32 {
         let mut x = 0u32;
-        x |= u32::from(self.opcode) << 26;
-        x |= u32::from(self.rs) << 21;
-        x |= u32::from(self.rt) << 16;
-        x |= u32::from(self.imm);
+        x |= u32::from(i.opcode) << 26;
+        x |= u32::from(i.rs) << 21;
+        x |= u32::from(i.rt) << 16;
+        x |= u32::from(i.imm);
         x
     }
 }
