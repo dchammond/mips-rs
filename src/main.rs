@@ -15,36 +15,36 @@ struct State {
 
 impl fmt::Debug for State {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
-        write!(f, "$pc: 0x{:x} == {}\n", self.pc, self.pc)?;
-        write!(f, "$0 : 0x{:x} == {}\n", self.registers[0], self.registers[0])?;
-        write!(f, "$at: 0x{:x} == {}\n", self.registers[1], self.registers[1])?;
-        write!(f, "$v0: 0x{:x} == {}\n", self.registers[2], self.registers[2])?;
-        write!(f, "$v1: 0x{:x} == {}\n", self.registers[3], self.registers[3])?;
-        write!(f, "$a0: 0x{:x} == {}\n", self.registers[4], self.registers[4])?;
-        write!(f, "$a1: 0x{:x} == {}\n", self.registers[5], self.registers[5])?;
-        write!(f, "$a2: 0x{:x} == {}\n", self.registers[6], self.registers[6])?;
-        write!(f, "$a3: 0x{:x} == {}\n", self.registers[7], self.registers[7])?;
-        write!(f, "$t0: 0x{:x} == {}\n", self.registers[8], self.registers[8])?;
-        write!(f, "$t1: 0x{:x} == {}\n", self.registers[9], self.registers[9])?;
-        write!(f, "$t2: 0x{:x} == {}\n", self.registers[10], self.registers[10])?;
-        write!(f, "$t3: 0x{:x} == {}\n", self.registers[11], self.registers[11])?;
-        write!(f, "$t4: 0x{:x} == {}\n", self.registers[12], self.registers[12])?;
-        write!(f, "$t5: 0x{:x} == {}\n", self.registers[13], self.registers[13])?;
-        write!(f, "$t6: 0x{:x} == {}\n", self.registers[14], self.registers[14])?;
-        write!(f, "$t7: 0x{:x} == {}\n", self.registers[15], self.registers[15])?;
-        write!(f, "$s0; 0x{:x} == {}\n", self.registers[16], self.registers[16])?;
-        write!(f, "$s1: 0x{:x} == {}\n", self.registers[17], self.registers[17])?;
-        write!(f, "$s2: 0x{:x} == {}\n", self.registers[18], self.registers[18])?;
-        write!(f, "$s3: 0x{:x} == {}\n", self.registers[19], self.registers[19])?;
-        write!(f, "$s4: 0x{:x} == {}\n", self.registers[20], self.registers[20])?;
-        write!(f, "$s5: 0x{:x} == {}\n", self.registers[21], self.registers[21])?;
-        write!(f, "$s6: 0x{:x} == {}\n", self.registers[22], self.registers[22])?;
-        write!(f, "$s7: 0x{:x} == {}\n", self.registers[23], self.registers[23])?;
-        write!(f, "$t8: 0x{:x} == {}\n", self.registers[24], self.registers[24])?;
-        write!(f, "$t9: 0x{:x} == {}\n", self.registers[25], self.registers[25])?;
-        write!(f, "$sp: 0x{:x} == {}\n", self.registers[29], self.registers[29])?;
-        write!(f, "$fp: 0x{:x} == {}\n", self.registers[30], self.registers[30])?;
-        write!(f, "$ra: 0x{:x} == {}", self.registers[31], self.registers[31])
+        write!(f, "$pc: {:#X} == {}\n", self.pc, self.pc)?;
+        write!(f, "$0 : {:#X} == {}\n", self.registers[0], self.registers[0])?;
+        write!(f, "$at: {:#X} == {}\n", self.registers[1], self.registers[1])?;
+        write!(f, "$v0: {:#X} == {}\n", self.registers[2], self.registers[2])?;
+        write!(f, "$v1: {:#X} == {}\n", self.registers[3], self.registers[3])?;
+        write!(f, "$a0: {:#X} == {}\n", self.registers[4], self.registers[4])?;
+        write!(f, "$a1: {:#X} == {}\n", self.registers[5], self.registers[5])?;
+        write!(f, "$a2: {:#X} == {}\n", self.registers[6], self.registers[6])?;
+        write!(f, "$a3: {:#X} == {}\n", self.registers[7], self.registers[7])?;
+        write!(f, "$t0: {:#X} == {}\n", self.registers[8], self.registers[8])?;
+        write!(f, "$t1: {:#X} == {}\n", self.registers[9], self.registers[9])?;
+        write!(f, "$t2: {:#X} == {}\n", self.registers[10], self.registers[10])?;
+        write!(f, "$t3: {:#X} == {}\n", self.registers[11], self.registers[11])?;
+        write!(f, "$t4: {:#X} == {}\n", self.registers[12], self.registers[12])?;
+        write!(f, "$t5: {:#X} == {}\n", self.registers[13], self.registers[13])?;
+        write!(f, "$t6: {:#X} == {}\n", self.registers[14], self.registers[14])?;
+        write!(f, "$t7: {:#X} == {}\n", self.registers[15], self.registers[15])?;
+        write!(f, "$s0; {:#X} == {}\n", self.registers[16], self.registers[16])?;
+        write!(f, "$s1: {:#X} == {}\n", self.registers[17], self.registers[17])?;
+        write!(f, "$s2: {:#X} == {}\n", self.registers[18], self.registers[18])?;
+        write!(f, "$s3: {:#X} == {}\n", self.registers[19], self.registers[19])?;
+        write!(f, "$s4: {:#X} == {}\n", self.registers[20], self.registers[20])?;
+        write!(f, "$s5: {:#X} == {}\n", self.registers[21], self.registers[21])?;
+        write!(f, "$s6: {:#X} == {}\n", self.registers[22], self.registers[22])?;
+        write!(f, "$s7: {:#X} == {}\n", self.registers[23], self.registers[23])?;
+        write!(f, "$t8: {:#X} == {}\n", self.registers[24], self.registers[24])?;
+        write!(f, "$t9: {:#X} == {}\n", self.registers[25], self.registers[25])?;
+        write!(f, "$sp: {:#X} == {}\n", self.registers[29], self.registers[29])?;
+        write!(f, "$fp: {:#X} == {}\n", self.registers[30], self.registers[30])?;
+        write!(f, "$ra: {:#X} == {}", self.registers[31], self.registers[31])
     }
 }
 
@@ -70,7 +70,7 @@ impl State {
     }
     pub fn find_label<T>(&self, addr: T) -> Option<String> where u16: From<T> {
         let x = u16::from(addr);
-        for p in self.labels {
+        for p in &self.labels {
             if p.0 == x {
                 return Some(p.1.clone());
             }
@@ -98,7 +98,7 @@ enum Reg {
 #[derive(Copy, Clone, Debug)]
 enum Imm {
     Raw(u16),
-    Label(u16), // label index in State
+    Label(u16),
 }
 
 macro_rules! imm_map {
@@ -141,8 +141,8 @@ imm_inv_map!(u128);
 impl From<Imm> for String {
     fn from(i: Imm) -> String {
         match i {
-            Imm::Raw(r) => format!("0x{:x}", r),
-            Imm::Label(l) => format!("0x{:x}", l),
+            Imm::Raw(r) => format!("{:#X}", r),
+            Imm::Label(l) => format!("{:#x}", l),
         }
     }
 }
@@ -298,6 +298,49 @@ enum RInst {
     Subu,
     Div,
     Divu,
+}
+
+impl From<RInst> for String {
+    fn from(r: RInst) -> String {
+        match r {
+            RInst::Add => "add",
+            RInst::Addu => "addu",
+            RInst::And => "and",
+            RInst::Jr => "jr",
+            RInst::Nor => "nor",
+            RInst::Or => "or",
+            RInst::Slt => "slt",
+            RInst::Sltu => "sltu",
+            RInst::Sll => "sll",
+            RInst::Srl => "srl",
+            RInst::Sub => "sub",
+            RInst::Subu => "subu",
+            RInst::Div => "div",
+            RInst::Divu => "divu"
+        }.to_owned()
+    }
+}
+
+impl From<&str> for RInst {
+    fn from(s: &str) -> RInst {
+        match s.to_lowercase().as_ref() {
+            "add" => RInst::Add,
+            "addu" => RInst::Addu,
+            "and" => RInst::And,
+            "jr" => RInst::Jr,
+            "nor" =>  RInst::Nor,
+            "or" =>  RInst::Or,
+            "slt" => RInst::Slt,
+            "sltu" => RInst::Sltu,
+            "sll" => RInst::Sll,
+            "srl" => RInst::Srl,
+            "sub" => RInst::Sub,
+            "subu" => RInst::Subu,
+            "div" =>  RInst::Div,
+            "divu" => RInst::Divu,
+            _ => unimplemented!()
+        }
+    }
 }
 
 macro_rules! rinst_map {
@@ -566,6 +609,28 @@ impl RType {
            RInst::Divu => state.write_reg(self.rd, rs / rt),
         }
     }
+    pub fn convert_to_string(&self, state: &State) -> String {
+        match self.funct {
+            RInst::Add  |
+            RInst::Addu |
+            RInst::And  |
+            RInst::Nor  |
+            RInst::Or   |
+            RInst::Slt  |
+            RInst::Sltu |
+            RInst::Sub  |
+            RInst::Subu |
+            RInst::Div  |
+            RInst::Divu => {
+                format!("{} {}, {}, {}", String::from(self.funct), String::from(self.rd), String::from(self.rs), String::from(self.rt))
+            },
+            RInst::Sll |
+            RInst::Srl => {
+                format!("{} {}, {}, {:#X}", String::from(self.funct), String::from(self.rd), String::from(self.rs), self.shamt)
+            },
+            _ => unimplemented!()
+        }
+    }
 }
 
 impl From<RType> for u32 {
@@ -608,11 +673,16 @@ impl IType {
            IInst::Sw => state.write_mem(u32::wrapping_add(rs, imm), rt),
         }
     }
-}
-
-impl From<IType> for String {
-    fn from(i: IType) -> String {
-        match i.opcode {
+    pub fn convert_to_string(&self, state: &State) -> String {
+        let imm_str = match self.imm {
+            Imm::Label(l) => state.find_label(l),
+            Imm::Raw(r) => Some(String::from(self.imm)),
+        };
+        let imm_str = match imm_str {
+            Some(s) => s,
+            None => format!("{:#X}", u32::from(self.imm)),
+        };
+        match self.opcode {
             IInst::Addi  |
             IInst::Addiu | 
             IInst::Andi  |
@@ -621,8 +691,22 @@ impl From<IType> for String {
             IInst::Sltiu |
             IInst::Beq   |
             IInst::Bne => {
-                format!("{}, {}, {}, {}", String::from(i.opcode), String::from(i.rt), String::from(i.rs), String::from(i.imm))
+                format!("{} {}, {}, {}", String::from(self.opcode), String::from(self.rt), String::from(self.rs), imm_str)
             },
+            IInst::Lbu |
+            IInst::Lhu |
+            IInst::Ll  |
+            IInst::Lw  |
+            IInst::Sb  |
+            IInst::Sh  |
+            IInst::Sw  => {
+                format!("{} {}, {}({})", String::from(self.opcode), String::from(self.rt), imm_str, String::from(self.rs))
+            },
+            IInst::Li |
+            IInst::Lui => {
+                format!("{} {}, {}", String::from(self.opcode), String::from(self.rt), imm_str)
+            },
+            _ => unimplemented!()
         }
     }
 }
@@ -642,8 +726,8 @@ pub fn main() {
     let mut state = State::new();
     let load1 = IType::new(IInst::Li, 0u8, Reg::t0, 10u8);
     let add = RType::new(Reg::t0, Reg::t0, Reg::t0, 0u8, RInst::Add);
-    load1.perform(&mut state);
-    add.perform(&mut state);
+    println!("r type: {}", add.convert_to_string(&state));
+    println!("i type: {}", load1.convert_to_string(&state));
     println!("registers:\n{:?}", state);
 }
 
