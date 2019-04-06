@@ -62,6 +62,9 @@ impl State {
             _ => self.registers[reg as usize] = u32::from(val),
         };
     }
+    pub fn jump<T>(&mut self, dest: T) where u32: From<T> {
+        self.pc = u32::from(dest);
+    }
     pub fn write_mem<T, U>(&mut self, addr: T, val: U) where u32: From<T> + From<U> {
         self.memory[u32::from(addr) as usize] = u32::from(val);
     }
@@ -674,24 +677,23 @@ impl IType {
         }
     }
     pub fn convert_to_string(&self, state: &State) -> String {
-        let imm_str = match self.imm {
+        let imm_str_label = match self.imm {
             Imm::Label(l) => state.find_label(l),
-            Imm::Raw(r) => Some(String::from(self.imm)),
+            Imm::Raw(r) => None,
         };
-        let imm_str = match imm_str {
-            Some(s) => s,
-            None => format!("{:#X}", u32::from(self.imm)),
-        };
+        let imm_str = format!("{:#X}", u16::from(self.imm));
         match self.opcode {
             IInst::Addi  |
             IInst::Addiu | 
             IInst::Andi  |
             IInst::Ori   |
             IInst::Slti  |
-            IInst::Sltiu |
+            IInst::Sltiu => {
+                format!("{} {}, {}, {}", String::from(self.opcode), String::from(self.rt), String::from(self.rs), imm_str)
+            },
             IInst::Beq   |
             IInst::Bne => {
-                format!("{} {}, {}, {}", String::from(self.opcode), String::from(self.rt), String::from(self.rs), imm_str)
+                format!("{} {}, {}, {}", String::from(self.opcode), String::from(self.rt), String::from(self.rs), imm_str_label.unwrap())
             },
             IInst::Lbu |
             IInst::Lhu |
@@ -724,10 +726,13 @@ impl From<IType> for u32 {
 
 pub fn main() {
     let mut state = State::new();
-    let load1 = IType::new(IInst::Li, 0u8, Reg::t0, 10u8);
+    state.add_label(10u16, "label1");
+    let branch = IType::new(IInst::Beq, Reg::s1, Reg::v0, Imm::Label(10));
+    let load = IType::new(IInst::Lw, Reg::s0, Reg::t0, Imm::Label(10));
     let add = RType::new(Reg::t0, Reg::t0, Reg::t0, 0u8, RInst::Add);
-    println!("r type: {}", add.convert_to_string(&state));
-    println!("i type: {}", load1.convert_to_string(&state));
+    println!("branch : {}", branch.convert_to_string(&state));
+    println!("add    : {}", add.convert_to_string(&state));
+    println!("load   : {}", load.convert_to_string(&state));
     println!("registers:\n{:?}", state);
 }
 
