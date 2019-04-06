@@ -52,6 +52,9 @@ impl State {
     pub fn new() -> Self {
         State {pc: 0, registers: [0; 32], memory: [0; std::u16::MAX as usize], labels: Vec::new() }
     }
+    pub fn run(mut self) {
+        
+    }
     pub fn read_reg<T>(&self, r: T) -> u32 where u8: From<T> {
         self.registers[u8::from(r) as usize]
     }
@@ -287,39 +290,39 @@ reg_inv_map!(i128);
 
 #[derive(Copy, Clone, Debug)]
 enum RInst {
-    Add,
-    Addu,
-    And,
-    Jr,
-    Nor,
-    Or,
-    Slt,
-    Sltu,
-    Sll,
-    Srl,
-    Sub,
-    Subu,
-    Div,
-    Divu,
+    add,
+    addu,
+    and,
+    jr,
+    nor,
+    or,
+    slt,
+    sltu,
+    sll,
+    srl,
+    sub,
+    subu,
+    div,
+    divu,
 }
 
 impl From<RInst> for String {
     fn from(r: RInst) -> String {
         match r {
-            RInst::Add => "add",
-            RInst::Addu => "addu",
-            RInst::And => "and",
-            RInst::Jr => "jr",
-            RInst::Nor => "nor",
-            RInst::Or => "or",
-            RInst::Slt => "slt",
-            RInst::Sltu => "sltu",
-            RInst::Sll => "sll",
-            RInst::Srl => "srl",
-            RInst::Sub => "sub",
-            RInst::Subu => "subu",
-            RInst::Div => "div",
-            RInst::Divu => "divu"
+            RInst::add => "add",
+            RInst::addu => "addu",
+            RInst::and => "and",
+            RInst::jr => "jr",
+            RInst::nor => "nor",
+            RInst::or => "or",
+            RInst::slt => "slt",
+            RInst::sltu => "sltu",
+            RInst::sll => "sll",
+            RInst::srl => "srl",
+            RInst::sub => "sub",
+            RInst::subu => "subu",
+            RInst::div => "div",
+            RInst::divu => "divu"
         }.to_owned()
     }
 }
@@ -327,20 +330,20 @@ impl From<RInst> for String {
 impl From<&str> for RInst {
     fn from(s: &str) -> RInst {
         match s.to_lowercase().as_ref() {
-            "add" => RInst::Add,
-            "addu" => RInst::Addu,
-            "and" => RInst::And,
-            "jr" => RInst::Jr,
-            "nor" =>  RInst::Nor,
-            "or" =>  RInst::Or,
-            "slt" => RInst::Slt,
-            "sltu" => RInst::Sltu,
-            "sll" => RInst::Sll,
-            "srl" => RInst::Srl,
-            "sub" => RInst::Sub,
-            "subu" => RInst::Subu,
-            "div" =>  RInst::Div,
-            "divu" => RInst::Divu,
+            "add" => RInst::add,
+            "addu" => RInst::addu,
+            "and" => RInst::and,
+            "jr" => RInst::jr,
+            "nor" =>  RInst::nor,
+            "or" =>  RInst::or,
+            "slt" => RInst::slt,
+            "sltu" => RInst::sltu,
+            "sll" => RInst::sll,
+            "srl" => RInst::srl,
+            "sub" => RInst::sub,
+            "subu" => RInst::subu,
+            "div" =>  RInst::div,
+            "divu" => RInst::divu,
             _ => unimplemented!()
         }
     }
@@ -351,20 +354,20 @@ macro_rules! rinst_map {
         impl From<$type_name> for RInst {
             fn from(num: $type_name) -> Self {
                 match num {
-                    0x20 => RInst::Add,
-                    0x21 => RInst::Addu,
-                    0x24 => RInst::And,
-                    0x08 => RInst::Jr,
-                    0x27 => RInst::Nor,
-                    0x25 => RInst::Or,
-                    0x2A => RInst::Slt,
-                    0x2B => RInst::Sltu,
-                    0x00 => RInst::Sll,
-                    0x02 => RInst::Srl,
-                    0x22 => RInst::Sub,
-                    0x23 => RInst::Subu,
-                    0x1A => RInst::Div,
-                    0x1B => RInst::Divu,
+                    0x20 => RInst::add,
+                    0x21 => RInst::addu,
+                    0x24 => RInst::and,
+                    0x08 => RInst::jr,
+                    0x27 => RInst::nor,
+                    0x25 => RInst::or,
+                    0x2A => RInst::slt,
+                    0x2B => RInst::sltu,
+                    0x00 => RInst::sll,
+                    0x02 => RInst::srl,
+                    0x22 => RInst::sub,
+                    0x23 => RInst::subu,
+                    0x1A => RInst::div,
+                    0x1B => RInst::divu,
                     _    => unimplemented!(),
                 }
             }
@@ -377,20 +380,20 @@ macro_rules! rinst_inv_map {
         impl From<RInst> for $type_name {
             fn from(r: RInst) -> Self {
                 match r {
-                    RInst::Add => 0x20,
-                    RInst::Addu => 0x21,
-                    RInst::And => 0x24,
-                    RInst::Jr => 0x08,
-                    RInst::Nor => 0x27,
-                    RInst::Or => 0x25,
-                    RInst::Slt => 0x2A,
-                    RInst::Sltu => 0x2B,
-                    RInst::Sll => 0x00,
-                    RInst::Srl => 0x02,
-                    RInst::Sub => 0x22,
-                    RInst::Subu => 0x23,
-                    RInst::Div => 0x1A,
-                    RInst::Divu => 0x1B,
+                    RInst::add => 0x20,
+                    RInst::addu => 0x21,
+                    RInst::and => 0x24,
+                    RInst::jr => 0x08,
+                    RInst::nor => 0x27,
+                    RInst::or => 0x25,
+                    RInst::slt => 0x2A,
+                    RInst::sltu => 0x2B,
+                    RInst::sll => 0x00,
+                    RInst::srl => 0x02,
+                    RInst::sub => 0x22,
+                    RInst::subu => 0x23,
+                    RInst::div => 0x1A,
+                    RInst::divu => 0x1B,
                 }
             }
         }
@@ -420,47 +423,47 @@ rinst_inv_map!(i128);
 
 #[derive(Copy, Clone, Debug)]
 enum IInst {
-    Addi,
-    Addiu,
-    Andi,
-    Beq,
-    Bne,
-    Lbu,
-    Lhu,
-    Ll,
-    Li,
-    Lui,
-    Lw,
-    Ori,
-    Slti,
-    Sltiu,
-    Sb,
-    Sc,
-    Sh,
-    Sw,
+    addi,
+    addiu,
+    andi,
+    beq,
+    bne,
+    lbu,
+    lhu,
+    ll,
+    li,
+    lui,
+    lw,
+    ori,
+    slti,
+    sltiu,
+    sb,
+    sc,
+    sh,
+    sw,
 }
 
 impl From<IInst> for String {
     fn from(i: IInst) -> String {
         match i {
-           IInst::Addi => "addi",
-           IInst::Addiu => "addiu",
-           IInst::Andi => "andi",
-           IInst::Beq => "beq",
-           IInst::Bne => "bne",
-           IInst::Lbu => "lbu",
-           IInst::Lhu => "lhu",
-           IInst::Ll => "ll",
-           IInst::Li => "li",
-           IInst::Lui => "lui",
-           IInst::Lw => "lw",
-           IInst::Ori => "ori",
-           IInst::Slti => "slti",
-           IInst::Sltiu => "sltiu",
-           IInst::Sb => "sb",
-           IInst::Sc => "sc",
-           IInst::Sh => "sh",
-           IInst::Sw => "sw"
+           IInst::addi => "addi",
+           IInst::addiu => "addiu",
+           IInst::andi => "andi",
+           IInst::beq => "beq",
+           IInst::bne => "bne",
+           IInst::lbu => "lbu",
+           IInst::lhu => "lhu",
+           IInst::ll => "ll",
+           IInst::li => "li",
+           IInst::lui => "lui",
+           IInst::lw => "lw",
+           IInst::ori => "ori",
+           IInst::slti => "slti",
+           IInst::sltiu => "sltiu",
+           IInst::sb => "sb",
+           IInst::sc => "sc",
+           IInst::sh => "sh",
+           IInst::sw => "sw"
         }.to_owned()
     }
 }
@@ -468,24 +471,24 @@ impl From<IInst> for String {
 impl From<&str> for IInst {
     fn from(s: &str) -> IInst {
         match s.to_lowercase().as_ref() {
-           "addi" => IInst::Addi,
-           "addiu" => IInst::Addiu,
-           "andi" => IInst::Andi,
-           "beq" => IInst::Beq,
-           "bne" => IInst::Bne,
-           "lbu" => IInst::Lbu,
-           "lhu" => IInst::Lhu,
-           "ll" => IInst::Ll,
-           "li" => IInst::Li,
-           "lui" => IInst::Lui,
-           "lw" => IInst::Lw,
-           "ori" => IInst::Ori,
-           "slti" => IInst::Slti,
-           "sltiu" => IInst::Sltiu,
-           "sb" => IInst::Sb,
-           "sc" => IInst::Sc,
-           "sh" => IInst::Sh,
-           "sw" => IInst::Sw,
+           "addi" => IInst::addi,
+           "addiu" => IInst::addiu,
+           "andi" => IInst::andi,
+           "beq" => IInst::beq,
+           "bne" => IInst::bne,
+           "lbu" => IInst::lbu,
+           "lhu" => IInst::lhu,
+           "ll" => IInst::ll,
+           "li" => IInst::li,
+           "lui" => IInst::lui,
+           "lw" => IInst::lw,
+           "ori" => IInst::ori,
+           "slti" => IInst::slti,
+           "sltiu" => IInst::sltiu,
+           "sb" => IInst::sb,
+           "sc" => IInst::sc,
+           "sh" => IInst::sh,
+           "sw" => IInst::sw,
            _ => unimplemented!(),
         }
     }
@@ -496,24 +499,24 @@ macro_rules! iinst_map {
         impl From<$type_name> for IInst {
             fn from(num: $type_name) -> Self {
                 match num {
-                    0x08 => IInst::Addi,
-                    0x09 => IInst::Addiu,
-                    0x0C => IInst::Andi,
-                    0x04 => IInst::Beq,
-                    0x05 => IInst::Bne,
-                    0x24 => IInst::Lbu,
-                    0x25 => IInst::Lhu,
-                    0x30 => IInst::Ll,
-                    0x7F => IInst::Li,
-                    0x0F => IInst::Lui,
-                    0x23 => IInst::Lw,
-                    0x0D => IInst::Ori,
-                    0x0A => IInst::Slti,
-                    0x0B => IInst::Sltiu,
-                    0x28 => IInst::Sb,
-                    0x38 => IInst::Sc,
-                    0x29 => IInst::Sh,
-                    0x2B => IInst::Sw,
+                    0x08 => IInst::addi,
+                    0x09 => IInst::addiu,
+                    0x0C => IInst::andi,
+                    0x04 => IInst::beq,
+                    0x05 => IInst::bne,
+                    0x24 => IInst::lbu,
+                    0x25 => IInst::lhu,
+                    0x30 => IInst::ll,
+                    0x7F => IInst::li,
+                    0x0F => IInst::lui,
+                    0x23 => IInst::lw,
+                    0x0D => IInst::ori,
+                    0x0A => IInst::slti,
+                    0x0B => IInst::sltiu,
+                    0x28 => IInst::sb,
+                    0x38 => IInst::sc,
+                    0x29 => IInst::sh,
+                    0x2B => IInst::sw,
                     _    => unimplemented!(),
                 }
             }
@@ -526,24 +529,24 @@ macro_rules! iinst_inv_map {
         impl From<IInst> for $type_name {
             fn from(i: IInst) -> Self {
                 match i {
-                    IInst::Addi => 0x08,
-                    IInst::Addiu => 0x09,
-                    IInst::Andi => 0x0C,
-                    IInst::Beq => 0x04,
-                    IInst::Bne => 0x05,
-                    IInst::Lbu => 0x24,
-                    IInst::Lhu => 0x25,
-                    IInst::Ll => 0x30,
-                    IInst::Li => 0x7F,
-                    IInst::Lui => 0x0F,
-                    IInst::Lw => 0x23,
-                    IInst::Ori => 0x0D,
-                    IInst::Slti => 0x0A,
-                    IInst::Sltiu => 0x0B,
-                    IInst::Sb => 0x28,
-                    IInst::Sc => 0x38,
-                    IInst::Sh => 0x29,
-                    IInst::Sw => 0x2B,
+                    IInst::addi => 0x08,
+                    IInst::addiu => 0x09,
+                    IInst::andi => 0x0C,
+                    IInst::beq => 0x04,
+                    IInst::bne => 0x05,
+                    IInst::lbu => 0x24,
+                    IInst::lhu => 0x25,
+                    IInst::ll => 0x30,
+                    IInst::li => 0x7F,
+                    IInst::lui => 0x0F,
+                    IInst::lw => 0x23,
+                    IInst::ori => 0x0D,
+                    IInst::slti => 0x0A,
+                    IInst::sltiu => 0x0B,
+                    IInst::sb => 0x28,
+                    IInst::sc => 0x38,
+                    IInst::sh => 0x29,
+                    IInst::sw => 0x2B,
                 }
             }
         }
@@ -596,42 +599,44 @@ impl RType {
         let rs = state.read_reg(self.rs);
         let rt = state.read_reg(self.rt);
         match self.funct {
-           RInst::Add => state.write_reg(self.rd, i32::wrapping_add(rs as i32, rt as i32) as u32),
-           RInst::Addu => state.write_reg(self.rd, u32::wrapping_add(rs, rt)),
-           RInst::And => state.write_reg(self.rd, rs & rt),
-           RInst::Jr => unimplemented!(),
-           RInst::Nor => state.write_reg(self.rd, !(rs | rt)),
-           RInst::Or => state.write_reg(self.rd, rs | rt),
-           RInst::Slt => state.write_reg(self.rd, match (rs as i32) < (rt as i32) { true => 1u32, false => 0u32 }),
-           RInst::Sltu => state.write_reg(self.rd, match rs < rt { true => 1u32, false => 0u32 }),
-           RInst::Sll => state.write_reg(self.rd, rt << self.shamt),
-           RInst::Srl => state.write_reg(self.rd, rt >> self.shamt),
-           RInst::Sub => state.write_reg(self.rd, i32::wrapping_sub(rs as i32, rt as i32) as u32),
-           RInst::Subu => state.write_reg(self.rd, u32::wrapping_sub(rs, rt)),
-           RInst::Div => state.write_reg(self.rd, ((rs as i32) / (rt as i32)) as u32),
-           RInst::Divu => state.write_reg(self.rd, rs / rt),
+           RInst::add => state.write_reg(self.rd, i32::wrapping_add(rs as i32, rt as i32) as u32),
+           RInst::addu => state.write_reg(self.rd, u32::wrapping_add(rs, rt)),
+           RInst::and => state.write_reg(self.rd, rs & rt),
+           RInst::jr => state.jump(self.rs),
+           RInst::nor => state.write_reg(self.rd, !(rs | rt)),
+           RInst::or => state.write_reg(self.rd, rs | rt),
+           RInst::slt => state.write_reg(self.rd, match (rs as i32) < (rt as i32) { true => 1u32, false => 0u32 }),
+           RInst::sltu => state.write_reg(self.rd, match rs < rt { true => 1u32, false => 0u32 }),
+           RInst::sll => state.write_reg(self.rd, rt << self.shamt),
+           RInst::srl => state.write_reg(self.rd, rt >> self.shamt),
+           RInst::sub => state.write_reg(self.rd, i32::wrapping_sub(rs as i32, rt as i32) as u32),
+           RInst::subu => state.write_reg(self.rd, u32::wrapping_sub(rs, rt)),
+           RInst::div => state.write_reg(self.rd, ((rs as i32) / (rt as i32)) as u32),
+           RInst::divu => state.write_reg(self.rd, rs / rt),
         }
     }
     pub fn convert_to_string(&self, state: &State) -> String {
         match self.funct {
-            RInst::Add  |
-            RInst::Addu |
-            RInst::And  |
-            RInst::Nor  |
-            RInst::Or   |
-            RInst::Slt  |
-            RInst::Sltu |
-            RInst::Sub  |
-            RInst::Subu |
-            RInst::Div  |
-            RInst::Divu => {
+            RInst::add  |
+            RInst::addu |
+            RInst::and  |
+            RInst::nor  |
+            RInst::or   |
+            RInst::slt  |
+            RInst::sltu |
+            RInst::sub  |
+            RInst::subu |
+            RInst::div  |
+            RInst::divu => {
                 format!("{} {}, {}, {}", String::from(self.funct), String::from(self.rd), String::from(self.rs), String::from(self.rt))
             },
-            RInst::Sll |
-            RInst::Srl => {
+            RInst::sll |
+            RInst::srl => {
                 format!("{} {}, {}, {:#X}", String::from(self.funct), String::from(self.rd), String::from(self.rs), self.shamt)
             },
-            _ => unimplemented!()
+            RInst::jr => {
+                format!("{} {}", String::from(self.funct), String::from(self.rs))
+            },
         }
     }
 }
@@ -657,23 +662,23 @@ impl IType {
         let rt = state.read_reg(self.rt);
         let imm = u32::from(self.imm);
         match self.opcode {
-           IInst::Addi => state.write_reg(self.rt, i32::wrapping_add(rs as i32, imm as i32) as u32),
-           IInst::Addiu => state.write_reg(self.rt, u32::wrapping_add(rs, imm)),
-           IInst::Andi => state.write_reg(self.rt, rs & imm),
-           IInst::Beq => unimplemented!(),
-           IInst::Bne => unimplemented!(),
-           IInst::Lbu => state.write_reg(self.rt, state.read_mem(u32::wrapping_add(rs, imm)) & 0xFFu32),
-           IInst::Lhu => state.write_reg(self.rt, state.read_mem(u32::wrapping_add(rs, imm)) & 0xFFFFu32),
-           IInst::Ll | IInst::Lw => state.write_reg(self.rt, state.read_mem(u32::wrapping_add(rs, imm))),
-           IInst::Li => state.write_reg(self.rt, imm),
-           IInst::Lui => state.write_reg(self.rt, imm << 16),
-           IInst::Ori => state.write_reg(self.rt, rs | imm),
-           IInst::Slti => state.write_reg(self.rt, match (rs as i32) < (imm as i32) { true => 1u32, false => 0u32 }),
-           IInst::Sltiu => state.write_reg(self.rt, match rs < imm { true => 1u32, false => 0u32 }),
-           IInst::Sb => state.write_mem(u32::wrapping_add(rs, imm), rt & 0xFFu32),
-           IInst::Sc => unimplemented!(),
-           IInst::Sh => state.write_mem(u32::wrapping_add(rs, imm), rt & 0xFFFFu32),
-           IInst::Sw => state.write_mem(u32::wrapping_add(rs, imm), rt),
+           IInst::addi => state.write_reg(self.rt, i32::wrapping_add(rs as i32, imm as i32) as u32),
+           IInst::addiu => state.write_reg(self.rt, u32::wrapping_add(rs, imm)),
+           IInst::andi => state.write_reg(self.rt, rs & imm),
+           IInst::beq => unimplemented!(),
+           IInst::bne => unimplemented!(),
+           IInst::lbu => state.write_reg(self.rt, state.read_mem(u32::wrapping_add(rs, imm)) & 0xFFu32),
+           IInst::lhu => state.write_reg(self.rt, state.read_mem(u32::wrapping_add(rs, imm)) & 0xFFFFu32),
+           IInst::ll | IInst::lw => state.write_reg(self.rt, state.read_mem(u32::wrapping_add(rs, imm))),
+           IInst::li => state.write_reg(self.rt, imm),
+           IInst::lui => state.write_reg(self.rt, imm << 16),
+           IInst::ori => state.write_reg(self.rt, rs | imm),
+           IInst::slti => state.write_reg(self.rt, match (rs as i32) < (imm as i32) { true => 1u32, false => 0u32 }),
+           IInst::sltiu => state.write_reg(self.rt, match rs < imm { true => 1u32, false => 0u32 }),
+           IInst::sb => state.write_mem(u32::wrapping_add(rs, imm), rt & 0xFFu32),
+           IInst::sc => unimplemented!(),
+           IInst::sh => state.write_mem(u32::wrapping_add(rs, imm), rt & 0xFFFFu32),
+           IInst::sw => state.write_mem(u32::wrapping_add(rs, imm), rt),
         }
     }
     pub fn convert_to_string(&self, state: &State) -> String {
@@ -683,29 +688,29 @@ impl IType {
         };
         let imm_str = format!("{:#X}", u16::from(self.imm));
         match self.opcode {
-            IInst::Addi  |
-            IInst::Addiu | 
-            IInst::Andi  |
-            IInst::Ori   |
-            IInst::Slti  |
-            IInst::Sltiu => {
+            IInst::addi  |
+            IInst::addiu | 
+            IInst::andi  |
+            IInst::ori   |
+            IInst::slti  |
+            IInst::sltiu => {
                 format!("{} {}, {}, {}", String::from(self.opcode), String::from(self.rt), String::from(self.rs), imm_str)
             },
-            IInst::Beq   |
-            IInst::Bne => {
+            IInst::beq   |
+            IInst::bne => {
                 format!("{} {}, {}, {}", String::from(self.opcode), String::from(self.rt), String::from(self.rs), imm_str_label.unwrap())
             },
-            IInst::Lbu |
-            IInst::Lhu |
-            IInst::Ll  |
-            IInst::Lw  |
-            IInst::Sb  |
-            IInst::Sh  |
-            IInst::Sw  => {
+            IInst::lbu |
+            IInst::lhu |
+            IInst::ll  |
+            IInst::lw  |
+            IInst::sb  |
+            IInst::sh  |
+            IInst::sw  => {
                 format!("{} {}, {}({})", String::from(self.opcode), String::from(self.rt), imm_str, String::from(self.rs))
             },
-            IInst::Li |
-            IInst::Lui => {
+            IInst::li |
+            IInst::lui => {
                 format!("{} {}, {}", String::from(self.opcode), String::from(self.rt), imm_str)
             },
             _ => unimplemented!()
@@ -727,9 +732,9 @@ impl From<IType> for u32 {
 pub fn main() {
     let mut state = State::new();
     state.add_label(10u16, "label1");
-    let branch = IType::new(IInst::Beq, Reg::s1, Reg::v0, Imm::Label(10));
-    let load = IType::new(IInst::Lw, Reg::s0, Reg::t0, Imm::Label(10));
-    let add = RType::new(Reg::t0, Reg::t0, Reg::t0, 0u8, RInst::Add);
+    let branch = IType::new(IInst::beq, Reg::s1, Reg::v0, Imm::Label(10));
+    let load = IType::new(IInst::lw, Reg::s0, Reg::t0, Imm::Label(10));
+    let add = RType::new(Reg::t0, Reg::t0, Reg::t0, 0u8, RInst::add);
     println!("branch : {}", branch.convert_to_string(&state));
     println!("add    : {}", add.convert_to_string(&state));
     println!("load   : {}", load.convert_to_string(&state));
