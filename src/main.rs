@@ -10,7 +10,7 @@ struct State {
     pc: u32,
     registers: [u32; 32],
     memory: [u32; std::u16::MAX as usize],
-    labels: Vec<String>,
+    labels: Vec<(u16, String)>,
 }
 
 impl fmt::Debug for State {
@@ -50,7 +50,7 @@ impl fmt::Debug for State {
 
 impl State {
     pub fn new() -> Self {
-        State {pc: 0, registers: [0; 32], memory: [0; std::u16::MAX as usize] }
+        State {pc: 0, registers: [0; 32], memory: [0; std::u16::MAX as usize], labels: Vec::new() }
     }
     pub fn read_reg<T>(&self, r: T) -> u32 where u8: From<T> {
         self.registers[u8::from(r) as usize]
@@ -89,14 +89,50 @@ enum Imm {
     Label(u16), // label index in State
 }
 
-impl From<u16> for Imm {
-    fn from(n: u16) -> Imm {
-        Imm::Raw(n)
-    }
+macro_rules! imm_map {
+    ($type_name: ty) => (
+        impl From<$type_name> for Imm {
+            fn from(n: $type_name) -> Imm {
+                Imm::Raw(n as u16)
+            }
+        }
+    );
 }
 
-impl From<&str> for Imm {
-    
+imm_map!(u8);
+imm_map!(u16);
+imm_map!(u32);
+imm_map!(u64);
+imm_map!(u128);
+
+macro_rules! imm_inv_map {
+    ($type_name: ty) => (
+        impl From<Imm> for $type_name {
+            fn from(i: Imm) -> $type_name {
+                match i {
+                    Imm::Raw(r) => r as $type_name,
+                    Imm::Label(l) => l as $type_name,
+                }
+            }
+        }
+    );
+}
+
+imm_inv_map!(i32);
+imm_inv_map!(i64);
+imm_inv_map!(i128);
+imm_inv_map!(u16);
+imm_inv_map!(u32);
+imm_inv_map!(u64);
+imm_inv_map!(u128);
+
+impl From<Imm> for String {
+    fn from(i: Imm) -> String {
+        match i {
+            Imm::Raw(r) => format!("0x{:x}", r),
+            Imm::Label(l) => format!("0x{:x}", l),
+        }
+    }
 }
 
 impl From<&str> for Reg {
@@ -539,7 +575,7 @@ impl IType {
     pub fn perform(&self, state: &mut State) {
         let rs = state.read_reg(self.rs);
         let rt = state.read_reg(self.rt);
-        let imm = self.imm as u32;
+        let imm = u32::from(self.imm);
         match self.opcode {
            IInst::Addi => state.write_reg(self.rt, i32::wrapping_add(rs as i32, imm as i32) as u32),
            IInst::Addiu => state.write_reg(self.rt, u32::wrapping_add(rs, imm)),
