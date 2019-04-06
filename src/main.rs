@@ -592,8 +592,8 @@ struct IType {
 }
 
 impl RType {
-    pub fn new<T,U,W,Q>(rs: T, rt: U, rd: Q, shamt: W, funct: RInst) -> RType where Reg: From<T> + From<U> + From<Q>, u8: From<W> {
-        RType {rs: Reg::from(rs), rt: Reg::from(rt), rd: Reg::from(rd), shamt: u8::from(shamt), funct}
+    pub fn new<X,T,U,W,Q>(funct: X, rs: T, rt: U, rd: Q, shamt: W) -> RType where RInst: From<X>, Reg: From<T> + From<U> + From<Q>, u8: From<W> {
+        RType {rs: Reg::from(rs), rt: Reg::from(rt), rd: Reg::from(rd), shamt: u8::from(shamt), funct: funct.into()}
     }
     pub fn perform(&self, state: &mut State) {
         let rs = state.read_reg(self.rs);
@@ -641,6 +641,17 @@ impl RType {
     }
 }
 
+impl From<u32> for RType {
+    fn from(n: u32) -> RType {
+        let rs = Reg::from(n >> 21);
+        let rt = Reg::from(n >> 16);
+        let rd = Reg::from(n >> 11);
+        let shamt = ((n >> 6) & 0x1F) as u8;
+        let funct = RInst::from(n);
+        RType::new(funct, rs, rt, rd, shamt)
+    }
+}
+
 impl From<RType> for u32 {
     fn from(r: RType) -> u32 {
         let mut x = 0u32;
@@ -654,8 +665,8 @@ impl From<RType> for u32 {
 }
 
 impl IType {
-    pub fn new<T,U,Q>(opcode: IInst, rs: T, rt: U, imm: Q) -> IType where Reg: From<T> + From<U>, Imm: From<Q> {
-        IType {opcode, rs: Reg::from(rs), rt: Reg::from(rt), imm: Imm::from(imm)}
+    pub fn new<W,T,U,Q>(opcode: W, rs: T, rt: U, imm: Q) -> IType where IInst: From<W>, Reg: From<T> + From<U>, Imm: From<Q> {
+        IType {opcode: opcode.into(), rs: Reg::from(rs), rt: Reg::from(rt), imm: Imm::from(imm)}
     }
     pub fn perform(&self, state: &mut State) {
         let rs = state.read_reg(self.rs);
@@ -718,6 +729,16 @@ impl IType {
     }
 }
 
+impl From<u32> for IType {
+    fn from(n: u32) -> IType {
+        let opcode = IInst::from(n >> 26);
+        let rs = Reg::from(n >> 21);
+        let rt = Reg::from(n >> 16);
+        let imm = Imm::from(n);
+        IType::new(opcode, rs, rt, imm)
+    }
+}
+
 impl From<IType> for u32 {
     fn from(i: IType) -> u32 {
         let mut x = 0u32;
@@ -734,7 +755,7 @@ pub fn main() {
     state.add_label(10u16, "label1");
     let branch = IType::new(IInst::beq, Reg::s1, Reg::v0, Imm::Label(10));
     let load = IType::new(IInst::lw, Reg::s0, Reg::t0, Imm::Label(10));
-    let add = RType::new(Reg::t0, Reg::t0, Reg::t0, 0u8, RInst::add);
+    let add = RType::new(RInst::add, Reg::t0, Reg::t0, Reg::t0, 0u8);
     println!("branch : {}", branch.convert_to_string(&state));
     println!("add    : {}", add.convert_to_string(&state));
     println!("load   : {}", load.convert_to_string(&state));
