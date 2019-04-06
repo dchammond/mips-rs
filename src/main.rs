@@ -68,6 +68,18 @@ impl State {
     pub fn read_mem<T>(&self, addr: T) -> u32 where u32: From<T> {
         self.memory[u32::from(addr) as usize]
     }
+    pub fn find_label<T>(&self, addr: T) -> Option<String> where u16: From<T> {
+        let x = u16::from(addr);
+        for p in self.labels {
+            if p.0 == x {
+                return Some(p.1.clone());
+            }
+        }
+        None
+    }
+    pub fn add_label<T,U>(&mut self, addr: T, label: U) where u16: From<T>, String: From<U> {
+        self.labels.push((u16::from(addr), String::from(label)))
+    }
 }
 
 #[derive(Copy, Clone, Debug)]
