@@ -177,7 +177,7 @@ impl From<&str> for Reg {
             "$sp" => Reg::sp,
             "$fp" => Reg::fp,
             "$ra" => Reg::ra,
-            _ => unimplemented!(),
+            _ => panic!("No such register: {}", s),
         }
     }
 }
@@ -233,7 +233,7 @@ macro_rules! reg_map {
                     29 => Reg::sp,
                     30 => Reg::fp,
                     31 => Reg::ra,
-                    _  => unimplemented!()
+                    _  => unreachable!(),
                 }
             }
         }
@@ -357,7 +357,7 @@ impl From<&str> for RInst {
             "subu" => RInst::subu,
             "div" =>  RInst::div,
             "divu" => RInst::divu,
-            _ => unimplemented!()
+            _ => panic!("No match for RType: {}", s)
         }
     }
 }
@@ -381,7 +381,7 @@ macro_rules! rinst_map {
                     0x23 => RInst::subu,
                     0x1A => RInst::div,
                     0x1B => RInst::divu,
-                    _    => unimplemented!(),
+                    _    => panic!("No match for RType funct code: {:#X}", num),
                 }
             }
         }
@@ -502,7 +502,7 @@ impl From<&str> for IInst {
            "sc" => IInst::sc,
            "sh" => IInst::sh,
            "sw" => IInst::sw,
-           _ => unimplemented!(),
+           _ => panic!("No such IType: {}", s),
         }
     }
 }
@@ -530,7 +530,7 @@ macro_rules! iinst_map {
                     0x38 => IInst::sc,
                     0x29 => IInst::sh,
                     0x2B => IInst::sw,
-                    _    => unimplemented!(),
+                    _    => panic!("No match for IType op-code: {:#X}", num),
                 }
             }
         }
@@ -689,8 +689,8 @@ impl IType {
            IInst::addi => state.write_reg(self.rt, i32::wrapping_add(rs as i32, imm as i32) as u32),
            IInst::addiu => state.write_reg(self.rt, u32::wrapping_add(rs, imm)),
            IInst::andi => state.write_reg(self.rt, rs & imm),
-           IInst::beq => unimplemented!(),
-           IInst::bne => unimplemented!(),
+           IInst::beq => if rs == rt { state.jump(imm) },
+           IInst::bne => if rs != rt { state.jump(imm) },
            IInst::lbu => state.write_reg(self.rt, state.read_mem(u32::wrapping_add(rs, imm)) & 0xFFu32),
            IInst::lhu => state.write_reg(self.rt, state.read_mem(u32::wrapping_add(rs, imm)) & 0xFFFFu32),
            IInst::ll | IInst::lw => state.write_reg(self.rt, state.read_mem(u32::wrapping_add(rs, imm))),
@@ -743,7 +743,7 @@ impl IType {
             IInst::lui => {
                 format!("{} {}, {}", String::from(self.opcode), String::from(self.rt), imm_str)
             },
-            _ => unimplemented!()
+            IInst::sc => unimplemented!()
         }
     }
 }
