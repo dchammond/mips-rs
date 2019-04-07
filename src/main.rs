@@ -4,6 +4,8 @@
 #![allow(unused_variables)]
 
 use std::fmt;
+use lazy_static::lazy_static;
+use regex::Regex;
 
 #[derive(Clone, Debug,)]
 struct Label {
@@ -108,6 +110,18 @@ impl State {
                 InstType::R(r) => r.into(),
                 InstType::I(i) => i.into(),
             };
+            start += 4;
+        }
+    }
+    pub fn load_text_instructions<T>(&mut self, instructions: &[&str], start: Option<T>) where u32: From<T> {
+        let mut start: u32 = match start { Some(s) => s.into(), None => 0 };
+        for inst in instructions {
+            /*
+            self.memory[start as usize] = match *inst {
+                InstType::R(r) => r.into(),
+                InstType::I(i) => i.into(),
+            };
+            */
             start += 4;
         }
     }
@@ -695,6 +709,27 @@ impl RType {
                 format!("{} {}", String::from(self.funct), String::from(self.rs))
             },
         }
+    }
+    pub fn convert_from_string(string: &str, state: &State) -> Option<RType> {
+        lazy_static! {
+            static ref R_ARITHMETIC_RE: Regex = Regex::new(r"\s*(?P<funct>\w+)\s*(?P<rd>\$\w+\d?),\s*(?P<rs>\$\w+\d?),\s*(?P<rt>\$\w+\d?)\s*").unwrap();
+            static ref R_SHIFT_HEX_RE: Regex = Regex::new(r"\s*(?P<funct>\w+)\s*(?P<rd>\$\w+\d?),\s*(?P<rs>\$\w+\d?),\s*(?P<shamt>0x\d+)").unwrap();
+            static ref R_SHIFT_DEC_RE: Regex = Regex::new(r"\s*(?P<funct>\w+)\s*(?P<rd>\$\w+\d?),\s*(?P<rs>\$\w+\d?),\s*(?P<shamt>\d+)").unwrap();
+            static ref R_JUMP_RE: Regex = Regex::new(r"\s*(?P<funct>\w+)\s*(?P<rs>\$\w+\d?)").unwrap();
+        }
+        for caps in R_ARITHMETIC_RE.captures_iter(string) {
+            return Some(RType::new(&caps["funct"], &caps["rs"], &caps["rt"], &caps["rd"], 0u8));
+        }
+        for caps in R_SHIFT_HEX_RE.captures_iter(string) {
+            return Some(RType::new(&caps["funct"], &caps["rs"], 0u8, &caps["rd"], u8::from_str_radix(&caps["shamt"], 16).unwrap()));
+        }
+        for caps in R_SHIFT_DEC_RE.captures_iter(string) {
+            return Some(RType::new(&caps["funct"], &caps["rs"], 0u8, &caps["rd"], u8::from_str_radix(&caps["shamt"], 10).unwrap()));
+        }
+        for caps in R_JUMP_RE.captures_iter(string) {
+            return Some(RType::new(&caps["funct"], &caps["rs"], 0u8, 0u8, 0u8));
+        }
+        None
     }
 }
 
