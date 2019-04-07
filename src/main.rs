@@ -60,12 +60,56 @@ impl fmt::Debug for State {
     }
 }
 
+#[derive(Clone)]
+enum InstType {
+    R(RType),
+    I(IType)
+}
+
 impl State {
     pub fn new() -> Self {
         State {pc: 0, registers: [0; 32], memory: [0; std::u16::MAX as usize], labels: Vec::new() }
     }
     pub fn run(mut self) {
-        
+        /*
+         * main's return address will be 0x0, if we ever jump here the program is done
+         * 1. Set pc to 0x0 + 4
+         * 2. Set $ra to 0x0 (which it already is)
+         * 3. Begin executing code from memory
+         */
+        self.pc = 0x4;
+        while self.pc != 0 {
+            self.pc += 4;
+            match State::parse_instruction(self.memory[self.pc as usize]) {
+                InstType::R(r) => r.perform(&mut self),
+                InstType::I(i) => i.perform(&mut self),
+            }
+        }
+    }
+    pub fn parse_instruction<T>(inst: T) -> InstType where u32: From<T> {
+        let inst: u32 = inst.into();
+        if (inst >> 26) == 0 {
+            InstType::R(RType::from(inst))
+        } else {
+            InstType::I(IType::from(inst))
+        }
+    }
+    pub fn load_compiled_instructions<T>(&mut self, instructions: &[u32], start: Option<T>) where u32: From<T> {
+        let mut start: u32 = match start { Some(s) => s.into(), None => 0 };
+        for inst in instructions {
+            self.memory[start as usize] = *inst;
+            start += 4;
+        }
+    }
+    pub fn load_parsed_instructions<T>(&mut self, instructions: &[InstType], start: Option<T>) where u32: From<T> {
+        let mut start: u32 = match start { Some(s) => s.into(), None => 0 };
+        for inst in instructions {
+            self.memory[start as usize] = match *inst {
+                InstType::R(r) => r.into(),
+                InstType::I(i) => i.into(),
+            };
+            start += 4;
+        }
     }
     pub fn read_reg<T>(&self, r: T) -> u32 where u8: From<T> {
         self.registers[u8::from(r) as usize]
@@ -771,13 +815,6 @@ impl From<IType> for u32 {
 
 pub fn main() {
     let mut state = State::new();
-    state.add_label(10u16, "label1");
-    let branch = IType::from(u32::from(IType::new(IInst::beq, Reg::s1, Reg::v0, Imm::Label(10))));
-    let load = IType::new(IInst::lw, Reg::s0, Reg::t0, Imm::Label(10));
-    let add = RType::new(RInst::add, Reg::t0, Reg::t0, Reg::t0, 0u8);
-    println!("branch : {}", branch.convert_to_string(&state));
-    println!("add    : {}", add.convert_to_string(&state));
-    println!("load   : {}", load.convert_to_string(&state));
     println!("registers:\n{:?}", state);
 }
 
