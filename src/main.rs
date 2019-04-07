@@ -9,13 +9,13 @@ use regex::Regex;
 
 #[derive(Clone, Debug,)]
 struct Label {
-    pub addr: u16,
+    pub addr: Option<u16>,
     pub label: String
 }
 
 impl Label {
-    pub fn new<T,U>(addr: T, label: U) -> Label where u16: From<T>, String: From<U> {
-        Label {addr: addr.into(), label: label.into()}
+    pub fn new<T,U>(addr: Option<T>, label: U) -> Label where u16: From<T>, String: From<U> {
+        Label {addr: match addr { Some(a) => Some(a.into()), None => None }, label: label.into()}
     }
 }
 
@@ -147,14 +147,29 @@ impl State {
     pub fn find_label<T>(&self, addr: T) -> Option<String> where u16: From<T> {
         let x = u16::from(addr);
         for p in &self.labels {
-            if p.addr == x {
-                return Some(p.label.clone());
+            match p.addr {
+                Some(a) => if a == x { return Some(p.label.clone()); }
+                None => (),
             }
         }
         None
     }
     pub fn add_label<T,U>(&mut self, addr: T, label: U) where u16: From<T>, String: From<U> {
-        self.labels.push(Label::new(addr, label))
+        //let addr = u16::from(addr);
+        let label = String::from(label);
+        for p in &mut self.labels {
+            if p.label == label {
+                match p.addr {
+                    Some(_) => {return;},
+                    None => {
+                        p.addr = Some(addr.into());
+                        return;
+                    }
+                }
+                unreachable!();
+            }
+        }
+        self.labels.push(Label::new(Some(addr), label))
     }
 }
 
@@ -712,12 +727,12 @@ impl RType {
     }
     pub fn convert_from_string(string: &str, state: &State) -> Option<RType> {
         lazy_static! {
-            static ref R_ARITHMETIC_RE: Regex = Regex::new(r"\s*(?P<funct>\w+)\s*(?P<rd>\$\w+\d?),\s*(?P<rs>\$\w+\d?),\s*(?P<rt>\$\w+\d?)\s*").unwrap();
+            static ref R_ARITH_RE: Regex = Regex::new(r"\s*(?P<funct>\w+)\s*(?P<rd>\$\w+\d?),\s*(?P<rs>\$\w+\d?),\s*(?P<rt>\$\w+\d?)\s*").unwrap();
             static ref R_SHIFT_HEX_RE: Regex = Regex::new(r"\s*(?P<funct>\w+)\s*(?P<rd>\$\w+\d?),\s*(?P<rs>\$\w+\d?),\s*(?P<shamt>0x\d+)").unwrap();
             static ref R_SHIFT_DEC_RE: Regex = Regex::new(r"\s*(?P<funct>\w+)\s*(?P<rd>\$\w+\d?),\s*(?P<rs>\$\w+\d?),\s*(?P<shamt>\d+)").unwrap();
             static ref R_JUMP_RE: Regex = Regex::new(r"\s*(?P<funct>\w+)\s*(?P<rs>\$\w+\d?)").unwrap();
         }
-        for caps in R_ARITHMETIC_RE.captures_iter(string) {
+        for caps in R_ARITH_RE.captures_iter(string) {
             return Some(RType::new(&caps["funct"], &caps["rs"], &caps["rt"], &caps["rd"], 0u8));
         }
         for caps in R_SHIFT_HEX_RE.captures_iter(string) {
@@ -824,6 +839,29 @@ impl IType {
             },
             IInst::sc => unimplemented!()
         }
+    }
+    pub fn convert_from_string(string: &str, state: &State) -> Option<IType> {
+        lazy_static! {
+            static ref I_ARITH_HEX_RE: Regex = Regex::new(r"\s*(?P<opcode>\w+)\s*(?P<rt>\$\w+\d?),\s*(?P<rs>\$\w+\d?),\s*(?P<imm>0x\d+)\s*").unwrap();
+            static ref I_ARITH_DEC_RE: Regex = Regex::new(r"\s*(?P<opcode>\w+)\s*(?P<rt>\$\w+\d?),\s*(?P<rs>\$\w+\d?),\s*(?P<imm>\d+)\s*").unwrap();
+            static ref I_BRANCH_HEX_RE: Regex = Regex::new(r"\s*(?P<opcode>\w+)\s*(?P<rt>\$\w+\d?),\s*(?P<rs>\$\w+\d?),\s*(?P<imm>0x\d+)\s*").unwrap();
+            static ref I_BRANCH_STR_RE: Regex = Regex::new(r"\s*(?P<opcode>\w+)\s*(?P<rt>\$\w+\d?),\s*(?P<rs>\$\w+\d?),\s*(?P<label>\w+)\s*").unwrap();
+        }
+        for caps in I_ARITH_HEX_RE.captures_iter(string) {
+            return Some(IType::new(&caps["opcode"], &caps["rs"], &caps["rt"], u16::from_str_radix(&caps["imm"], 16).unwrap()));
+        }
+        for caps in I_ARITH_DEC_RE.captures_iter(string) {
+            return Some(IType::new(&caps["opcode"], &caps["rs"], &caps["rt"], u16::from_str_radix(&caps["imm"], 10).unwrap()));
+        }
+        for caps in I_BRANCH_HEX_RE.captures_iter(string) {
+            return Some(IType::new(&caps["opcode"], &caps["rs"], &caps["rt"], Imm::Raw(u16::from_str_radix(&caps["imm"], 16).unwrap())));
+        }
+        /*
+        for caps in I_BRANCH_STR_RE.captures_iter(string) {
+            return Some(IType::new(&caps["opcode"], &caps["rs"], &caps["rt"], ));
+        }
+        */
+        None
     }
 }
 
