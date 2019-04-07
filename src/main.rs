@@ -5,12 +5,24 @@
 
 use std::fmt;
 
+#[derive(Clone, Debug,)]
+struct Label {
+    pub addr: u16,
+    pub label: String
+}
+
+impl Label {
+    pub fn new<T,U>(addr: T, label: U) -> Label where u16: From<T>, String: From<U> {
+        Label {addr: addr.into(), label: label.into()}
+    }
+}
+
 #[derive(Clone)]
 struct State {
     pc: u32,
     registers: [u32; 32],
     memory: [u32; std::u16::MAX as usize],
-    labels: Vec<(u16, String)>,
+    labels: Vec<Label>,
 }
 
 impl fmt::Debug for State {
@@ -77,14 +89,14 @@ impl State {
     pub fn find_label<T>(&self, addr: T) -> Option<String> where u16: From<T> {
         let x = u16::from(addr);
         for p in &self.labels {
-            if p.0 == x {
-                return Some(p.1.clone());
+            if p.addr == x {
+                return Some(p.label.clone());
             }
         }
         None
     }
     pub fn add_label<T,U>(&mut self, addr: T, label: U) where u16: From<T>, String: From<U> {
-        self.labels.push((u16::from(addr), String::from(label)))
+        self.labels.push(Label::new(addr, label))
     }
 }
 
