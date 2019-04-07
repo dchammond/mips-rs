@@ -190,6 +190,7 @@ macro_rules! reg_map {
     ($type_name: ty) => (
         impl From<$type_name> for Reg {
             fn from(num: $type_name) -> Self {
+                let num = (num as u8) & 0x1F;
                 match num {
                     0  => Reg::zero,
                     1  => Reg::at,
@@ -709,7 +710,13 @@ impl IType {
             },
             IInst::beq   |
             IInst::bne => {
-                format!("{} {}, {}, {}", String::from(self.opcode), String::from(self.rt), String::from(self.rs), imm_str_label.unwrap())
+                let branch_imm = match imm_str_label {
+                    Some(s) => s,
+                    None => {
+                        state.find_label(u16::from(self.imm)).unwrap()
+                    }
+                };
+                format!("{} {}, {}, {}", String::from(self.opcode), String::from(self.rt), String::from(self.rs), branch_imm)
             },
             IInst::lbu |
             IInst::lhu |
@@ -753,7 +760,7 @@ impl From<IType> for u32 {
 pub fn main() {
     let mut state = State::new();
     state.add_label(10u16, "label1");
-    let branch = IType::new(IInst::beq, Reg::s1, Reg::v0, Imm::Label(10));
+    let branch = IType::from(u32::from(IType::new(IInst::beq, Reg::s1, Reg::v0, Imm::Label(10))));
     let load = IType::new(IInst::lw, Reg::s0, Reg::t0, Imm::Label(10));
     let add = RType::new(RInst::add, Reg::t0, Reg::t0, Reg::t0, 0u8);
     println!("branch : {}", branch.convert_to_string(&state));
