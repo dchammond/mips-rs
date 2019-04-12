@@ -29,36 +29,36 @@ struct State {
 
 impl fmt::Debug for State {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
-        write!(f, "$pc: {:#X} == {}\n", self.pc, self.pc)?;
-        write!(f, "$0 : {:#X} == {}\n", self.registers[0], self.registers[0])?;
-        write!(f, "$at: {:#X} == {}\n", self.registers[1], self.registers[1])?;
-        write!(f, "$v0: {:#X} == {}\n", self.registers[2], self.registers[2])?;
-        write!(f, "$v1: {:#X} == {}\n", self.registers[3], self.registers[3])?;
-        write!(f, "$a0: {:#X} == {}\n", self.registers[4], self.registers[4])?;
-        write!(f, "$a1: {:#X} == {}\n", self.registers[5], self.registers[5])?;
-        write!(f, "$a2: {:#X} == {}\n", self.registers[6], self.registers[6])?;
-        write!(f, "$a3: {:#X} == {}\n", self.registers[7], self.registers[7])?;
-        write!(f, "$t0: {:#X} == {}\n", self.registers[8], self.registers[8])?;
-        write!(f, "$t1: {:#X} == {}\n", self.registers[9], self.registers[9])?;
-        write!(f, "$t2: {:#X} == {}\n", self.registers[10], self.registers[10])?;
-        write!(f, "$t3: {:#X} == {}\n", self.registers[11], self.registers[11])?;
-        write!(f, "$t4: {:#X} == {}\n", self.registers[12], self.registers[12])?;
-        write!(f, "$t5: {:#X} == {}\n", self.registers[13], self.registers[13])?;
-        write!(f, "$t6: {:#X} == {}\n", self.registers[14], self.registers[14])?;
-        write!(f, "$t7: {:#X} == {}\n", self.registers[15], self.registers[15])?;
-        write!(f, "$s0; {:#X} == {}\n", self.registers[16], self.registers[16])?;
-        write!(f, "$s1: {:#X} == {}\n", self.registers[17], self.registers[17])?;
-        write!(f, "$s2: {:#X} == {}\n", self.registers[18], self.registers[18])?;
-        write!(f, "$s3: {:#X} == {}\n", self.registers[19], self.registers[19])?;
-        write!(f, "$s4: {:#X} == {}\n", self.registers[20], self.registers[20])?;
-        write!(f, "$s5: {:#X} == {}\n", self.registers[21], self.registers[21])?;
-        write!(f, "$s6: {:#X} == {}\n", self.registers[22], self.registers[22])?;
-        write!(f, "$s7: {:#X} == {}\n", self.registers[23], self.registers[23])?;
-        write!(f, "$t8: {:#X} == {}\n", self.registers[24], self.registers[24])?;
-        write!(f, "$t9: {:#X} == {}\n", self.registers[25], self.registers[25])?;
-        write!(f, "$sp: {:#X} == {}\n", self.registers[29], self.registers[29])?;
-        write!(f, "$fp: {:#X} == {}\n", self.registers[30], self.registers[30])?;
-        write!(f, "$ra: {:#X} == {}", self.registers[31], self.registers[31])
+        write!(f, "$pc: 0x{:08X} == {}\n", self.pc, self.pc)?;
+        write!(f, "$0 : 0x{:08X} == {}\n", self.registers[0], self.registers[0])?;
+        write!(f, "$at: 0x{:08X} == {}\n", self.registers[1], self.registers[1])?;
+        write!(f, "$v0: 0x{:08X} == {}\n", self.registers[2], self.registers[2])?;
+        write!(f, "$v1: 0x{:08X} == {}\n", self.registers[3], self.registers[3])?;
+        write!(f, "$a0: 0x{:08X} == {}\n", self.registers[4], self.registers[4])?;
+        write!(f, "$a1: 0x{:08X} == {}\n", self.registers[5], self.registers[5])?;
+        write!(f, "$a2: 0x{:08X} == {}\n", self.registers[6], self.registers[6])?;
+        write!(f, "$a3: 0x{:08X} == {}\n", self.registers[7], self.registers[7])?;
+        write!(f, "$t0: 0x{:08X} == {}\n", self.registers[8], self.registers[8])?;
+        write!(f, "$t1: 0x{:08X} == {}\n", self.registers[9], self.registers[9])?;
+        write!(f, "$t2: 0x{:08X} == {}\n", self.registers[10], self.registers[10])?;
+        write!(f, "$t3: 0x{:08X} == {}\n", self.registers[11], self.registers[11])?;
+        write!(f, "$t4: 0x{:08X} == {}\n", self.registers[12], self.registers[12])?;
+        write!(f, "$t5: 0x{:08X} == {}\n", self.registers[13], self.registers[13])?;
+        write!(f, "$t6: 0x{:08X} == {}\n", self.registers[14], self.registers[14])?;
+        write!(f, "$t7: 0x{:08X} == {}\n", self.registers[15], self.registers[15])?;
+        write!(f, "$s0; 0x{:08X} == {}\n", self.registers[16], self.registers[16])?;
+        write!(f, "$s1: 0x{:08X} == {}\n", self.registers[17], self.registers[17])?;
+        write!(f, "$s2: 0x{:08X} == {}\n", self.registers[18], self.registers[18])?;
+        write!(f, "$s3: 0x{:08X} == {}\n", self.registers[19], self.registers[19])?;
+        write!(f, "$s4: 0x{:08X} == {}\n", self.registers[20], self.registers[20])?;
+        write!(f, "$s5: 0x{:08X} == {}\n", self.registers[21], self.registers[21])?;
+        write!(f, "$s6: 0x{:08X} == {}\n", self.registers[22], self.registers[22])?;
+        write!(f, "$s7: 0x{:08X} == {}\n", self.registers[23], self.registers[23])?;
+        write!(f, "$t8: 0x{:08X} == {}\n", self.registers[24], self.registers[24])?;
+        write!(f, "$t9: 0x{:08X} == {}\n", self.registers[25], self.registers[25])?;
+        write!(f, "$sp: 0x{:08X} == {}\n", self.registers[29], self.registers[29])?;
+        write!(f, "$fp: 0x{:08X} == {}\n", self.registers[30], self.registers[30])?;
+        write!(f, "$ra: 0x{:08X} == {}", self.registers[31], self.registers[31])
     }
 }
 
@@ -81,7 +81,7 @@ impl State {
          */
         self.pc = 0;
         while self.pc <= 16 {
-            println!("instruction at {:#X} is {:#X}", self.pc, self.memory[self.pc as usize]);
+            println!("instruction at 0x{:08X} is 0x{:08X}", self.pc, self.memory[self.pc as usize]);
             match State::parse_instruction(self.memory[self.pc as usize]) {
                 InstType::R(r) => {
                     println!("exec: {}", r.convert_to_string(self));
@@ -153,14 +153,14 @@ impl State {
                     continue;
                 }
             }
-            println!("start is {:#X}", start);
+            println!("start is 0x{:08X}", start);
             if let Some(r) = RType::convert_from_string(inst, &self) {
                 let u: u32 = r.clone().into();
-                println!("parsed RType: {} == {:#X}", r.convert_to_string(self), u);
+                println!("parsed RType: {} == 0x{:08X}", r.convert_to_string(self), u);
                 self.memory[start as usize] = r.into();
             } else if let Some(i) = IType::convert_from_string(inst, &self) {
                 let u: u32 = i.clone().into();
-                println!("parsed IType: {} == {:#X}", i.convert_to_string(self), u);
+                println!("parsed IType: {} == 0x{:08X}", i.convert_to_string(self), u);
                 self.memory[start as usize] = i.into();
             } else {
                 panic!("Could not parse instruction: {}", inst);
@@ -281,8 +281,8 @@ imm_inv_map!(u128);
 impl From<Imm> for String {
     fn from(i: Imm) -> String {
         match i {
-            Imm::Raw(r) => format!("{:#X}", r),
-            Imm::Label(l) => format!("{:#x}", l),
+            Imm::Raw(r) => format!("0x{:08X}", r),
+            Imm::Label(l) => format!("0x{:08X}", l),
         }
     }
 }
@@ -503,7 +503,7 @@ macro_rules! rinst_map {
                     0x23 => RInst::subu,
                     0x1A => RInst::div,
                     0x1B => RInst::divu,
-                    _    => panic!("No match for RType funct code: {:#X}", num),
+                    _    => panic!("No match for RType funct code: 0x{:08X}", num),
                 }
             }
         }
@@ -652,7 +652,7 @@ macro_rules! iinst_map {
                     0x38 => IInst::sc,
                     0x29 => IInst::sh,
                     0x2B => IInst::sw,
-                    _    => panic!("No match for IType op-code: {:#X}", num),
+                    _    => panic!("No match for IType op-code: 0x{:08X}", num),
                 }
             }
         }
@@ -767,7 +767,7 @@ impl RType {
             },
             RInst::sll |
             RInst::srl => {
-                format!("{} {}, {}, {:#X}", String::from(self.funct), String::from(self.rd), String::from(self.rs), self.shamt)
+                format!("{} {}, {}, 0x{:08X}", String::from(self.funct), String::from(self.rd), String::from(self.rs), self.shamt)
             },
             RInst::jr => {
                 format!("{} {}", String::from(self.funct), String::from(self.rs))
@@ -853,7 +853,7 @@ impl IType {
             Imm::Label(l) => state.find_label_by_addr(l),
             Imm::Raw(r) => None,
         };
-        let imm_str = format!("{:#X}", u16::from(self.imm));
+        let imm_str = format!("0x{:08X}", u16::from(self.imm));
         match self.opcode {
             IInst::addi  |
             IInst::addiu | 
