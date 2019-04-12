@@ -154,19 +154,16 @@ impl State {
         }
         None
     }
-    pub fn add_label<T,U>(&mut self, addr: T, label: U) where u16: From<T>, String: From<U> {
-        //let addr = u16::from(addr);
-        let label = String::from(label);
+    pub fn add_label<T,U>(&mut self, addr: T, label: U) where u16: From<T>, String: From<U>, U: Clone {
         for p in &mut self.labels {
-            if p.label == label {
+            if p.label == String::from(label.clone()) {
                 match p.addr {
                     Some(_) => {return;},
                     None => {
-                        p.addr = Some(addr.into());
-                        return;
+                       p.addr = Some(addr.into());
+                       return;
                     }
                 }
-                unreachable!();
             }
         }
         self.labels.push(Label::new(Some(addr), label))
