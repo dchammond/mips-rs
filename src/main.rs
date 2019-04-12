@@ -488,7 +488,7 @@ macro_rules! rinst_map {
     ($type_name: ty) => (
         impl From<$type_name> for RInst {
             fn from(num: $type_name) -> Self {
-                match num {
+                match num & 0x3F {
                     0x20 => RInst::add,
                     0x21 => RInst::addu,
                     0x24 => RInst::and,
@@ -633,7 +633,7 @@ macro_rules! iinst_map {
     ($type_name: ty) => (
         impl From<$type_name> for IInst {
             fn from(num: $type_name) -> Self {
-                match num {
+                match num & 0x3F {
                     0x08 => IInst::addi,
                     0x09 => IInst::addiu,
                     0x0C => IInst::andi,
@@ -972,6 +972,6 @@ pub fn main() {
     println!("split: {:?}", s);
     state.load_text_instructions(&s[..], None::<u32>);
     state.run();
-//    println!("registers:\n{:?}", state);
+    println!("registers:\n{:?}", state);
 }
 
