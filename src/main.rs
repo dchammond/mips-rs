@@ -80,19 +80,19 @@ impl State {
          * 3. Begin executing code from memory
          */
         self.pc = 0;
-        while self.pc <= 16 {
-            println!("instruction at 0x{:08X} is 0x{:08X}", self.pc, self.memory[self.pc as usize]);
+        loop {
+            self.pc += 4;
             match State::parse_instruction(self.memory[self.pc as usize]) {
                 InstType::R(r) => {
-                    println!("exec: {}", r.convert_to_string(self));
                     r.perform(self);
                 },
                 InstType::I(i) => {
-                    println!("exec: {}", i.convert_to_string(self));
                     i.perform(self);
                 }
             }
-            self.pc += 4;
+            if self.pc == 0 {
+                break;
+            }
         }
     }
     pub fn parse_instruction<T>(inst: T) -> InstType where u32: From<T> {
@@ -104,14 +104,14 @@ impl State {
         }
     }
     pub fn load_compiled_instructions<T>(&mut self, instructions: &[u32], start: Option<T>) where u32: From<T> {
-        let mut start: u32 = match start { Some(s) => s.into(), None => 0 };
+        let mut start: u32 = match start { Some(s) => s.into(), None => 0x4 };
         for inst in instructions {
             self.memory[start as usize] = *inst;
             start += 4;
         }
     }
     pub fn load_parsed_instructions<T>(&mut self, instructions: &[InstType], start: Option<T>) where u32: From<T> {
-        let mut start: u32 = match start { Some(s) => s.into(), None => 0 };
+        let mut start: u32 = match start { Some(s) => s.into(), None => 0x4 };
         for inst in instructions {
             self.memory[start as usize] = match *inst {
                 InstType::R(r) => r.into(),
@@ -124,7 +124,7 @@ impl State {
         lazy_static! {
             static ref LABEL_RE: Regex = Regex::new(r"\s*(?P<label>\w+):\s*").unwrap();
         }
-        let mut start: u32 = match start { Some(s) => s.into(), None => 0 };
+        let mut start: u32 = match start { Some(s) => s.into(), None => 0x4 };
         let mut labels: Vec<u32> = Vec::new();
         {
             let mut count = start;
@@ -737,7 +737,7 @@ impl RType {
            RInst::add => state.write_reg(self.rd, i32::wrapping_add(rs as i32, rt as i32) as u32),
            RInst::addu => state.write_reg(self.rd, u32::wrapping_add(rs, rt)),
            RInst::and => state.write_reg(self.rd, rs & rt),
-           RInst::jr => state.jump(self.rs),
+           RInst::jr => state.jump(rs),
            RInst::nor => state.write_reg(self.rd, !(rs | rt)),
            RInst::or => state.write_reg(self.rd, rs | rt),
            RInst::slt => state.write_reg(self.rd, match (rs as i32) < (rt as i32) { true => 1u32, false => 0u32 }),
@@ -969,7 +969,6 @@ pub fn main() {
     let s = String::from("main:\nli $t0, 1\njr $ra\n");
     let s = s.split("\n");
     let s: Vec<&str> = s.collect();
-    println!("split: {:?}", s);
     state.load_text_instructions(&s[..], None::<u32>);
     state.run();
     println!("registers:\n{:?}", state);
