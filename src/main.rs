@@ -72,20 +72,27 @@ impl State {
     pub fn new() -> Self {
         State {pc: 0, registers: [0; 32], memory: [0; std::u16::MAX as usize], labels: Vec::new() }
     }
-    pub fn run(mut self) {
+    pub fn run(&mut self) {
         /*
          * main's return address will be 0x0, if we ever jump here the program is done
          * 1. Set pc to 0x0 + 4
          * 2. Set $ra to 0x0 (which it already is)
          * 3. Begin executing code from memory
          */
-        self.pc = 0x4;
-        while self.pc != 0 {
-            self.pc += 4;
+        self.pc = 0;
+        while self.pc <= 16 {
+            println!("instruction at {:#X} is {:#X}", self.pc, self.memory[self.pc as usize]);
             match State::parse_instruction(self.memory[self.pc as usize]) {
-                InstType::R(r) => r.perform(&mut self),
-                InstType::I(i) => i.perform(&mut self),
+                InstType::R(r) => {
+                    println!("exec: {}", r.convert_to_string(self));
+                    r.perform(self);
+                },
+                InstType::I(i) => {
+                    println!("exec: {}", i.convert_to_string(self));
+                    i.perform(self);
+                }
             }
+            self.pc += 4;
         }
     }
     pub fn parse_instruction<T>(inst: T) -> InstType where u32: From<T> {
@@ -131,6 +138,9 @@ impl State {
         }
         let mut iter = labels.into_iter().peekable();
         for inst in instructions {
+            if *inst == "" {
+                continue;
+            }
             while let Some(&i) = iter.peek() {
                 if i >= start {
                     break;
@@ -143,10 +153,17 @@ impl State {
                     continue;
                 }
             }
+            println!("start is {:#X}", start);
             if let Some(r) = RType::convert_from_string(inst, &self) {
+                let u: u32 = r.clone().into();
+                println!("parsed RType: {} == {:#X}", r.convert_to_string(self), u);
                 self.memory[start as usize] = r.into();
             } else if let Some(i) = IType::convert_from_string(inst, &self) {
+                let u: u32 = i.clone().into();
+                println!("parsed IType: {} == {:#X}", i.convert_to_string(self), u);
                 self.memory[start as usize] = i.into();
+            } else {
+                panic!("Could not parse instruction: {}", inst);
             }
             start += 4;
         }
@@ -625,7 +642,7 @@ macro_rules! iinst_map {
                     0x24 => IInst::lbu,
                     0x25 => IInst::lhu,
                     0x30 => IInst::ll,
-                    0x7F => IInst::li,
+                    0x3F => IInst::li,
                     0x0F => IInst::lui,
                     0x23 => IInst::lw,
                     0x0D => IInst::ori,
@@ -655,7 +672,7 @@ macro_rules! iinst_inv_map {
                     IInst::lbu => 0x24,
                     IInst::lhu => 0x25,
                     IInst::ll => 0x30,
-                    IInst::li => 0x7F,
+                    IInst::li => 0x3F,
                     IInst::lui => 0x0F,
                     IInst::lw => 0x23,
                     IInst::ori => 0x0D,
@@ -759,10 +776,10 @@ impl RType {
     }
     pub fn convert_from_string(string: &str, state: &State) -> Option<RType> {
         lazy_static! {
-            static ref R_ARITH_RE: Regex = Regex::new(r"\s*(?P<funct>\w+)\s*(?P<rd>\$\w+\d?),\s*(?P<rs>\$\w+\d?),\s*(?P<rt>\$\w+\d?)\s*").unwrap();
-            static ref R_SHIFT_HEX_RE: Regex = Regex::new(r"\s*(?P<funct>\w+)\s*(?P<rd>\$\w+\d?),\s*(?P<rs>\$\w+\d?),\s*(?P<shamt>0x\d+)").unwrap();
-            static ref R_SHIFT_DEC_RE: Regex = Regex::new(r"\s*(?P<funct>\w+)\s*(?P<rd>\$\w+\d?),\s*(?P<rs>\$\w+\d?),\s*(?P<shamt>\d+)").unwrap();
-            static ref R_JUMP_RE: Regex = Regex::new(r"\s*(?P<funct>\w+)\s*(?P<rs>\$\w+\d?)").unwrap();
+            static ref R_ARITH_RE: Regex = Regex::new(r"^\s*(?P<funct>\w+)\s*(?P<rd>\$\w+\d?),\s*(?P<rs>\$\w+\d?),\s*(?P<rt>\$\w+\d?)\s*$").unwrap();
+            static ref R_SHIFT_HEX_RE: Regex = Regex::new(r"^\s*(?P<funct>\w+)\s*(?P<rd>\$\w+\d?),\s*(?P<rs>\$\w+\d?),\s*(?P<shamt>0x\d+)\s*$").unwrap();
+            static ref R_SHIFT_DEC_RE: Regex = Regex::new(r"^\s*(?P<funct>\w+)\s*(?P<rd>\$\w+\d?),\s*(?P<rs>\$\w+\d?),\s*(?P<shamt>\d+)\s*$").unwrap();
+            static ref R_JUMP_RE: Regex = Regex::new(r"^\s*(?P<funct>\w+)\s*(?P<rs>\$\w+\d?)\s*$").unwrap();
         }
         for caps in R_ARITH_RE.captures_iter(string) {
             return Some(RType::new(&caps["funct"], &caps["rs"], &caps["rt"], &caps["rd"], 0u8));
@@ -874,10 +891,15 @@ impl IType {
     }
     pub fn convert_from_string(string: &str, state: &State) -> Option<IType> {
         lazy_static! {
-            static ref I_ARITH_HEX_RE: Regex  = Regex::new(r"\s*(?P<opcode>\w+)\s*(?P<rt>\$\w+\d?),\s*(?P<rs>\$\w+\d?),\s*(?P<imm>0x\d+)\s*").unwrap();
-            static ref I_ARITH_DEC_RE: Regex  = Regex::new(r"\s*(?P<opcode>\w+)\s*(?P<rt>\$\w+\d?),\s*(?P<rs>\$\w+\d?),\s*(?P<imm>\d+)\s*").unwrap();
-            static ref I_BRANCH_HEX_RE: Regex = Regex::new(r"\s*(?P<opcode>\w+)\s*(?P<rt>\$\w+\d?),\s*(?P<rs>\$\w+\d?),\s*(?P<imm>0x\d+)\s*").unwrap();
-            static ref I_BRANCH_STR_RE: Regex = Regex::new(r"\s*(?P<opcode>\w+)\s*(?P<rt>\$\w+\d?),\s*(?P<rs>\$\w+\d?),\s*(?P<label>\w+)\s*").unwrap();
+            static ref I_ARITH_HEX_RE:  Regex = Regex::new(r"^\s*(?P<opcode>\w+)\s*(?P<rt>\$\w+\d?),\s*(?P<rs>\$\w+\d?),\s*(?P<imm>0x\d+)\s*$").unwrap();
+            static ref I_ARITH_DEC_RE:  Regex = Regex::new(r"^\s*(?P<opcode>\w+)\s*(?P<rt>\$\w+\d?),\s*(?P<rs>\$\w+\d?),\s*(?P<imm>\d+)\s*$").unwrap();
+            static ref I_BRANCH_HEX_RE: Regex = Regex::new(r"^\s*(?P<opcode>\w+)\s*(?P<rt>\$\w+\d?),\s*(?P<rs>\$\w+\d?),\s*(?P<imm>0x\d+)\s*$").unwrap();
+            static ref I_BRANCH_STR_RE: Regex = Regex::new(r"^\s*(?P<opcode>\w+)\s*(?P<rt>\$\w+\d?),\s*(?P<rs>\$\w+\d?),\s*(?P<label>\w+)\s*$").unwrap();
+            static ref I_MEM_HEX_RE:    Regex = Regex::new(r"^\s*(?P<opcode>\w+)\s*(?P<rt>\$\w+\d?),\s*(?P<imm>0x\d+)\((?P<rs>\$\w+\d?)\)\s*$").unwrap();
+            static ref I_MEM_DEC_RE:    Regex = Regex::new(r"^\s*(?P<opcode>\w+)\s*(?P<rt>\$\w+\d?),\s*(?P<imm>\d+)\((?P<rs>\$\w+\d?)\)\s*$").unwrap();
+            static ref I_MEM_STR_RE:    Regex = Regex::new(r"^\s*(?P<opcode>\w+)\s*(?P<rt>\$\w+\d?),\s*(?P<label>\s+)\((?P<rs>\$\w+\d?)\)\s*$").unwrap();
+            static ref I_IMM_HEX_RE:  Regex = Regex::new(r"^\s*(?P<opcode>\w+)\s*(?P<rt>\$\w+\d?),\s*(?P<imm>0x\d+)\s*$").unwrap();
+            static ref I_IMM_DEC_RE:  Regex = Regex::new(r"^\s*(?P<opcode>\w+)\s*(?P<rt>\$\w+\d?),\s*(?P<imm>\d+)\s*$").unwrap();
         }
         for caps in I_ARITH_HEX_RE.captures_iter(string) {
             return Some(IType::new(&caps["opcode"], &caps["rs"], &caps["rt"], u16::from_str_radix(&caps["imm"], 16).unwrap()));
@@ -895,6 +917,26 @@ impl IType {
                     panic!("Unresolved label: {}", string);
                 }
             }
+        }
+        for caps in I_MEM_HEX_RE.captures_iter(string) {
+            return Some(IType::new(&caps["opcode"], &caps["rs"], &caps["rt"], Imm::Raw(u16::from_str_radix(&caps["imm"], 16).unwrap())));
+        }
+        for caps in I_MEM_DEC_RE.captures_iter(string) {
+            return Some(IType::new(&caps["opcode"], &caps["rs"], &caps["rt"], Imm::Raw(u16::from_str_radix(&caps["imm"], 10).unwrap())));
+        }
+        for caps in I_MEM_STR_RE.captures_iter(string) {
+            match state.find_label_by_name(&caps["label"]) {
+                Some(a) => return Some(IType::new(&caps["opcode"], &caps["rs"], &caps["rt"], a)),
+                None => {
+                    panic!("Unresolved label: {}", string);
+                }
+            }
+        }
+        for caps in I_IMM_HEX_RE.captures_iter(string) {
+            return Some(IType::new(&caps["opcode"], 0u16, &caps["rt"], Imm::Raw(u16::from_str_radix(&caps["imm"], 16).unwrap())));
+        }
+        for caps in I_IMM_DEC_RE.captures_iter(string) {
+            return Some(IType::new(&caps["opcode"], 0u16, &caps["rt"], Imm::Raw(u16::from_str_radix(&caps["imm"], 10).unwrap())));
         }
         None
     }
@@ -924,5 +966,12 @@ impl From<IType> for u32 {
 pub fn main() {
     let mut state = State::new();
     println!("registers:\n{:?}", state);
+    let s = String::from("main:\nli $t0, 1\njr $ra\n");
+    let s = s.split("\n");
+    let s: Vec<&str> = s.collect();
+    println!("split: {:?}", s);
+    state.load_text_instructions(&s[..], None::<u32>);
+    state.run();
+//    println!("registers:\n{:?}", state);
 }
 
