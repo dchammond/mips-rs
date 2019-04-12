@@ -114,12 +114,42 @@ impl State {
         }
     }
     pub fn load_text_instructions<T>(&mut self, instructions: &[&str], start: Option<T>) where u32: From<T> {
-        /*
+        lazy_static! {
+            static ref LABEL_RE: Regex = Regex::new(r"\s*(?P<label>\w+):\s*").unwrap();
+        }
         let mut start: u32 = match start { Some(s) => s.into(), None => 0 };
+        let mut labels: Vec<u32> = Vec::new();
+        {
+            let mut count = start;
+            for line in instructions {
+                for caps in LABEL_RE.captures_iter(line) {
+                    self.add_label(Some(count as u16), &caps["label"]);
+                    labels.push(count);
+                }
+                count += 4;
+            }
+        }
+        let mut iter = labels.into_iter().peekable();
         for inst in instructions {
+            while let Some(&i) = iter.peek() {
+                if i >= start {
+                    break;
+                }
+                iter.next();
+            }
+            if let Some(&i) = iter.peek() {
+                if i == start {
+                    iter.next();
+                    continue;
+                }
+            }
+            if let Some(r) = RType::convert_from_string(inst, &self) {
+                self.memory[start as usize] = r.into();
+            } else if let Some(i) = IType::convert_from_string(inst, &self) {
+                self.memory[start as usize] = i.into();
+            }
             start += 4;
         }
-        */
     }
     pub fn read_reg<T>(&self, r: T) -> u32 where u8: From<T> {
         self.registers[u8::from(r) as usize]
