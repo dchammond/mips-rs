@@ -7,7 +7,7 @@ use std::fmt;
 use lazy_static::lazy_static;
 use regex::Regex;
 
-#[derive(Clone, Debug,)]
+#[derive(Clone, Debug)]
 struct Label {
     pub addr: Option<u16>,
     pub label: String
@@ -122,9 +122,9 @@ impl State {
     }
     pub fn load_text_instructions<T>(&mut self, instructions: &[&str], start: Option<T>) where u32: From<T> {
         lazy_static! {
-            static ref LABEL_RE: Regex = Regex::new(r"\s*(?P<label>\w+):\s*").unwrap();
+            static ref LABEL_RE: Regex = Regex::new(r"^\s*(?P<label>\w+):\s*$").unwrap();
         }
-        let mut start: u32 = match start { Some(s) => s.into(), None => 0x4 };
+        let mut start: u32 = match start { Some(s) => s.into(), None => 0 };
         let mut labels: Vec<u32> = Vec::new();
         {
             let mut count = start;
@@ -137,13 +137,14 @@ impl State {
             }
         }
         let mut iter = labels.into_iter().peekable();
-        for inst in instructions {
+'outer: for inst in instructions {
             if *inst == "" {
                 continue;
             }
             while let Some(&i) = iter.peek() {
                 if i >= start {
-                    break;
+                    start += 4;
+                    continue 'outer;
                 }
                 iter.next();
             }
@@ -153,14 +154,11 @@ impl State {
                     continue;
                 }
             }
-            println!("start is 0x{:08X}", start);
             if let Some(r) = RType::convert_from_string(inst, &self) {
                 let u: u32 = r.clone().into();
-                println!("parsed RType: {} == 0x{:08X}", r.convert_to_string(self), u);
                 self.memory[start as usize] = r.into();
             } else if let Some(i) = IType::convert_from_string(inst, &self) {
                 let u: u32 = i.clone().into();
-                println!("parsed IType: {} == 0x{:08X}", i.convert_to_string(self), u);
                 self.memory[start as usize] = i.into();
             } else {
                 panic!("Could not parse instruction: {}", inst);
@@ -963,13 +961,26 @@ impl From<IType> for u32 {
     }
 }
 
+use std::{env, fs, io, path};
+use std::io::Read;
+
 pub fn main() {
+    let mut file: fs::File;
+    {
+        let args: Vec<String> = env::args().collect();
+        if args.len() != 2 {
+            println!("Usage: {} <mips_file>", args[0]);
+            return;
+        }
+        let r: io::Result<fs::File> = fs::File::open(path::Path::new(&args[1]));
+        file = r.unwrap();
+    }
+    let mut file_contents: String = String::new();
+    file.read_to_string(&mut file_contents).unwrap();
+    let file_contents = file_contents.split("\n");
+    let file_contents: Vec<&str> = file_contents.collect();
     let mut state = State::new();
-    println!("registers:\n{:?}", state);
-    let s = String::from("main:\nli $t0, 1\njr $ra\n");
-    let s = s.split("\n");
-    let s: Vec<&str> = s.collect();
-    state.load_text_instructions(&s[..], None::<u32>);
+    state.load_text_instructions(&file_contents[..], None::<u32>);
     state.run();
     println!("registers:\n{:?}", state);
 }
