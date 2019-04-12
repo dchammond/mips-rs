@@ -114,16 +114,12 @@ impl State {
         }
     }
     pub fn load_text_instructions<T>(&mut self, instructions: &[&str], start: Option<T>) where u32: From<T> {
+        /*
         let mut start: u32 = match start { Some(s) => s.into(), None => 0 };
         for inst in instructions {
-            /*
-            self.memory[start as usize] = match *inst {
-                InstType::R(r) => r.into(),
-                InstType::I(i) => i.into(),
-            };
-            */
             start += 4;
         }
+        */
     }
     pub fn read_reg<T>(&self, r: T) -> u32 where u8: From<T> {
         self.registers[u8::from(r) as usize]
@@ -144,7 +140,7 @@ impl State {
     pub fn read_mem<T>(&self, addr: T) -> u32 where u32: From<T> {
         self.memory[u32::from(addr) as usize]
     }
-    pub fn find_label<T>(&self, addr: T) -> Option<String> where u16: From<T> {
+    pub fn find_label_by_addr<T>(&self, addr: T) -> Option<String> where u16: From<T> {
         let x = u16::from(addr);
         for p in &self.labels {
             match p.addr {
@@ -154,19 +150,28 @@ impl State {
         }
         None
     }
-    pub fn add_label<T,U>(&mut self, addr: T, label: U) where u16: From<T>, String: From<U>, U: Clone {
+    pub fn find_label_by_name<T>(&self, name: T) -> Option<u16> where String: From<T> {
+        let x = String::from(name);
+        for p in &self.labels {
+            if p.label == x {
+                return p.addr;
+            }
+        }
+        None
+    }
+    pub fn add_label<T,U>(&mut self, addr: Option<T>, label: U) where u16: From<T>, String: From<U>, U: Clone {
         for p in &mut self.labels {
             if p.label == String::from(label.clone()) {
                 match p.addr {
                     Some(_) => {return;},
                     None => {
-                       p.addr = Some(addr.into());
+                       p.addr = match addr { Some(a) => Some(a.into()), None => None };
                        return;
                     }
                 }
             }
         }
-        self.labels.push(Label::new(Some(addr), label))
+        self.labels.push(Label::new(addr, label))
     }
 }
 
@@ -798,7 +803,7 @@ impl IType {
     }
     pub fn convert_to_string(&self, state: &State) -> String {
         let imm_str_label = match self.imm {
-            Imm::Label(l) => state.find_label(l),
+            Imm::Label(l) => state.find_label_by_addr(l),
             Imm::Raw(r) => None,
         };
         let imm_str = format!("{:#X}", u16::from(self.imm));
@@ -816,7 +821,7 @@ impl IType {
                 let branch_imm = match imm_str_label {
                     Some(s) => s,
                     None => {
-                        state.find_label(u16::from(self.imm)).unwrap()
+                        state.find_label_by_addr(u16::from(self.imm)).unwrap()
                     }
                 };
                 format!("{} {}, {}, {}", String::from(self.opcode), String::from(self.rt), String::from(self.rs), branch_imm)
@@ -839,8 +844,8 @@ impl IType {
     }
     pub fn convert_from_string(string: &str, state: &State) -> Option<IType> {
         lazy_static! {
-            static ref I_ARITH_HEX_RE: Regex = Regex::new(r"\s*(?P<opcode>\w+)\s*(?P<rt>\$\w+\d?),\s*(?P<rs>\$\w+\d?),\s*(?P<imm>0x\d+)\s*").unwrap();
-            static ref I_ARITH_DEC_RE: Regex = Regex::new(r"\s*(?P<opcode>\w+)\s*(?P<rt>\$\w+\d?),\s*(?P<rs>\$\w+\d?),\s*(?P<imm>\d+)\s*").unwrap();
+            static ref I_ARITH_HEX_RE: Regex  = Regex::new(r"\s*(?P<opcode>\w+)\s*(?P<rt>\$\w+\d?),\s*(?P<rs>\$\w+\d?),\s*(?P<imm>0x\d+)\s*").unwrap();
+            static ref I_ARITH_DEC_RE: Regex  = Regex::new(r"\s*(?P<opcode>\w+)\s*(?P<rt>\$\w+\d?),\s*(?P<rs>\$\w+\d?),\s*(?P<imm>\d+)\s*").unwrap();
             static ref I_BRANCH_HEX_RE: Regex = Regex::new(r"\s*(?P<opcode>\w+)\s*(?P<rt>\$\w+\d?),\s*(?P<rs>\$\w+\d?),\s*(?P<imm>0x\d+)\s*").unwrap();
             static ref I_BRANCH_STR_RE: Regex = Regex::new(r"\s*(?P<opcode>\w+)\s*(?P<rt>\$\w+\d?),\s*(?P<rs>\$\w+\d?),\s*(?P<label>\w+)\s*").unwrap();
         }
@@ -853,11 +858,14 @@ impl IType {
         for caps in I_BRANCH_HEX_RE.captures_iter(string) {
             return Some(IType::new(&caps["opcode"], &caps["rs"], &caps["rt"], Imm::Raw(u16::from_str_radix(&caps["imm"], 16).unwrap())));
         }
-        /*
         for caps in I_BRANCH_STR_RE.captures_iter(string) {
-            return Some(IType::new(&caps["opcode"], &caps["rs"], &caps["rt"], ));
+            match state.find_label_by_name(&caps["label"]) {
+                Some(a) => return Some(IType::new(&caps["opcode"], &caps["rs"], &caps["rt"], a)),
+                None => {
+                    panic!("Unresolved label: {}", string);
+                }
+            }
         }
-        */
         None
     }
 }
