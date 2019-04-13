@@ -1,5 +1,5 @@
 #[derive(Copy, Clone, Debug)]
-enum Imm {
+pub enum Imm {
     Raw(u32),
     Label(u32),
     Address(u32),

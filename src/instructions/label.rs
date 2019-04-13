@@ -1,5 +1,5 @@
 #[derive(Clone, Debug)]
-struct Label {
+pub struct Label {
     pub addr: Option<u32>,
     pub label: String
 }

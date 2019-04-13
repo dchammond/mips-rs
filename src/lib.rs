@@ -1,10 +1,13 @@
-use std::fmt;
 use lazy_static::lazy_static;
 use regex::Regex;
 
-
 use std::{fs, io, path};
 use std::io::Read;
+
+mod machine;
+mod instructions;
+
+pub use machine::state::State;
 
 pub fn load_file(state: &mut State, p: &path::Path, offset: Option<u32>) {
     lazy_static! {

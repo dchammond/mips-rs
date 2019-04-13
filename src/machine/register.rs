@@ -1,5 +1,6 @@
+#[allow(non_camel_case_types)]
 #[derive(Copy, Clone, Debug)]
-enum Reg {
+pub enum Reg {
     zero,
     at,
     v0, v1,

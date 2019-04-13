@@ -1,3 +1,9 @@
+use lazy_static::lazy_static;
+use regex::Regex;
+
+use crate::machine::state::State;
+use crate::machine::register::Reg;
+
 #[derive(Copy, Clone, Debug)]
 pub struct RType {
     rs: Reg,
@@ -31,7 +37,7 @@ impl RType {
             RInst::divu => state.write_reg(self.rd, rs / rt),
         }
     }
-    pub fn convert_to_string(&self, state: &State) -> String {
+    pub fn convert_to_string(&self, _state: &State) -> String {
         match self.funct {
             RInst::add  |
                 RInst::addu |
@@ -55,7 +61,7 @@ impl RType {
                 },
         }
     }
-    pub fn convert_from_string(string: &str, state: &State) -> Option<RType> {
+    pub fn convert_from_string(string: &str, _state: &State) -> Option<RType> {
         lazy_static! {
             static ref R_ARITH_RE: Regex = Regex::new(r"^\s*(?P<funct>\w+)\s*(?P<rd>\$[\w\d]+),\s*(?P<rs>\$[\w\d]+),\s*(?P<rt>\$[\w\d]+)\s*$").unwrap();
             static ref R_SHIFT_HEX_RE: Regex = Regex::new(r"^\s*(?P<funct>\w+)\s*(?P<rd>\$[\w\d]+),\s*(?P<rs>\$[\w\d]+),\s*0x(?P<shamt>[\da-fA-F]+)\s*$").unwrap();
@@ -107,8 +113,9 @@ impl From<RType> for u32 {
     }
 }
 
+#[allow(non_camel_case_types)]
 #[derive(Copy, Clone, Debug)]
-enum RInst {
+pub enum RInst {
     add,
     addu,
     and,

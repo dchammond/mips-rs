@@ -1,3 +1,13 @@
+use lazy_static::lazy_static;
+use regex::Regex;
+
+use std::fmt;
+
+use crate::instructions::label::Label;
+use crate::instructions::rtype::RType;
+use crate::instructions::itype::IType;
+use crate::instructions::jtype::{JType, JInst};
+
 #[derive(Clone)]
 pub struct State {
     pc: u32,
@@ -117,6 +127,9 @@ impl State {
             }
             start += 4;
         }
+    }
+    pub fn read_pc(&self) -> u32 {
+        self.pc
     }
     pub fn read_reg<T>(&self, r: T) -> u32 where u8: From<T> {
         self.registers[u8::from(r) as usize]

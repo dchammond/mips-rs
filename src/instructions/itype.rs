@@ -1,3 +1,10 @@
+use lazy_static::lazy_static;
+use regex::Regex;
+
+use crate::machine::state::State;
+use crate::machine::register::Reg;
+use crate::machine::immediate::Imm;
+
 #[derive(Copy, Clone, Debug)]
 pub struct IType {
     opcode: IInst,
@@ -38,7 +45,7 @@ impl IType {
         let imm_str_label = match self.imm {
             Imm::Address(j) => state.find_label_by_addr(j),
             Imm::Label(l) => state.find_label_by_addr(l),
-            Imm::Raw(r) => None,
+            Imm::Raw(_) => None,
         };
         let imm_str = format!("0x{:08X}", u16::from(self.imm));
         match self.opcode {
@@ -160,9 +167,9 @@ impl From<IType> for u32 {
     }
 }
 
-
+#[allow(non_camel_case_types)]
 #[derive(Copy, Clone, Debug)]
-enum IInst {
+pub enum IInst {
     addi,
     addiu,
     andi,

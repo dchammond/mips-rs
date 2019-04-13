@@ -1,3 +1,10 @@
+use lazy_static::lazy_static;
+use regex::Regex;
+
+use crate::machine::state::State;
+use crate::machine::immediate::Imm;
+use crate::machine::register::Reg;
+
 #[derive(Copy, Clone, Debug)]
 pub struct JType {
     opcode: JInst,
@@ -12,16 +19,21 @@ impl JType {
         let address = u32::from(self.address);
         match self.opcode {
             JInst::j => state.jump(address),
-            JInst::jal => { state.write_reg(Reg::ra, state.pc); state.jump(address); },
+            JInst::jal => { state.write_reg(Reg::ra, state.read_pc()); state.jump(address); },
         }
     }
     pub fn convert_to_string(&self, state: &State) -> String {
-        let address_str_label = match self.address {
+        let address_str_label: Option<String> = match self.address {
             Imm::Address(a) => state.find_label_by_addr(a),
             Imm::Label(l) => state.find_label_by_addr(l),
-            Imm::Raw(r) => None,
+            Imm::Raw(_) => None,
         };
-        let address_str = format!("0x{:08X}", u32::from(self.address));
+        let address_str: String;
+        if let Some(l) = address_str_label {
+            address_str = l;
+        } else {
+            address_str = format!("0x{:08X}", u32::from(self.address));
+        }
         match self.opcode {
             JInst::j | JInst::jal => format!("{} {}", String::from(self.opcode), address_str),
         }
@@ -59,8 +71,9 @@ impl From<JType> for u32 {
     }
 }
 
+#[allow(non_camel_case_types)]
 #[derive(Copy, Clone, Debug)]
-enum JInst {
+pub enum JInst {
     j,
     jal,
 }
