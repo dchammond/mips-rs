@@ -578,6 +578,7 @@ enum IInst {
     lhu,
     ll,
     li,
+    la,
     lui,
     lw,
     ori,
@@ -601,6 +602,7 @@ impl From<IInst> for String {
             IInst::lhu => "lhu",
             IInst::ll => "ll",
             IInst::li => "li",
+            IInst::la => "la",
             IInst::lui => "lui",
             IInst::lw => "lw",
             IInst::ori => "ori",
@@ -626,6 +628,7 @@ impl From<&str> for IInst {
             "lhu" => IInst::lhu,
             "ll" => IInst::ll,
             "li" => IInst::li,
+            "la" => IInst::la,
             "lui" => IInst::lui,
             "lw" => IInst::lw,
             "ori" => IInst::ori,
@@ -654,6 +657,7 @@ macro_rules! iinst_map {
                     0x25 => IInst::lhu,
                     0x30 => IInst::ll,
                     0x3F => IInst::li,
+                    0x01 => IInst::la,
                     0x0F => IInst::lui,
                     0x23 => IInst::lw,
                     0x0D => IInst::ori,
@@ -684,6 +688,7 @@ macro_rules! iinst_inv_map {
                     IInst::lhu => 0x25,
                     IInst::ll => 0x30,
                     IInst::li => 0x3F,
+                    IInst::la => 0x01,
                     IInst::lui => 0x0F,
                     IInst::lw => 0x23,
                     IInst::ori => 0x0D,
@@ -933,7 +938,7 @@ impl IType {
             IInst::lbu => state.write_reg(self.rt, state.read_mem(u32::wrapping_add(rs, imm)) & 0xFFu32),
             IInst::lhu => state.write_reg(self.rt, state.read_mem(u32::wrapping_add(rs, imm)) & 0xFFFFu32),
             IInst::ll | IInst::lw => state.write_reg(self.rt, state.read_mem(u32::wrapping_add(rs, imm))),
-            IInst::li => state.write_reg(self.rt, imm),
+            IInst::li | IInst::la => state.write_reg(self.rt, imm),
             IInst::lui => state.write_reg(self.rt, imm << 16),
             IInst::ori => state.write_reg(self.rt, rs | imm),
             IInst::slti => state.write_reg(self.rt, match (rs as i32) < (imm as i32) { true => 1u32, false => 0u32 }),
@@ -961,29 +966,30 @@ impl IType {
                     format!("{} {}, {}, {}", String::from(self.opcode), String::from(self.rt), String::from(self.rs), imm_str)
                 },
                 IInst::beq   |
-                    IInst::bne => {
-                        let branch_imm = match imm_str_label {
-                            Some(s) => s,
-                            None => {
-                                state.find_label_by_addr(u16::from(self.imm)).unwrap()
-                            }
-                        };
-                        format!("{} {}, {}, {}", String::from(self.opcode), String::from(self.rt), String::from(self.rs), branch_imm)
-                    },
-                    IInst::lbu |
-                        IInst::lhu |
-                        IInst::ll  |
-                        IInst::lw  |
-                        IInst::sb  |
-                        IInst::sh  |
-                        IInst::sw  => {
-                            format!("{} {}, {}({})", String::from(self.opcode), String::from(self.rt), imm_str, String::from(self.rs))
-                        },
-                        IInst::li |
-                            IInst::lui => {
-                                format!("{} {}, {}", String::from(self.opcode), String::from(self.rt), imm_str)
-                            },
-                        IInst::sc => unimplemented!()
+                IInst::bne => {
+                    let branch_imm = match imm_str_label {
+                        Some(s) => s,
+                        None => {
+                            state.find_label_by_addr(u16::from(self.imm)).unwrap()
+                        }
+                    };
+                    format!("{} {}, {}, {}", String::from(self.opcode), String::from(self.rt), String::from(self.rs), branch_imm)
+                },
+                IInst::lbu |
+                IInst::lhu |
+                IInst::ll  |
+                IInst::lw  |
+                IInst::sb  |
+                IInst::sh  |
+                IInst::sw  => {
+                    format!("{} {}, {}({})", String::from(self.opcode), String::from(self.rt), imm_str, String::from(self.rs))
+                },
+                IInst::li  |
+                IInst::lui |
+                IInst::la => {
+                    format!("{} {}, {}", String::from(self.opcode), String::from(self.rt), imm_str)
+                },
+                IInst::sc => unimplemented!()
         }
     }
     pub fn convert_from_string(string: &str, state: &State) -> Option<IType> {
@@ -997,6 +1003,7 @@ impl IType {
             static ref I_MEM_STR_RE:    Regex = Regex::new(r"^\s*(?P<opcode>\w+)\s*(?P<rt>\$[\w\d]+?),\s*(?P<label>\w+)\((?P<rs>\$[\w\d]+?)\)\s*$").unwrap();
             static ref I_IMM_HEX_RE:  Regex = Regex::new(r"^\s*(?P<opcode>\w+)\s*(?P<rt>\$[\w\d]+?),\s*0x(?P<imm>[\da-fA-F]+)\s*$").unwrap();
             static ref I_IMM_DEC_RE:  Regex = Regex::new(r"^\s*(?P<opcode>\w+)\s*(?P<rt>\$[\w\d]+?),\s*(?P<imm>\d+)\s*$").unwrap();
+            static ref I_IMM_STR_RE:  Regex = Regex::new(r"^\s*(?P<opcode>\w+)\s*(?P<rt>\$[\w\d]+?),\s*(?P<label>\w+)\s*$").unwrap();
         }
         for caps in I_ARITH_HEX_RE.captures_iter(string) {
             return Some(IType::new(&caps["opcode"], &caps["rs"], &caps["rt"], u32::from_str_radix(&caps["imm"], 16).unwrap()));
@@ -1034,6 +1041,14 @@ impl IType {
         }
         for caps in I_IMM_DEC_RE.captures_iter(string) {
             return Some(IType::new(&caps["opcode"], 0u16, &caps["rt"], Imm::Raw(u32::from_str_radix(&caps["imm"], 10).unwrap())));
+        }
+        for caps in I_IMM_STR_RE.captures_iter(string) {
+            match state.find_label_by_name(&caps["label"]) {
+                Some(a) => return Some(IType::new(&caps["opcode"], 0u16, &caps["rt"], a)),
+                None => {
+                    panic!("Unresolved label: {}", string);
+                }
+            }
         }
         None
     }
