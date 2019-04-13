@@ -1,5 +1,5 @@
 use std::vec::Vec;
-use std::ops::Index;
+use std::ops::{Index, IndexMut};
 
 #[derive(Clone, Debug)]
 pub struct Parser {
@@ -38,6 +38,17 @@ impl Index<usize> for SegmentEntry {
             Alignment::Byte     => &self.data[idx][..1],
             Alignment::HalfWord => &self.data[idx][..2],
             Alignment::Word     => &self.data[idx][..4],
+        }
+    }
+}
+
+impl IndexMut<usize> for SegmentEntry {
+    type Output = [u8];
+    fn index(&mut self, idx: usize) -> &mut Self::Output {
+        match self.alignment {
+            Alignment::Byte     => &mut self.data[idx][..1],
+            Alignment::HalfWord => &mut self.data[idx][..2],
+            Alignment::Word     => &mut self.data[idx][..4],
         }
     }
 }
