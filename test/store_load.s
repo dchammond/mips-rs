@@ -4,7 +4,7 @@
 
 #.text
 main:   
-	li	$2, 0x10010000	# $2  = 0x10010000	testing lui
+	li	$2, 0x1001	# $2  = 0x10010000	testing lui
 				      
 	lw	$3, 12($2)	# $3  = 0xcafebabe	
 	slt	$8, $3, $0	# $8  = 1	  	testing slt

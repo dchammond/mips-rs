@@ -288,14 +288,14 @@ impl From<&str> for Reg {
     fn from(s: &str) -> Reg {
         match s.to_lowercase().as_ref() {
             "$zero" | "$0" => Reg::zero,
-            "$at" => Reg::at,
-            "$v0" => Reg::v0, "$v1" => Reg::v1,
-            "$a0" => Reg::a0, "$a1" => Reg::a1, "$a2" => Reg::a2, "$a3" => Reg::a3, 
-            "$t0" => Reg::t0, "$t1" => Reg::t1, "$t2" => Reg::t2, "$t3" => Reg::t3, "$t4" => Reg::t4, "$t5" => Reg::t5, "$t6" => Reg::t6, "$t7" => Reg::t7, "$t8" => Reg::t8, "$t9" => Reg::t9,
-            "$s0" => Reg::s0, "$s1" => Reg::s1, "$s2" => Reg::s2, "$s3" => Reg::s3, "$s4" => Reg::s4, "$s5" => Reg::s5, "$s6" => Reg::s6, "$s7" => Reg::s7,
-            "$sp" => Reg::sp,
-            "$fp" => Reg::fp,
-            "$ra" => Reg::ra,
+            "$at" | "$1" => Reg::at,
+            "$v0" | "$2" => Reg::v0, "$v1" | "$3" => Reg::v1,
+            "$a0" | "$4" => Reg::a0, "$a1" | "$5"=> Reg::a1, "$a2" | "$6" => Reg::a2, "$a3" | "$7" => Reg::a3, 
+            "$t0" | "$8" => Reg::t0, "$t1" | "$9" => Reg::t1, "$t2" | "$10" => Reg::t2, "$t3" | "$11" => Reg::t3, "$t4" | "$12" => Reg::t4, "$t5" | "$13" => Reg::t5, "$t6" | "$14" => Reg::t6, "$t7" | "$15" => Reg::t7, "$t8" | "$24" => Reg::t8, "$t9" | "$25" => Reg::t9,
+            "$s0" | "$16" => Reg::s0, "$s1" | "$17" => Reg::s1, "$s2" | "$18" => Reg::s2, "$s3" | "$19" => Reg::s3, "$s4" | "$20" => Reg::s4, "$s5" | "$21" => Reg::s5, "$s6" | "$22" => Reg::s6, "$s7" | "$23" => Reg::s7,
+            "$sp" | "$29" => Reg::sp,
+            "$fp" | "$30" => Reg::fp,
+            "$ra" | "$31" => Reg::ra,
             _ => panic!("No such register: {}", s),
         }
     }
