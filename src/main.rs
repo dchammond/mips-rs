@@ -1133,30 +1133,33 @@ impl From<JType> for u32 {
 use std::{env, fs, io, path};
 use std::io::Read;
 
-pub fn main() {
+fn load_file(state: &mut State, p: &path::Path, offset: Option<u32>) {
     lazy_static! {
         static ref COMMENT_RE: Regex = Regex::new(r"\s*#.*\s*\n").unwrap();
         static ref LABEL_CODE_RE: Regex = Regex::new(r"\s*(?P<label>\w+:)[^\n](?P<code>.+)").unwrap();
     }
     let mut file: fs::File;
     {
-        let args: Vec<String> = env::args().collect();
-        if args.len() != 2 {
-            println!("Usage: {} <mips_file>", args[0]);
-            return;
-        }
-        let r: io::Result<fs::File> = fs::File::open(path::Path::new(&args[1]));
+        let r: io::Result<fs::File> = fs::File::open(p);
         file = r.unwrap();
     }
     let mut file_contents: String = String::new();
     file.read_to_string(&mut file_contents).unwrap();
     file_contents = COMMENT_RE.replace_all(&file_contents, "\n").to_string();
     file_contents = LABEL_CODE_RE.replace_all(&file_contents, "\n$label\n$code").to_string(); // dumb hack to put label on its own line
-    println!("file contents\n{}", file_contents);
     let file_contents = file_contents.split("\n");
     let file_contents: Vec<&str> = file_contents.collect();
+    state.load_text_instructions(&file_contents[..], offset);
+}
+
+pub fn main() {
+    let args: Vec<String> = env::args().collect();
+    if args.len() != 2 {
+        println!("Usage: {} <mips_file>", args[0]);
+        return;
+    }
     let mut state = State::new();
-    state.load_text_instructions(&file_contents[..], None::<u32>);
+    load_file(&mut state, path::Path::new(&args[1]), None);
     state.run();
     println!("registers:\n{:?}", state);
 }
