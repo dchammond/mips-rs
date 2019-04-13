@@ -177,8 +177,11 @@ impl State {
     pub fn read_reg<T>(&self, r: T) -> u32 where u8: From<T> {
         self.registers[u8::from(r) as usize]
     }
-    pub fn dump_reg(&self) -> [u32; 32] {
-        self.registers
+    pub fn dump_reg(&self) -> [u32; 33] {
+        let mut r: [u32; 33] = [0; 33];
+        r.clone_from_slice(&self.registers[..]);
+        r[32] = self.pc;
+        r
     }
     pub fn write_reg<T,U>(&mut self, r: T, val: U) where u8: From<T>, u32: From<U> {
         let reg = u8::from(r);
