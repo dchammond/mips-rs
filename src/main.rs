@@ -1,7 +1,6 @@
 use std::{env, path};
 
 use mips_rs::*;
-use mips_rs::State;
 
 pub fn main() {
     let args: Vec<String> = env::args().collect();
