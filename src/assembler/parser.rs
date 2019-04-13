@@ -22,11 +22,18 @@ impl SegmentEntry {
     fn add_data(&mut self, data: [u8; 4]) {
         self.data.push(data);
     }
-    fn get_data_checked(&mut self, idx: usize) -> Option<&[u8]> {
+    fn get_data_checked(&self, idx: usize) -> Option<&[u8]> {
         if idx >= self.data.len() {
             None
         } else {
             Some(&self[idx])
+        }
+    }
+    fn get_data_mut_checked(&mut self, idx: usize) -> Option<&mut [u8]> {
+        if idx >= self.data.len() {
+            None
+        } else {
+            Some(&mut self[idx])
         }
     }
 }
@@ -43,8 +50,7 @@ impl Index<usize> for SegmentEntry {
 }
 
 impl IndexMut<usize> for SegmentEntry {
-    type Output = [u8];
-    fn index(&mut self, idx: usize) -> &mut Self::Output {
+    fn index_mut(&mut self, idx: usize) -> &mut Self::Output {
         match self.alignment {
             Alignment::Byte     => &mut self.data[idx][..1],
             Alignment::HalfWord => &mut self.data[idx][..2],
