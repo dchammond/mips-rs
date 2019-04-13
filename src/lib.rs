@@ -4,6 +4,7 @@ use regex::Regex;
 use std::{fs, io, path};
 use std::io::Read;
 
+mod assembler;
 mod machine;
 mod instructions;
 
