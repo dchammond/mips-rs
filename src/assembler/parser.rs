@@ -1,4 +1,5 @@
 use std::vec::Vec;
+use std::ops::Index;
 
 #[derive(Clone, Debug)]
 pub struct Parser {
@@ -15,8 +16,29 @@ struct SegmentEntry {
 }
 
 impl SegmentEntry {
-    fn new<T,U,V>(offset: T, alignment: U, data: V) -> SegmentEntry where u32: From<T>, Alignment: From<U>, Vec<[u8; 4]>: From<V> {
-        SegmentEntry {offset: offset.into(), alignment: alignment.into(), data: data.into()}
+    fn new<T,U>(offset: T, alignment: U, data: Vec<[u8; 4]>) -> SegmentEntry where u32: From<T>, Alignment: From<U> {
+        SegmentEntry {offset: offset.into(), alignment: alignment.into(), data}
+    }
+    fn add_data(&mut self, data: [u8; 4]) {
+        self.data.push(data);
+    }
+    fn get_data_checked(&mut self, idx: usize) -> Option<&[u8]> {
+        if idx >= self.data.len() {
+            None
+        } else {
+            Some(&self[idx])
+        }
+    }
+}
+
+impl Index<usize> for SegmentEntry {
+    type Output = [u8];
+    fn index(&self, idx: usize) -> &Self::Output {
+        match self.alignment {
+            Alignment::Byte     => &self.data[idx][..1],
+            Alignment::HalfWord => &self.data[idx][..2],
+            Alignment::Word     => &self.data[idx][..4],
+        }
     }
 }
 
