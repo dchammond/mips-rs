@@ -137,20 +137,23 @@ impl State {
             }
         }
         let mut iter = labels.into_iter().peekable();
-'outer: for inst in instructions {
+        for inst in instructions {
             if *inst == "" {
                 continue;
             }
+            /*
             while let Some(&i) = iter.peek() {
-                if i >= start {
+                if i == start {
                     start += 4;
                     continue 'outer;
                 }
                 iter.next();
             }
+            */
             if let Some(&i) = iter.peek() {
                 if i == start {
                     iter.next();
+                    start += 4;
                     continue;
                 }
             }
