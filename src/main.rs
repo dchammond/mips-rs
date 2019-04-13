@@ -244,8 +244,8 @@ enum Reg {
 
 #[derive(Copy, Clone, Debug)]
 enum Imm {
-    Raw(u16),
-    Label(u16),
+    Raw(u32),
+    Label(u32),
     Address(u32),
 }
 
@@ -253,7 +253,7 @@ macro_rules! imm_map {
     ($type_name: ty) => (
         impl From<$type_name> for Imm {
             fn from(n: $type_name) -> Imm {
-                Imm::Raw(n as u16)
+                Imm::Raw(n as u32)
             }
         }
     );
@@ -998,13 +998,13 @@ impl IType {
             static ref I_IMM_DEC_RE:  Regex = Regex::new(r"^\s*(?P<opcode>\w+)\s*(?P<rt>\$\w+\d?),\s*(?P<imm>\d+)\s*$").unwrap();
         }
         for caps in I_ARITH_HEX_RE.captures_iter(string) {
-            return Some(IType::new(&caps["opcode"], &caps["rs"], &caps["rt"], u16::from_str_radix(&caps["imm"], 16).unwrap()));
+            return Some(IType::new(&caps["opcode"], &caps["rs"], &caps["rt"], u32::from_str_radix(&caps["imm"], 16).unwrap()));
         }
         for caps in I_ARITH_DEC_RE.captures_iter(string) {
-            return Some(IType::new(&caps["opcode"], &caps["rs"], &caps["rt"], u16::from_str_radix(&caps["imm"], 10).unwrap()));
+            return Some(IType::new(&caps["opcode"], &caps["rs"], &caps["rt"], u32::from_str_radix(&caps["imm"], 10).unwrap()));
         }
         for caps in I_BRANCH_HEX_RE.captures_iter(string) {
-            return Some(IType::new(&caps["opcode"], &caps["rs"], &caps["rt"], Imm::Raw(u16::from_str_radix(&caps["imm"], 16).unwrap())));
+            return Some(IType::new(&caps["opcode"], &caps["rs"], &caps["rt"], Imm::Raw(u32::from_str_radix(&caps["imm"], 16).unwrap())));
         }
         for caps in I_BRANCH_STR_RE.captures_iter(string) {
             match state.find_label_by_name(&caps["label"]) {
@@ -1015,10 +1015,10 @@ impl IType {
             }
         }
         for caps in I_MEM_HEX_RE.captures_iter(string) {
-            return Some(IType::new(&caps["opcode"], &caps["rs"], &caps["rt"], Imm::Raw(u16::from_str_radix(&caps["imm"], 16).unwrap())));
+            return Some(IType::new(&caps["opcode"], &caps["rs"], &caps["rt"], Imm::Raw(u32::from_str_radix(&caps["imm"], 16).unwrap())));
         }
         for caps in I_MEM_DEC_RE.captures_iter(string) {
-            return Some(IType::new(&caps["opcode"], &caps["rs"], &caps["rt"], Imm::Raw(u16::from_str_radix(&caps["imm"], 10).unwrap())));
+            return Some(IType::new(&caps["opcode"], &caps["rs"], &caps["rt"], Imm::Raw(u32::from_str_radix(&caps["imm"], 10).unwrap())));
         }
         for caps in I_MEM_STR_RE.captures_iter(string) {
             match state.find_label_by_name(&caps["label"]) {
@@ -1029,10 +1029,10 @@ impl IType {
             }
         }
         for caps in I_IMM_HEX_RE.captures_iter(string) {
-            return Some(IType::new(&caps["opcode"], 0u16, &caps["rt"], Imm::Raw(u16::from_str_radix(&caps["imm"], 16).unwrap())));
+            return Some(IType::new(&caps["opcode"], 0u16, &caps["rt"], Imm::Raw(u32::from_str_radix(&caps["imm"], 16).unwrap())));
         }
         for caps in I_IMM_DEC_RE.captures_iter(string) {
-            return Some(IType::new(&caps["opcode"], 0u16, &caps["rt"], Imm::Raw(u16::from_str_radix(&caps["imm"], 10).unwrap())));
+            return Some(IType::new(&caps["opcode"], 0u16, &caps["rt"], Imm::Raw(u32::from_str_radix(&caps["imm"], 10).unwrap())));
         }
         None
     }

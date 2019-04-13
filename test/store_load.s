@@ -33,7 +33,7 @@ skipped:
 	addi	$15, $zero, 1	# skipped so $15 remains 0
 	j	skipped	    	# skipped
 
-end:	lui	$17, 0xf00f	# $17 = 0xf00f0000
+end:	lui	$17, 0xf00f0000	# $17 = 0xf00f0000
 	j	end
 
 target:
