@@ -9,12 +9,12 @@ use regex::Regex;
 
 #[derive(Clone, Debug)]
 struct Label {
-    pub addr: Option<u16>,
+    pub addr: Option<u32>,
     pub label: String
 }
 
 impl Label {
-    pub fn new<T,U>(addr: Option<T>, label: U) -> Label where u16: From<T>, String: From<U> {
+    pub fn new<T,U>(addr: Option<T>, label: U) -> Label where u32: From<T>, String: From<U> {
         Label {addr: match addr { Some(a) => Some(a.into()), None => None }, label: label.into()}
     }
 }
@@ -65,7 +65,8 @@ impl fmt::Debug for State {
 #[derive(Clone)]
 enum InstType {
     R(RType),
-    I(IType)
+    I(IType),
+    J(JType)
 }
 
 impl State {
@@ -88,6 +89,9 @@ impl State {
                 },
                 InstType::I(i) => {
                     i.perform(self);
+                },
+                InstType::J(j) => {
+                    j.perform(self);
                 }
             }
             if self.pc == 0 {
@@ -97,8 +101,11 @@ impl State {
     }
     pub fn parse_instruction<T>(inst: T) -> InstType where u32: From<T> {
         let inst: u32 = inst.into();
-        if (inst >> 26) == 0 {
+        let inst: u32 = inst >> 26;
+        if inst == 0 {
             InstType::R(RType::from(inst))
+        } else if inst == JInst::j.into() || inst == JInst::jal.into()  {
+            InstType::J(JType::from(inst))
         } else {
             InstType::I(IType::from(inst))
         }
@@ -116,6 +123,7 @@ impl State {
             self.memory[start as usize] = match *inst {
                 InstType::R(r) => r.into(),
                 InstType::I(i) => i.into(),
+                InstType::J(j) => j.into(),
             };
             start += 4;
         }
@@ -134,7 +142,7 @@ impl State {
                     continue;
                 }
                 for caps in LABEL_RE.captures_iter(trim) {
-                    self.add_label(Some(count as u16), &caps["label"]);
+                    self.add_label::<u32,&str>(Some(count), &caps["label"]);
                     labels.push(count);
                 }
                 count += 4;
@@ -154,11 +162,11 @@ impl State {
                 }
             }
             if let Some(r) = RType::convert_from_string(inst, &self) {
-                let u: u32 = r.clone().into();
                 self.memory[start as usize] = r.into();
             } else if let Some(i) = IType::convert_from_string(inst, &self) {
-                let u: u32 = i.clone().into();
                 self.memory[start as usize] = i.into();
+            } else if let Some(j) = JType::convert_from_string(inst, &self) {
+                self.memory[start as usize] = j.into();
             } else {
                 panic!("Could not parse instruction: {}", inst);
             }
@@ -184,8 +192,8 @@ impl State {
     pub fn read_mem<T>(&self, addr: T) -> u32 where u32: From<T> {
         self.memory[u32::from(addr) as usize]
     }
-    pub fn find_label_by_addr<T>(&self, addr: T) -> Option<String> where u16: From<T> {
-        let x = u16::from(addr);
+    pub fn find_label_by_addr<T>(&self, addr: T) -> Option<String> where u32: From<T> {
+        let x = u32::from(addr);
         for p in &self.labels {
             match p.addr {
                 Some(a) => if a == x { return Some(p.label.clone()); }
@@ -194,7 +202,7 @@ impl State {
         }
         None
     }
-    pub fn find_label_by_name<T>(&self, name: T) -> Option<u16> where String: From<T> {
+    pub fn find_label_by_name<T>(&self, name: T) -> Option<u32> where String: From<T> {
         let x = String::from(name);
         for p in &self.labels {
             if p.label == x {
@@ -203,19 +211,21 @@ impl State {
         }
         None
     }
-    pub fn add_label<T,U>(&mut self, addr: Option<T>, label: U) where u16: From<T>, String: From<U>, U: Clone {
+    pub fn add_label<T,U>(&mut self, addr: Option<T>, label: U) where u32: From<T>, String: From<U>, U: Clone {
+        let addr: Option<u32> = match addr { Some(a) => Some(a.into()), None => None };
+        let label = String::from(label);
         for p in &mut self.labels {
-            if p.label == String::from(label.clone()) {
+            if p.label == label {
                 match p.addr {
                     Some(_) => {return;},
                     None => {
-                       p.addr = match addr { Some(a) => Some(a.into()), None => None };
+                       p.addr = addr;
                        return;
                     }
                 }
             }
         }
-        self.labels.push(Label::new(addr, label))
+        self.labels.push(Label::new::<u32,String>(addr, label))
     }
 }
 
@@ -236,6 +246,7 @@ enum Reg {
 enum Imm {
     Raw(u16),
     Label(u16),
+    Address(u32),
 }
 
 macro_rules! imm_map {
@@ -261,6 +272,7 @@ macro_rules! imm_inv_map {
                 match i {
                     Imm::Raw(r) => r as $type_name,
                     Imm::Label(l) => l as $type_name,
+                    Imm::Address(a) => a as $type_name,
                 }
             }
         }
@@ -280,6 +292,7 @@ impl From<Imm> for String {
         match i {
             Imm::Raw(r) => format!("0x{:08X}", r),
             Imm::Label(l) => format!("0x{:08X}", l),
+            Imm::Address(a) => format!("0x{:08X}", a),
         }
     }
 }
@@ -707,6 +720,79 @@ iinst_inv_map!(i64);
 iinst_inv_map!(i128);
 
 #[derive(Copy, Clone, Debug)]
+enum JInst {
+    j,
+    jal,
+}
+
+impl From<JInst> for String {
+    fn from(j: JInst) -> String {
+        match j {
+            JInst::j => "j",
+            JInst::jal => "jal",
+        }.to_owned()
+    }
+}
+
+impl From<&str> for JInst {
+    fn from(s: &str) -> JInst {
+        match s.to_lowercase().as_ref() {
+            "j" => JInst::j,
+            "jal" => JInst::jal,
+            _ => panic!("No such JType: {}", s)
+        }
+    }
+}
+
+macro_rules! jinst_map {
+    ($type_name: ty) => (
+        impl From<$type_name> for JInst {
+            fn from(num: $type_name) -> Self {
+                match num & 0x3F {
+                    0x02 => JInst::j,
+                    0x03 => JInst::jal,
+                    _    => panic!("No match for JType op-code: 0x{:08X}", num),
+                }
+            }
+        }
+    );
+}
+
+macro_rules! jinst_inv_map {
+    ($type_name: ty) => (
+        impl From<JInst> for $type_name {
+            fn from(j: JInst) -> Self {
+                match j {
+                    JInst::j => 0x02,
+                    JInst::jal => 0x03,
+                }
+            }
+        }
+    );
+}
+
+jinst_map!(u8);
+jinst_map!(u16);
+jinst_map!(u32);
+jinst_map!(u64);
+jinst_map!(u128);
+jinst_map!(i8);
+jinst_map!(i16);
+jinst_map!(i32);
+jinst_map!(i64);
+jinst_map!(i128);
+jinst_inv_map!(u8);
+jinst_inv_map!(u16);
+jinst_inv_map!(u32);
+jinst_inv_map!(u64);
+jinst_inv_map!(u128);
+jinst_inv_map!(i8);
+jinst_inv_map!(i16);
+jinst_inv_map!(i32);
+jinst_inv_map!(i64);
+jinst_inv_map!(i128);
+
+#[derive(Copy, Clone, Debug)]
 struct RType {
     rs: Reg,
     rt: Reg,
@@ -721,6 +807,12 @@ struct IType {
     rs: Reg,
     rt: Reg,
     imm: Imm,
+}
+
+#[derive(Copy, Clone, Debug)]
+struct JType {
+    opcode: JInst,
+    address: Imm,
 }
 
 impl RType {
@@ -782,9 +874,15 @@ impl RType {
             return Some(RType::new(&caps["funct"], &caps["rs"], &caps["rt"], &caps["rd"], 0u8));
         }
         for caps in R_SHIFT_HEX_RE.captures_iter(string) {
+            if &caps["funct"] != "sll" && &caps["funct"] != "srl" {
+                continue;
+            }
             return Some(RType::new(&caps["funct"], &caps["rs"], 0u8, &caps["rd"], u8::from_str_radix(&caps["shamt"], 16).unwrap()));
         }
         for caps in R_SHIFT_DEC_RE.captures_iter(string) {
+            if &caps["funct"] != "sll" && &caps["funct"] != "srl" {
+                continue;
+            }
             return Some(RType::new(&caps["funct"], &caps["rs"], 0u8, &caps["rd"], u8::from_str_radix(&caps["shamt"], 10).unwrap()));
         }
         for caps in R_JUMP_RE.captures_iter(string) {
@@ -847,6 +945,7 @@ impl IType {
     }
     pub fn convert_to_string(&self, state: &State) -> String {
         let imm_str_label = match self.imm {
+            Imm::Address(j) => state.find_label_by_addr(j),
             Imm::Label(l) => state.find_label_by_addr(l),
             Imm::Raw(r) => None,
         };
@@ -894,7 +993,7 @@ impl IType {
             static ref I_BRANCH_STR_RE: Regex = Regex::new(r"^\s*(?P<opcode>\w+)\s*(?P<rt>\$\w+\d?),\s*(?P<rs>\$\w+\d?),\s*(?P<label>\w+)\s*$").unwrap();
             static ref I_MEM_HEX_RE:    Regex = Regex::new(r"^\s*(?P<opcode>\w+)\s*(?P<rt>\$\w+\d?),\s*0x(?P<imm>\d+)\((?P<rs>\$\w+\d?)\)\s*$").unwrap();
             static ref I_MEM_DEC_RE:    Regex = Regex::new(r"^\s*(?P<opcode>\w+)\s*(?P<rt>\$\w+\d?),\s*(?P<imm>\d+)\((?P<rs>\$\w+\d?)\)\s*$").unwrap();
-            static ref I_MEM_STR_RE:    Regex = Regex::new(r"^\s*(?P<opcode>\w+)\s*(?P<rt>\$\w+\d?),\s*(?P<label>\s+)\((?P<rs>\$\w+\d?)\)\s*$").unwrap();
+            static ref I_MEM_STR_RE:    Regex = Regex::new(r"^\s*(?P<opcode>\w+)\s*(?P<rt>\$\w+\d?),\s*(?P<label>\w+)\((?P<rs>\$\w+\d?)\)\s*$").unwrap();
             static ref I_IMM_HEX_RE:  Regex = Regex::new(r"^\s*(?P<opcode>\w+)\s*(?P<rt>\$\w+\d?),\s*0x(?P<imm>\d+)\s*$").unwrap();
             static ref I_IMM_DEC_RE:  Regex = Regex::new(r"^\s*(?P<opcode>\w+)\s*(?P<rt>\$\w+\d?),\s*(?P<imm>\d+)\s*$").unwrap();
         }
@@ -956,6 +1055,61 @@ impl From<IType> for u32 {
         x |= u32::from(i.rs) << 21;
         x |= u32::from(i.rt) << 16;
         x |= u32::from(i.imm);
+        x
+    }
+}
+
+impl JType {
+    pub fn new<W,T>(opcode: W, address: T) -> JType where JInst: From<W>, u32: From<T> {
+        JType {opcode: opcode.into(), address: Imm::Address(u32::from(address))}
+    }
+    pub fn perform(&self, state: &mut State) {
+        let address = u32::from(self.address);
+        match self.opcode {
+            JInst::j => state.jump(address),
+            JInst::jal => { state.write_reg(Reg::ra, state.pc); state.jump(address); },
+        }
+    }
+    pub fn convert_to_string(&self, state: &State) -> String {
+        let address_str_label = match self.address {
+            Imm::Address(a) => state.find_label_by_addr(a),
+            Imm::Label(l) => state.find_label_by_addr(l),
+            Imm::Raw(r) => None,
+        };
+        let address_str = format!("0x{:08X}", u32::from(self.address));
+        match self.opcode {
+            JInst::j | JInst::jal => format!("{} {}", String::from(self.opcode), address_str),
+        }
+    }
+    pub fn convert_from_string(string: &str, state: &State) -> Option<JType> {
+        lazy_static! {
+            static ref J_STR_RE: Regex = Regex::new(r"^\s*(?P<opcode>\w+)\s*(?P<label>\w+)s*$").unwrap();
+        }
+        for caps in J_STR_RE.captures_iter(string) {
+            match state.find_label_by_name(&caps["label"]) {
+                Some(a) => return Some(JType::new(&caps["opcode"], a)),
+                None => {
+                    panic!("Unresolved label: {}", string);
+                }
+            }
+        }
+        None
+    }
+}
+
+impl From<u32> for JType {
+    fn from(n: u32) -> JType {
+        let opcode = JInst::from(n >> 26);
+        let addr = Imm::Address(n & 0x3ffffff);
+        JType::new(opcode, addr)
+    }
+}
+
+impl From<JType> for u32 {
+    fn from(j: JType) -> u32 {
+        let mut x = 0u32;
+        x |= u32::from(j.opcode) << 26;
+        x |= u32::from(j.address);
         x
     }
 }
