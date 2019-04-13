@@ -129,7 +129,11 @@ impl State {
         {
             let mut count = start;
             for line in instructions {
-                for caps in LABEL_RE.captures_iter(line) {
+                let trim = line.trim();
+                if trim == "" {
+                    continue;
+                }
+                for caps in LABEL_RE.captures_iter(trim) {
                     self.add_label(Some(count as u16), &caps["label"]);
                     labels.push(count);
                 }
@@ -138,18 +142,10 @@ impl State {
         }
         let mut iter = labels.into_iter().peekable();
         for inst in instructions {
-            if *inst == "" {
+            let inst = inst.trim();
+            if inst == "" {
                 continue;
             }
-            /*
-            while let Some(&i) = iter.peek() {
-                if i == start {
-                    start += 4;
-                    continue 'outer;
-                }
-                iter.next();
-            }
-            */
             if let Some(&i) = iter.peek() {
                 if i == start {
                     iter.next();
@@ -778,7 +774,7 @@ impl RType {
     pub fn convert_from_string(string: &str, state: &State) -> Option<RType> {
         lazy_static! {
             static ref R_ARITH_RE: Regex = Regex::new(r"^\s*(?P<funct>\w+)\s*(?P<rd>\$\w+\d?),\s*(?P<rs>\$\w+\d?),\s*(?P<rt>\$\w+\d?)\s*$").unwrap();
-            static ref R_SHIFT_HEX_RE: Regex = Regex::new(r"^\s*(?P<funct>\w+)\s*(?P<rd>\$\w+\d?),\s*(?P<rs>\$\w+\d?),\s*(?P<shamt>0x\d+)\s*$").unwrap();
+            static ref R_SHIFT_HEX_RE: Regex = Regex::new(r"^\s*(?P<funct>\w+)\s*(?P<rd>\$\w+\d?),\s*(?P<rs>\$\w+\d?),\s*0x(?P<shamt>\d+)\s*$").unwrap();
             static ref R_SHIFT_DEC_RE: Regex = Regex::new(r"^\s*(?P<funct>\w+)\s*(?P<rd>\$\w+\d?),\s*(?P<rs>\$\w+\d?),\s*(?P<shamt>\d+)\s*$").unwrap();
             static ref R_JUMP_RE: Regex = Regex::new(r"^\s*(?P<funct>\w+)\s*(?P<rs>\$\w+\d?)\s*$").unwrap();
         }
@@ -892,14 +888,14 @@ impl IType {
     }
     pub fn convert_from_string(string: &str, state: &State) -> Option<IType> {
         lazy_static! {
-            static ref I_ARITH_HEX_RE:  Regex = Regex::new(r"^\s*(?P<opcode>\w+)\s*(?P<rt>\$\w+\d?),\s*(?P<rs>\$\w+\d?),\s*(?P<imm>0x\d+)\s*$").unwrap();
+            static ref I_ARITH_HEX_RE:  Regex = Regex::new(r"^\s*(?P<opcode>\w+)\s*(?P<rt>\$\w+\d?),\s*(?P<rs>\$\w+\d?),\s*0x(?P<imm>\d+)\s*$").unwrap();
             static ref I_ARITH_DEC_RE:  Regex = Regex::new(r"^\s*(?P<opcode>\w+)\s*(?P<rt>\$\w+\d?),\s*(?P<rs>\$\w+\d?),\s*(?P<imm>\d+)\s*$").unwrap();
-            static ref I_BRANCH_HEX_RE: Regex = Regex::new(r"^\s*(?P<opcode>\w+)\s*(?P<rt>\$\w+\d?),\s*(?P<rs>\$\w+\d?),\s*(?P<imm>0x\d+)\s*$").unwrap();
+            static ref I_BRANCH_HEX_RE: Regex = Regex::new(r"^\s*(?P<opcode>\w+)\s*(?P<rt>\$\w+\d?),\s*(?P<rs>\$\w+\d?),\s*0x(?P<imm>\d+)\s*$").unwrap();
             static ref I_BRANCH_STR_RE: Regex = Regex::new(r"^\s*(?P<opcode>\w+)\s*(?P<rt>\$\w+\d?),\s*(?P<rs>\$\w+\d?),\s*(?P<label>\w+)\s*$").unwrap();
-            static ref I_MEM_HEX_RE:    Regex = Regex::new(r"^\s*(?P<opcode>\w+)\s*(?P<rt>\$\w+\d?),\s*(?P<imm>0x\d+)\((?P<rs>\$\w+\d?)\)\s*$").unwrap();
+            static ref I_MEM_HEX_RE:    Regex = Regex::new(r"^\s*(?P<opcode>\w+)\s*(?P<rt>\$\w+\d?),\s*0x(?P<imm>\d+)\((?P<rs>\$\w+\d?)\)\s*$").unwrap();
             static ref I_MEM_DEC_RE:    Regex = Regex::new(r"^\s*(?P<opcode>\w+)\s*(?P<rt>\$\w+\d?),\s*(?P<imm>\d+)\((?P<rs>\$\w+\d?)\)\s*$").unwrap();
             static ref I_MEM_STR_RE:    Regex = Regex::new(r"^\s*(?P<opcode>\w+)\s*(?P<rt>\$\w+\d?),\s*(?P<label>\s+)\((?P<rs>\$\w+\d?)\)\s*$").unwrap();
-            static ref I_IMM_HEX_RE:  Regex = Regex::new(r"^\s*(?P<opcode>\w+)\s*(?P<rt>\$\w+\d?),\s*(?P<imm>0x\d+)\s*$").unwrap();
+            static ref I_IMM_HEX_RE:  Regex = Regex::new(r"^\s*(?P<opcode>\w+)\s*(?P<rt>\$\w+\d?),\s*0x(?P<imm>\d+)\s*$").unwrap();
             static ref I_IMM_DEC_RE:  Regex = Regex::new(r"^\s*(?P<opcode>\w+)\s*(?P<rt>\$\w+\d?),\s*(?P<imm>\d+)\s*$").unwrap();
         }
         for caps in I_ARITH_HEX_RE.captures_iter(string) {
@@ -968,6 +964,10 @@ use std::{env, fs, io, path};
 use std::io::Read;
 
 pub fn main() {
+    lazy_static! {
+        static ref COMMENT_RE: Regex = Regex::new(r"\s*#.*\s*\n").unwrap();
+        static ref LABEL_CODE_RE: Regex = Regex::new(r"\s*(?P<label>\w+:)[^\n](?P<code>.+)").unwrap();
+    }
     let mut file: fs::File;
     {
         let args: Vec<String> = env::args().collect();
@@ -980,6 +980,9 @@ pub fn main() {
     }
     let mut file_contents: String = String::new();
     file.read_to_string(&mut file_contents).unwrap();
+    file_contents = COMMENT_RE.replace_all(&file_contents, "\n").to_string();
+    file_contents = LABEL_CODE_RE.replace_all(&file_contents, "\n$label\n$code").to_string(); // dumb hack to put label on its own line
+    println!("file contents\n{}", file_contents);
     let file_contents = file_contents.split("\n");
     let file_contents: Vec<&str> = file_contents.collect();
     let mut state = State::new();
