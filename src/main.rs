@@ -101,10 +101,11 @@ impl State {
     }
     pub fn parse_instruction<T>(inst: T) -> InstType where u32: From<T> {
         let inst: u32 = inst.into();
-        let inst: u32 = inst >> 26;
-        if inst == 0 {
+        let opcode: u32 = inst;
+        let opcode: u32 = opcode >> 26;
+        if opcode == 0 {
             InstType::R(RType::from(inst))
-        } else if inst == JInst::j.into() || inst == JInst::jal.into()  {
+        } else if opcode == JInst::j.into() || opcode == JInst::jal.into()  {
             InstType::J(JType::from(inst))
         } else {
             InstType::I(IType::from(inst))
@@ -219,8 +220,8 @@ impl State {
                 match p.addr {
                     Some(_) => {return;},
                     None => {
-                       p.addr = addr;
-                       return;
+                        p.addr = addr;
+                        return;
                     }
                 }
             }
@@ -591,24 +592,24 @@ enum IInst {
 impl From<IInst> for String {
     fn from(i: IInst) -> String {
         match i {
-           IInst::addi => "addi",
-           IInst::addiu => "addiu",
-           IInst::andi => "andi",
-           IInst::beq => "beq",
-           IInst::bne => "bne",
-           IInst::lbu => "lbu",
-           IInst::lhu => "lhu",
-           IInst::ll => "ll",
-           IInst::li => "li",
-           IInst::lui => "lui",
-           IInst::lw => "lw",
-           IInst::ori => "ori",
-           IInst::slti => "slti",
-           IInst::sltiu => "sltiu",
-           IInst::sb => "sb",
-           IInst::sc => "sc",
-           IInst::sh => "sh",
-           IInst::sw => "sw"
+            IInst::addi => "addi",
+            IInst::addiu => "addiu",
+            IInst::andi => "andi",
+            IInst::beq => "beq",
+            IInst::bne => "bne",
+            IInst::lbu => "lbu",
+            IInst::lhu => "lhu",
+            IInst::ll => "ll",
+            IInst::li => "li",
+            IInst::lui => "lui",
+            IInst::lw => "lw",
+            IInst::ori => "ori",
+            IInst::slti => "slti",
+            IInst::sltiu => "sltiu",
+            IInst::sb => "sb",
+            IInst::sc => "sc",
+            IInst::sh => "sh",
+            IInst::sw => "sw"
         }.to_owned()
     }
 }
@@ -616,25 +617,25 @@ impl From<IInst> for String {
 impl From<&str> for IInst {
     fn from(s: &str) -> IInst {
         match s.to_lowercase().as_ref() {
-           "addi" => IInst::addi,
-           "addiu" => IInst::addiu,
-           "andi" => IInst::andi,
-           "beq" => IInst::beq,
-           "bne" => IInst::bne,
-           "lbu" => IInst::lbu,
-           "lhu" => IInst::lhu,
-           "ll" => IInst::ll,
-           "li" => IInst::li,
-           "lui" => IInst::lui,
-           "lw" => IInst::lw,
-           "ori" => IInst::ori,
-           "slti" => IInst::slti,
-           "sltiu" => IInst::sltiu,
-           "sb" => IInst::sb,
-           "sc" => IInst::sc,
-           "sh" => IInst::sh,
-           "sw" => IInst::sw,
-           _ => panic!("No such IType: {}", s),
+            "addi" => IInst::addi,
+            "addiu" => IInst::addiu,
+            "andi" => IInst::andi,
+            "beq" => IInst::beq,
+            "bne" => IInst::bne,
+            "lbu" => IInst::lbu,
+            "lhu" => IInst::lhu,
+            "ll" => IInst::ll,
+            "li" => IInst::li,
+            "lui" => IInst::lui,
+            "lw" => IInst::lw,
+            "ori" => IInst::ori,
+            "slti" => IInst::slti,
+            "sltiu" => IInst::sltiu,
+            "sb" => IInst::sb,
+            "sc" => IInst::sc,
+            "sh" => IInst::sh,
+            "sw" => IInst::sw,
+            _ => panic!("No such IType: {}", s),
         }
     }
 }
@@ -823,44 +824,44 @@ impl RType {
         let rs = state.read_reg(self.rs);
         let rt = state.read_reg(self.rt);
         match self.funct {
-           RInst::add => state.write_reg(self.rd, i32::wrapping_add(rs as i32, rt as i32) as u32),
-           RInst::addu => state.write_reg(self.rd, u32::wrapping_add(rs, rt)),
-           RInst::and => state.write_reg(self.rd, rs & rt),
-           RInst::jr => state.jump(rs),
-           RInst::nor => state.write_reg(self.rd, !(rs | rt)),
-           RInst::or => state.write_reg(self.rd, rs | rt),
-           RInst::slt => state.write_reg(self.rd, match (rs as i32) < (rt as i32) { true => 1u32, false => 0u32 }),
-           RInst::sltu => state.write_reg(self.rd, match rs < rt { true => 1u32, false => 0u32 }),
-           RInst::sll => state.write_reg(self.rd, rt << self.shamt),
-           RInst::srl => state.write_reg(self.rd, rt >> self.shamt),
-           RInst::sub => state.write_reg(self.rd, i32::wrapping_sub(rs as i32, rt as i32) as u32),
-           RInst::subu => state.write_reg(self.rd, u32::wrapping_sub(rs, rt)),
-           RInst::div => state.write_reg(self.rd, ((rs as i32) / (rt as i32)) as u32),
-           RInst::divu => state.write_reg(self.rd, rs / rt),
+            RInst::add => state.write_reg(self.rd, i32::wrapping_add(rs as i32, rt as i32) as u32),
+            RInst::addu => state.write_reg(self.rd, u32::wrapping_add(rs, rt)),
+            RInst::and => state.write_reg(self.rd, rs & rt),
+            RInst::jr => state.jump(rs),
+            RInst::nor => state.write_reg(self.rd, !(rs | rt)),
+            RInst::or => state.write_reg(self.rd, rs | rt),
+            RInst::slt => state.write_reg(self.rd, match (rs as i32) < (rt as i32) { true => 1u32, false => 0u32 }),
+            RInst::sltu => state.write_reg(self.rd, match rs < rt { true => 1u32, false => 0u32 }),
+            RInst::sll => state.write_reg(self.rd, rt << self.shamt),
+            RInst::srl => state.write_reg(self.rd, rt >> self.shamt),
+            RInst::sub => state.write_reg(self.rd, i32::wrapping_sub(rs as i32, rt as i32) as u32),
+            RInst::subu => state.write_reg(self.rd, u32::wrapping_sub(rs, rt)),
+            RInst::div => state.write_reg(self.rd, ((rs as i32) / (rt as i32)) as u32),
+            RInst::divu => state.write_reg(self.rd, rs / rt),
         }
     }
     pub fn convert_to_string(&self, state: &State) -> String {
         match self.funct {
             RInst::add  |
-            RInst::addu |
-            RInst::and  |
-            RInst::nor  |
-            RInst::or   |
-            RInst::slt  |
-            RInst::sltu |
-            RInst::sub  |
-            RInst::subu |
-            RInst::div  |
-            RInst::divu => {
-                format!("{} {}, {}, {}", String::from(self.funct), String::from(self.rd), String::from(self.rs), String::from(self.rt))
-            },
-            RInst::sll |
-            RInst::srl => {
-                format!("{} {}, {}, 0x{:08X}", String::from(self.funct), String::from(self.rd), String::from(self.rs), self.shamt)
-            },
-            RInst::jr => {
-                format!("{} {}", String::from(self.funct), String::from(self.rs))
-            },
+                RInst::addu |
+                RInst::and  |
+                RInst::nor  |
+                RInst::or   |
+                RInst::slt  |
+                RInst::sltu |
+                RInst::sub  |
+                RInst::subu |
+                RInst::div  |
+                RInst::divu => {
+                    format!("{} {}, {}, {}", String::from(self.funct), String::from(self.rd), String::from(self.rs), String::from(self.rt))
+                },
+                RInst::sll |
+                    RInst::srl => {
+                        format!("{} {}, {}, 0x{:08X}", String::from(self.funct), String::from(self.rd), String::from(self.rs), self.shamt)
+                    },
+                RInst::jr => {
+                    format!("{} {}", String::from(self.funct), String::from(self.rs))
+                },
         }
     }
     pub fn convert_from_string(string: &str, state: &State) -> Option<RType> {
@@ -924,23 +925,23 @@ impl IType {
         let rt = state.read_reg(self.rt);
         let imm = u32::from(self.imm);
         match self.opcode {
-           IInst::addi => state.write_reg(self.rt, i32::wrapping_add(rs as i32, imm as i32) as u32),
-           IInst::addiu => state.write_reg(self.rt, u32::wrapping_add(rs, imm)),
-           IInst::andi => state.write_reg(self.rt, rs & imm),
-           IInst::beq => if rs == rt { state.jump(imm) },
-           IInst::bne => if rs != rt { state.jump(imm) },
-           IInst::lbu => state.write_reg(self.rt, state.read_mem(u32::wrapping_add(rs, imm)) & 0xFFu32),
-           IInst::lhu => state.write_reg(self.rt, state.read_mem(u32::wrapping_add(rs, imm)) & 0xFFFFu32),
-           IInst::ll | IInst::lw => state.write_reg(self.rt, state.read_mem(u32::wrapping_add(rs, imm))),
-           IInst::li => state.write_reg(self.rt, imm),
-           IInst::lui => state.write_reg(self.rt, imm << 16),
-           IInst::ori => state.write_reg(self.rt, rs | imm),
-           IInst::slti => state.write_reg(self.rt, match (rs as i32) < (imm as i32) { true => 1u32, false => 0u32 }),
-           IInst::sltiu => state.write_reg(self.rt, match rs < imm { true => 1u32, false => 0u32 }),
-           IInst::sb => state.write_mem(u32::wrapping_add(rs, imm), rt & 0xFFu32),
-           IInst::sc => unimplemented!(),
-           IInst::sh => state.write_mem(u32::wrapping_add(rs, imm), rt & 0xFFFFu32),
-           IInst::sw => state.write_mem(u32::wrapping_add(rs, imm), rt),
+            IInst::addi => state.write_reg(self.rt, i32::wrapping_add(rs as i32, imm as i32) as u32),
+            IInst::addiu => state.write_reg(self.rt, u32::wrapping_add(rs, imm)),
+            IInst::andi => state.write_reg(self.rt, rs & imm),
+            IInst::beq => if rs == rt { state.jump(imm) },
+            IInst::bne => if rs != rt { state.jump(imm) },
+            IInst::lbu => state.write_reg(self.rt, state.read_mem(u32::wrapping_add(rs, imm)) & 0xFFu32),
+            IInst::lhu => state.write_reg(self.rt, state.read_mem(u32::wrapping_add(rs, imm)) & 0xFFFFu32),
+            IInst::ll | IInst::lw => state.write_reg(self.rt, state.read_mem(u32::wrapping_add(rs, imm))),
+            IInst::li => state.write_reg(self.rt, imm),
+            IInst::lui => state.write_reg(self.rt, imm << 16),
+            IInst::ori => state.write_reg(self.rt, rs | imm),
+            IInst::slti => state.write_reg(self.rt, match (rs as i32) < (imm as i32) { true => 1u32, false => 0u32 }),
+            IInst::sltiu => state.write_reg(self.rt, match rs < imm { true => 1u32, false => 0u32 }),
+            IInst::sb => state.write_mem(u32::wrapping_add(rs, imm), rt & 0xFFu32),
+            IInst::sc => unimplemented!(),
+            IInst::sh => state.write_mem(u32::wrapping_add(rs, imm), rt & 0xFFFFu32),
+            IInst::sw => state.write_mem(u32::wrapping_add(rs, imm), rt),
         }
     }
     pub fn convert_to_string(&self, state: &State) -> String {
@@ -952,37 +953,37 @@ impl IType {
         let imm_str = format!("0x{:08X}", u16::from(self.imm));
         match self.opcode {
             IInst::addi  |
-            IInst::addiu | 
-            IInst::andi  |
-            IInst::ori   |
-            IInst::slti  |
-            IInst::sltiu => {
-                format!("{} {}, {}, {}", String::from(self.opcode), String::from(self.rt), String::from(self.rs), imm_str)
-            },
-            IInst::beq   |
-            IInst::bne => {
-                let branch_imm = match imm_str_label {
-                    Some(s) => s,
-                    None => {
-                        state.find_label_by_addr(u16::from(self.imm)).unwrap()
-                    }
-                };
-                format!("{} {}, {}, {}", String::from(self.opcode), String::from(self.rt), String::from(self.rs), branch_imm)
-            },
-            IInst::lbu |
-            IInst::lhu |
-            IInst::ll  |
-            IInst::lw  |
-            IInst::sb  |
-            IInst::sh  |
-            IInst::sw  => {
-                format!("{} {}, {}({})", String::from(self.opcode), String::from(self.rt), imm_str, String::from(self.rs))
-            },
-            IInst::li |
-            IInst::lui => {
-                format!("{} {}, {}", String::from(self.opcode), String::from(self.rt), imm_str)
-            },
-            IInst::sc => unimplemented!()
+                IInst::addiu | 
+                IInst::andi  |
+                IInst::ori   |
+                IInst::slti  |
+                IInst::sltiu => {
+                    format!("{} {}, {}, {}", String::from(self.opcode), String::from(self.rt), String::from(self.rs), imm_str)
+                },
+                IInst::beq   |
+                    IInst::bne => {
+                        let branch_imm = match imm_str_label {
+                            Some(s) => s,
+                            None => {
+                                state.find_label_by_addr(u16::from(self.imm)).unwrap()
+                            }
+                        };
+                        format!("{} {}, {}, {}", String::from(self.opcode), String::from(self.rt), String::from(self.rs), branch_imm)
+                    },
+                    IInst::lbu |
+                        IInst::lhu |
+                        IInst::ll  |
+                        IInst::lw  |
+                        IInst::sb  |
+                        IInst::sh  |
+                        IInst::sw  => {
+                            format!("{} {}, {}({})", String::from(self.opcode), String::from(self.rt), imm_str, String::from(self.rs))
+                        },
+                        IInst::li |
+                            IInst::lui => {
+                                format!("{} {}, {}", String::from(self.opcode), String::from(self.rt), imm_str)
+                            },
+                        IInst::sc => unimplemented!()
         }
     }
     pub fn convert_from_string(string: &str, state: &State) -> Option<IType> {

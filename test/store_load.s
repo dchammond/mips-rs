@@ -4,7 +4,7 @@
 
 #.text
 main:   
-	li	$2, 0x1001	# $2  = 0x10010000	testing lui
+	li	$2, 0x1000	# $2  = 0x10010000	testing lui
 				      
 	lw	$3, 12($2)	# $3  = 0xcafebabe	
 	slt	$8, $3, $0	# $8  = 1	  	testing slt
@@ -26,7 +26,7 @@ main:
 	lw	$13, 0($2)	# $13 = 0x00be0000
 
 
-	lw	$14, 16($2)	# $14 = target = 0x0000005c
+	la	$14, target 	# $14 = target = 0x0000005c
 	jr	$14  		#  PC = 0x0000005c	test indirect branches
 
 skipped:
@@ -34,7 +34,7 @@ skipped:
 	j	skipped	    	# skipped
 
 end:	lui	$17, 0xf00f0000	# $17 = 0xf00f0000
-	j	end
+	jr $ra
 
 target:
 	addi	$16, $zero, 2	# $16 = 2
