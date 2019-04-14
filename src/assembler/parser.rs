@@ -7,14 +7,14 @@ use std::str::*;
 
 #[derive(Clone, Debug)]
 pub struct Parsed {
-    pub data_segment: Option<Segment>,
-    pub text_segment: Option<Segment>,
-    pub kdata_segment: Option<Segment>,
-    pub ktext_segment: Option<Segment>,
+    pub data_segment: Option<Vec<Segment>>,
+    pub text_segment: Option<Vec<Segment>>,
+    pub kdata_segment: Option<Vec<Segment>>,
+    pub ktext_segment: Option<Vec<Segment>>,
 }
 
 impl Parsed {
-    pub fn new(data_segment: Option<Segment>, text_segment: Option<Segment>, kdata_segment: Option<Segment>, ktext_segment: Option<Segment>) -> Parsed {
+    pub fn new(data_segment: Option<Vec<Segment>>, text_segment: Option<Vec<Segment>>, kdata_segment: Option<Vec<Segment>>, ktext_segment: Option<Vec<Segment>>) -> Parsed {
         Parsed {data_segment, text_segment, kdata_segment, ktext_segment}
     }
 }
@@ -170,12 +170,13 @@ alignment_inv_map!(usize);
 
 #[derive(Clone, Debug)]
 pub struct Segment {
-    entries: Vec<SegmentEntry>
+    requested_start: Option<u32>, // user wants segment to start here
+    entries: Vec<SegmentEntry>,
 }
 
 impl Segment {
-    pub fn new(entries: Vec<SegmentEntry>) -> Segment {
-        Segment {entries}
+    pub fn new<T>(start: Option<T>, entries: Vec<SegmentEntry>) -> Segment where u32: From<T> {
+        Segment {requested_start: start.map(|s| s.into()), entries}
     }
     pub fn get_size(&self) -> u32 {
         let mut size: u32 = 0;
@@ -187,7 +188,7 @@ impl Segment {
     }
 }
 
-#[derive(Copy, Clone, Debug)]
+#[derive(Copy, Clone, Debug, PartialEq)]
 enum ParseMode {
     Default,
     Data,
@@ -198,8 +199,10 @@ enum ParseMode {
 
 pub fn parse(program: &String) -> Parsed {
     lazy_static! {
-        static ref LABEL_RE: Regex = Regex::new(r"^\s*(?P<label>\w+):\s*$").unwrap();
-        static ref DIRECTIVE_RE: Regex = Regex::new(r"\s*\.(?P<directive>\w+)\s*").unwrap();
+        static ref LINE_COMMENT_RE: Regex = Regex::new(r"^(?P<comment>#*)$").unwrap();
+        static ref POST_COMMENT_RE: Regex = Regex::new(r"(?P<comment>#*)$").unwrap();
+        static ref LABEL_RE: Regex = Regex::new(r"^(?P<label>\w[\w\d_]+):").unwrap();
+        static ref DIRECTIVE_RE: Regex = Regex::new(r"\.(?P<directive>\w+\s*)").unwrap();
         static ref J_STR_RE: Regex = Regex::new(r"^\s*(?P<opcode>\w+)\s*(?P<label>\w+)s*$").unwrap();
         static ref R_ARITH_RE: Regex = Regex::new(r"^\s*(?P<funct>\w+)\s*(?P<rd>\$[\w\d]+),\s*(?P<rs>\$[\w\d]+),\s*(?P<rt>\$[\w\d]+)\s*$").unwrap();
         static ref R_SHIFT_HEX_RE: Regex = Regex::new(r"^\s*(?P<funct>\w+)\s*(?P<rd>\$[\w\d]+),\s*(?P<rs>\$[\w\d]+),\s*0x(?P<shamt>[\da-fA-F]+)\s*$").unwrap();
@@ -224,7 +227,27 @@ pub fn parse(program: &String) -> Parsed {
     let mut current_label: Option<String> = None;
     let mut lines: Lines = program.lines();
     while let Some(line) = lines.next() {
-
+        let line = line.trim();
+        if line == "" || LINE_COMMENT_RE.is_match(line) { // empty or pure comment line
+            continue;
+        }
+        match parse_mode {
+            ParseMode::Default => {
+                for caps in DIRECTIVE_RE.captures_iter(line) {
+                    match caps["directive"].trim() {
+                        "data"  => parse_mode = ParseMode::Data,
+                        "text"  => parse_mode = ParseMode::Text,
+                        "kdata" => parse_mode = ParseMode::KData,
+                        "ktext" => parse_mode = ParseMode::KText,
+                        s => panic!("Expected segment directive, got: .{}", s)
+                    }
+                }
+                if parse_mode == ParseMode::Default {
+                    panic!("Found code without any defined directive");
+                }
+            },
+            _ => unimplemented!()
+        }
     }
     Parsed::new(data_seg, text_seg, kdata_seg, ktext_seg)
 }
