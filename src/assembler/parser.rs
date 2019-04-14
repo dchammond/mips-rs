@@ -3,12 +3,20 @@ use std::ops::{Index, IndexMut};
 
 #[derive(Clone, Debug)]
 pub struct Parsed {
-    data_segment: Segment,
-    text_segment: Segment,
+    pub data_segment: Option<Segment>,
+    pub text_segment: Option<Segment>,
+    pub kdata_segment: Option<Segment>,
+    pub ktext_segment: Option<Segment>,
+}
+
+impl Parsed {
+    pub fn new(data_segment: Option<Segment>, text_segment: Option<Segment>, kdata_segment: Option<Segment>, ktext_segment: Option<Segment>) -> Parsed {
+        Parsed {data_segment, text_segment, kdata_segment, ktext_segment}
+    }
 }
 
 #[derive(Clone, Debug)]
-struct SegmentEntry {
+pub struct SegmentEntry {
     offset: u32,          // offset from segment start
     alignment: Alignment, // alignment of each entry
     data: Vec<[u8; 4]>,   // size of an entry is data.len() * Alignment
@@ -107,7 +115,7 @@ impl IndexMut<usize> for SegmentEntry {
 }
 
 #[derive(Copy, Clone, Debug)]
-enum Alignment {
+pub enum Alignment {
     Byte,
     HalfWord,
     Word,
@@ -156,9 +164,10 @@ alignment_inv_map!(u128);
 alignment_inv_map!(usize);
 
 #[derive(Clone, Debug)]
-struct Segment {
+pub struct Segment {
     entries: Vec<SegmentEntry>
 }
+
 impl Segment {
     fn get_size(&self) -> u32 {
         let mut size: u32 = 0;
@@ -168,5 +177,9 @@ impl Segment {
     fn get_entries(&self) -> &[SegmentEntry] {
         &self.entries[..]
     }
+}
+
+pub fn parse(file: &[&str]) -> Parsed {
+    return Parsed::new(None, None, None, None);
 }
 
