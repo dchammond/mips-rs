@@ -15,12 +15,58 @@ struct SegmentEntry {
                           // Accessing a data element is based off the alignment
 }
 
-impl SegmentEntry {
-    fn new<T,U>(offset: T, alignment: U, data: Vec<[u8; 4]>) -> SegmentEntry where u32: From<T>, Alignment: From<U> {
-        SegmentEntry {offset: offset.into(), alignment: alignment.into(), data}
+trait ToFromBytes {
+    fn to_bytes(&self) -> [u8; 4];
+    fn from_bytes(bytes: [u8; 4]) -> Self;
+}
+
+impl ToFromBytes for u8 {
+    fn to_bytes(&self) -> [u8; 4] {
+        let mut out = [0u8; 4];
+        out.clone_from_slice(&self.to_le_bytes());
+        out
     }
-    fn add_data(&mut self, data: [u8; 4]) {
-        self.data.push(data);
+    fn from_bytes(bytes: [u8; 4]) -> Self {
+        bytes[0]
+    }
+}
+
+impl ToFromBytes for u16 {
+    fn to_bytes(&self) -> [u8; 4] {
+        let mut out = [0u8; 4];
+        out.clone_from_slice(&self.to_le_bytes());
+        out
+    }
+    fn from_bytes(bytes: [u8; 4]) -> Self {
+        Self::from_le_bytes([bytes[0], bytes[1]])
+    }
+}
+
+impl ToFromBytes for u32 {
+    fn to_bytes(&self) -> [u8; 4] {
+        let mut out = [0u8; 4];
+        out.clone_from_slice(&self.to_le_bytes());
+        out
+    }
+    fn from_bytes(bytes: [u8; 4]) -> Self {
+        Self::from_le_bytes(bytes)
+    }
+}
+
+impl SegmentEntry {
+    fn new<T,U,V>(offset: T, alignment: U, data: &[V]) -> SegmentEntry where u32: From<T>, Alignment: From<U>, V: ToFromBytes {
+        if data.len() == 0 {
+            SegmentEntry {offset: offset.into(), alignment: alignment.into(), data: Vec::new()}
+        } else {
+            let mut v: Vec<[u8; 4]> = Vec::with_capacity(data.len());
+            for d in data {
+                v.push(d.to_bytes());
+            }
+            SegmentEntry {offset: offset.into(), alignment: alignment.into(), data: v}
+        }
+    }
+    fn add_data<T>(&mut self, data: &T) where T: ToFromBytes {
+        self.data.push(data.to_bytes());
     }
     fn get_data_checked(&self, idx: usize) -> Option<&[u8]> {
         if idx >= self.data.len() {
