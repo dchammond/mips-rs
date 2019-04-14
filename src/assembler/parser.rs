@@ -156,12 +156,24 @@ macro_rules! alignment_inv_map {
     );
 }
 
+alignment_map!(i8);
+alignment_map!(i16);
+alignment_map!(i32);
+alignment_map!(i64);
+alignment_map!(i128);
+alignment_map!(isize);
 alignment_map!(u8);
 alignment_map!(u16);
 alignment_map!(u32);
 alignment_map!(u64);
 alignment_map!(u128);
 alignment_map!(usize);
+alignment_inv_map!(i8);
+alignment_inv_map!(i16);
+alignment_inv_map!(i32);
+alignment_inv_map!(i64);
+alignment_inv_map!(i128);
+alignment_inv_map!(isize);
 alignment_inv_map!(u8);
 alignment_inv_map!(u16);
 alignment_inv_map!(u32);
@@ -204,14 +216,41 @@ enum ParseMode {
     KText,
 }
 
+fn match_number(s: &str) -> Option<i128> {
+    lazy_static! {
+        static ref NUM_HEX_RE: Regex = Regex::new(r"(?P<sign>[-+])?0x(?P<num>\d+)").unwrap();
+        static ref NUM_DEC_RE: Regex = Regex::new(r"(?P<sign>[-+])?(?P<num>\d+)").unwrap();
+    }
+    if NUM_HEX_RE.is_match(s) {
+        for caps in NUM_HEX_RE.captures_iter(s) {
+            let mut i = i128::from_str_radix(&caps["addr"], 16).unwrap();
+            if let Some(s) = caps.name("sign") {
+                if s.as_str() == "-" {
+                    i *= -1;
+                }
+            }
+            return Some(i);
+        }
+    } else if NUM_DEC_RE.is_match(s) {
+        for caps in NUM_DEC_RE.captures_iter(s) {
+            let mut i = i128::from_str_radix(&caps["addr"], 16).unwrap();
+            if let Some(s) = caps.name("sign") {
+                if s.as_str() == "-" {
+                    i *= -1;
+                }
+            }
+            return Some(i);
+        }
+    }
+    None
+}
+
 pub fn parse(program: &String) -> Parsed {
     lazy_static! {
         static ref LINE_COMMENT_RE: Regex = Regex::new(r"^(?P<comment>#*)$").unwrap();
         //static ref POST_COMMENT_RE: Regex = Regex::new(r"(?P<comment>#*)$").unwrap();
         static ref LABEL_RE: Regex = Regex::new(r"^(?P<label>\w[\w\d_]+):").unwrap();
         static ref DIRECTIVE_RE: Regex = Regex::new(r"\.(?P<directive>\w+\s*)").unwrap();
-        static ref ADDR_HEX_RE: Regex = Regex::new(r"0x(?P<addr>\d+)").unwrap();
-        static ref ADDR_DEC_RE: Regex = Regex::new(r"(?P<addr>\d+)").unwrap();
         static ref J_STR_RE: Regex = Regex::new(r"^\s*(?P<opcode>\w+)\s*(?P<label>\w+)s*$").unwrap();
         static ref R_ARITH_RE: Regex = Regex::new(r"^\s*(?P<funct>\w+)\s*(?P<rd>\$[\w\d]+),\s*(?P<rs>\$[\w\d]+),\s*(?P<rt>\$[\w\d]+)\s*$").unwrap();
         static ref R_SHIFT_HEX_RE: Regex = Regex::new(r"^\s*(?P<funct>\w+)\s*(?P<rd>\$[\w\d]+),\s*(?P<rs>\$[\w\d]+),\s*0x(?P<shamt>[\da-fA-F]+)\s*$").unwrap();
@@ -252,16 +291,8 @@ pub fn parse(program: &String) -> Parsed {
                         "ktext" => parse_mode = ParseMode::KText,
                         s => panic!("Expected segment directive, got: .{}", s)
                     }
-                    if ADDR_HEX_RE.is_match(line) {
-                        for caps in ADDR_HEX_RE.captures_iter(line) {
-                            current_segment.set_start(Some(u32::from_str_radix(&caps["addr"], 16).unwrap()));
-                            break;
-                        }
-                    } else if ADDR_DEC_RE.is_match(line) {
-                        for caps in ADDR_DEC_RE.captures_iter(line) {
-                            current_segment.set_start(Some(u32::from_str_radix(&caps["addr"], 10).unwrap()));
-                            break;
-                        }
+                    if let Some(i) = match_number(line) {
+                        current_segment.set_start(Some(i as u32));
                     }
                     break;
                 }
@@ -270,7 +301,16 @@ pub fn parse(program: &String) -> Parsed {
                 }
             },
             ParseMode::Data | ParseMode::KData => {
-
+                for caps in DIRECTIVE_RE.captures_iter(line) {
+                    match caps["directive"].trim() {
+                        "align" => {
+                            if let Some(i) = match_number(line) {
+                                current_segment.add_entry(current_segment_entry);
+                                current_segment_entry = SegmentEntry::new::<u32, String, Alignment>(None, None, Some(i.into()));
+                            }
+                        },
+                    }
+                }
             }
             _ => unimplemented!()
         }
