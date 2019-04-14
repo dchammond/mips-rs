@@ -267,15 +267,16 @@ pub fn parse(program: &String) -> Parsed {
         static ref I_IMM_DEC_RE:  Regex = Regex::new(r"^\s*(?P<opcode>\w+)\s*(?P<rt>\$[\w\d]+?),\s*(?P<imm>\d+)\s*$").unwrap();
         static ref I_IMM_STR_RE:  Regex = Regex::new(r"^\s*(?P<opcode>\w+)\s*(?P<rt>\$[\w\d]+?),\s*(?P<label>\w+)\s*$").unwrap();
     }
-    let mut data_seg_vec = None;
-    let mut text_seg_vec = None;
-    let mut kdata_seg_vec = None;
-    let mut ktext_seg_vec = None;
+    let mut data_seg_vec: Option<Vec<Segment>> = None;
+    let mut text_seg_vec: Option<Vec<Segment>> = None;
+    let mut kdata_seg_vec: Option<Vec<Segment>> = None;
+    let mut ktext_seg_vec: Option<Vec<Segment>> = None;
     let mut current_segment = Segment::new::<u32>(None, None);
     let mut current_segment_entry = SegmentEntry::new::<u32, String, Alignment>(None, None, None);
     let mut parse_mode = ParseMode::Default;
     let mut current_label: Option<String> = None;
     let mut lines: Lines = program.lines();
+'parse_loop:
     while let Some(line) = lines.next() {
         let line = line.trim();
         if line == "" || LINE_COMMENT_RE.is_match(line) { // empty or pure comment line
@@ -308,6 +309,24 @@ pub fn parse(program: &String) -> Parsed {
                                 current_segment.add_entry(current_segment_entry);
                                 current_segment_entry = SegmentEntry::new::<u32, String, Alignment>(None, None, Some(i.into()));
                             }
+                            continue 'parse_loop;
+                        },
+                        "data" => {
+                            // If no starting address, just absorb into current data segment
+                            if let Some(i) = match_number(line) {
+                                current_segment.add_entry(current_segment_entry);
+                                if parse_mode == ParseMode::Data {
+                                    match data_seg_vec { Some(d) => d.push(current_segment), None => data_seg_vec = Some(vec![current_segment]), };
+                                } else {
+                                    match kdata_seg_vec { Some(d) => d.push(current_segment), None => kdata_seg_vec = Some(vec![current_segment]), };
+                                }
+                                current_segment = Segment::new::<u32>(Some(i as u32), None);
+                                current_segment_entry = SegmentEntry::new::<u32, String, Alignment>(None, None, None);
+                            }
+                            continue 'parse_loop;
+                        },
+                        "text" => {
+
                         },
                     }
                 }
