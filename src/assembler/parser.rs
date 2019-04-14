@@ -3,6 +3,7 @@ use regex::Regex;
 
 use std::vec::Vec;
 use std::ops::{Index, IndexMut};
+use std::str::*;
 
 #[derive(Clone, Debug)]
 pub struct Parsed {
@@ -27,7 +28,7 @@ pub struct SegmentEntry {
                            // Accessing a data element is based off the alignment
 }
 
-trait ToFromBytes {
+pub trait ToFromBytes {
     fn to_bytes(&self) -> [u8; 4];
     fn from_bytes(bytes: [u8; 4]) -> Self;
 }
@@ -67,7 +68,7 @@ impl ToFromBytes for u32 {
 
 #[allow(dead_code)]
 impl SegmentEntry {
-    fn new<T,W,U,V>(offset: T, label: Option<W>, alignment: U, data: &[V]) -> SegmentEntry where u32: From<T>, String: From<W>, Alignment: From<U>, V: ToFromBytes {
+    pub fn new<T,W,U,V>(offset: T, label: Option<W>, alignment: U, data: &[V]) -> SegmentEntry where u32: From<T>, String: From<W>, Alignment: From<U>, V: ToFromBytes {
         if data.len() == 0 {
             SegmentEntry {offset: offset.into(), label: label.map(|s| String::from(s)), alignment: alignment.into(), data: Vec::new()}
         } else {
@@ -78,17 +79,17 @@ impl SegmentEntry {
             SegmentEntry {offset: offset.into(), label: label.map(|s| String::from(s)), alignment: alignment.into(), data: v}
         }
     }
-    fn add_data<T>(&mut self, data: &T) where T: ToFromBytes {
+    pub fn add_data<T>(&mut self, data: &T) where T: ToFromBytes {
         self.data.push(data.to_bytes());
     }
-    fn get_data_checked(&self, idx: usize) -> Option<&[u8]> {
+    pub fn get_data_checked(&self, idx: usize) -> Option<&[u8]> {
         if idx >= self.data.len() {
             None
         } else {
             Some(&self[idx])
         }
     }
-    fn get_data_mut_checked(&mut self, idx: usize) -> Option<&mut [u8]> {
+    pub fn get_data_mut_checked(&mut self, idx: usize) -> Option<&mut [u8]> {
         if idx >= self.data.len() {
             None
         } else {
@@ -173,14 +174,26 @@ pub struct Segment {
 }
 
 impl Segment {
-    fn get_size(&self) -> u32 {
+    pub fn new(entries: Vec<SegmentEntry>) -> Segment {
+        Segment {entries}
+    }
+    pub fn get_size(&self) -> u32 {
         let mut size: u32 = 0;
         self.entries.iter().for_each(|e| size += (e.data.len() * usize::from(e.alignment)) as u32);
         size
     }
-    fn get_entries(&self) -> &[SegmentEntry] {
+    pub fn get_entries(&self) -> &[SegmentEntry] {
         &self.entries[..]
     }
+}
+
+#[derive(Copy, Clone, Debug)]
+enum ParseMode {
+    Default,
+    Data,
+    Text,
+    KData,
+    KText,
 }
 
 pub fn parse(program: &String) -> Parsed {
@@ -203,7 +216,16 @@ pub fn parse(program: &String) -> Parsed {
         static ref I_IMM_DEC_RE:  Regex = Regex::new(r"^\s*(?P<opcode>\w+)\s*(?P<rt>\$[\w\d]+?),\s*(?P<imm>\d+)\s*$").unwrap();
         static ref I_IMM_STR_RE:  Regex = Regex::new(r"^\s*(?P<opcode>\w+)\s*(?P<rt>\$[\w\d]+?),\s*(?P<label>\w+)\s*$").unwrap();
     }
+    let mut data_seg = None;
+    let mut text_seg = None;
+    let mut kdata_seg = None;
+    let mut ktext_seg = None;
+    let mut parse_mode = ParseMode::Default;
+    let mut current_label: Option<String> = None;
+    let mut lines: Lines = program.lines();
+    while let Some(line) = lines.next() {
 
-    return Parsed::new(None, None, None, None);
+    }
+    Parsed::new(data_seg, text_seg, kdata_seg, ktext_seg)
 }
 
