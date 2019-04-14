@@ -2,7 +2,7 @@ use std::vec::Vec;
 use std::ops::{Index, IndexMut};
 
 #[derive(Clone, Debug)]
-pub struct Parser {
+pub struct Parsed {
     data_segment: Segment,
     text_segment: Segment,
 }
@@ -53,6 +53,7 @@ impl ToFromBytes for u32 {
     }
 }
 
+#[allow(dead_code)]
 impl SegmentEntry {
     fn new<T,U,V>(offset: T, alignment: U, data: &[V]) -> SegmentEntry where u32: From<T>, Alignment: From<U>, V: ToFromBytes {
         if data.len() == 0 {
