@@ -17,10 +17,11 @@ impl Parsed {
 
 #[derive(Clone, Debug)]
 pub struct SegmentEntry {
-    offset: u32,          // offset from segment start
-    alignment: Alignment, // alignment of each entry
-    data: Vec<[u8; 4]>,   // size of an entry is data.len() * Alignment
-                          // Accessing a data element is based off the alignment
+    offset: u32,           // offset from segment start
+    label: Option<String>, // If the segment is labeled
+    alignment: Alignment,  // alignment of each entry
+    data: Vec<[u8; 4]>,    // size of an entry is data.len() * Alignment
+                           // Accessing a data element is based off the alignment
 }
 
 trait ToFromBytes {
@@ -63,15 +64,15 @@ impl ToFromBytes for u32 {
 
 #[allow(dead_code)]
 impl SegmentEntry {
-    fn new<T,U,V>(offset: T, alignment: U, data: &[V]) -> SegmentEntry where u32: From<T>, Alignment: From<U>, V: ToFromBytes {
+    fn new<T,W,U,V>(offset: T, label: Option<W>, alignment: U, data: &[V]) -> SegmentEntry where u32: From<T>, String: From<W>, Alignment: From<U>, V: ToFromBytes {
         if data.len() == 0 {
-            SegmentEntry {offset: offset.into(), alignment: alignment.into(), data: Vec::new()}
+            SegmentEntry {offset: offset.into(), label: label.map(|s| String::from(s)), alignment: alignment.into(), data: Vec::new()}
         } else {
             let mut v: Vec<[u8; 4]> = Vec::with_capacity(data.len());
             for d in data {
                 v.push(d.to_bytes());
             }
-            SegmentEntry {offset: offset.into(), alignment: alignment.into(), data: v}
+            SegmentEntry {offset: offset.into(), label: label.map(|s| String::from(s)), alignment: alignment.into(), data: v}
         }
     }
     fn add_data<T>(&mut self, data: &T) where T: ToFromBytes {
