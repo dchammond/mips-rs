@@ -320,15 +320,21 @@ pub fn parse(program: &String) -> Parsed {
                                 } else {
                                     match kdata_seg_vec { Some(d) => d.push(current_segment), None => kdata_seg_vec = Some(vec![current_segment]), };
                                 }
-                                current_segment = Segment::new::<u32>(Some(i as u32), None);
                                 current_segment_entry = SegmentEntry::new::<u32, String, Alignment>(None, None, None);
                             }
                             continue 'parse_loop;
                         },
                         "text" => {
-
+                            if parse_mode == ParseMode::Data {
+                                match data_seg_vec { Some(d) => d.push(current_segment), None => data_seg_vec = Some(vec![current_segment]), };
+                            } else {
+                                match kdata_seg_vec { Some(d) => d.push(current_segment), None => kdata_seg_vec = Some(vec![current_segment]), };
+                            }
+                            current_segment = Segment::new::<u32>(match_number(line).map_or(0u32, |i| i as u32), None);
+                            current_segment_entry = SegmentEntry::new::<u32, String, Alignment>(None, None, Alignment::Word);
                         },
                     }
+                    break;
                 }
             }
             _ => unimplemented!()
