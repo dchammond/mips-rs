@@ -330,8 +330,8 @@ pub fn parse(program: &String) -> Parsed {
                             } else {
                                 match kdata_seg_vec { Some(d) => d.push(current_segment), None => kdata_seg_vec = Some(vec![current_segment]), };
                             }
-                            current_segment = Segment::new::<u32>(match_number(line).map_or(0u32, |i| i as u32), None);
-                            current_segment_entry = SegmentEntry::new::<u32, String, Alignment>(None, None, Alignment::Word);
+                            current_segment = Segment::new::<u32>(Some(match_number(line).map_or(0u32, |i| i as u32)), None);
+                            current_segment_entry = SegmentEntry::new::<u32, String, Alignment>(None, None, Some(Alignment::Word));
                         },
                     }
                     break;
