@@ -19,15 +19,6 @@ impl Parsed {
     }
 }
 
-#[derive(Clone, Debug)]
-pub struct SegmentEntry {
-    offset: u32,           // offset from segment start
-    label: Option<String>, // If the segment is labeled
-    alignment: Alignment,  // alignment of each entry
-    data: Vec<[u8; 4]>,    // size of an entry is data.len() * Alignment
-                           // Accessing a data element is based off the alignment
-}
-
 pub trait ToFromBytes {
     fn to_bytes(&self) -> [u8; 4];
     fn from_bytes(bytes: [u8; 4]) -> Self;
@@ -55,6 +46,7 @@ impl ToFromBytes for u16 {
     }
 }
 
+
 impl ToFromBytes for u32 {
     fn to_bytes(&self) -> [u8; 4] {
         let mut out = [0u8; 4];
@@ -64,6 +56,15 @@ impl ToFromBytes for u32 {
     fn from_bytes(bytes: [u8; 4]) -> Self {
         Self::from_le_bytes(bytes)
     }
+}
+
+#[derive(Clone, Debug)]
+pub struct SegmentEntry {
+    offset: u32,           // offset from segment start
+    label: Option<String>, // If the segment is labeled
+    alignment: Alignment,  // alignment of each entry
+    data: Vec<[u8; 4]>,    // size of an entry is data.len() * Alignment
+                           // Accessing a data element is based off the alignment
 }
 
 #[allow(dead_code)]
@@ -96,6 +97,9 @@ impl SegmentEntry {
         } else {
             Some(&mut self[idx])
         }
+    }
+    pub fn get_alignment(&self) -> Alignment {
+        self.alignment
     }
 }
 
@@ -311,28 +315,57 @@ pub fn parse(program: &String) -> Parsed {
                             }
                             continue 'parse_loop;
                         },
-                        "data" => {
+                        "data" | "kdata" => {
                             // If no starting address, just absorb into current data segment
                             if let Some(i) = match_number(line) {
                                 current_segment.add_entry(current_segment_entry);
                                 if parse_mode == ParseMode::Data {
-                                    match data_seg_vec { Some(d) => d.push(current_segment), None => data_seg_vec = Some(vec![current_segment]), };
+                                    match data_seg_vec { Some(ref mut d) => d.push(current_segment), None => data_seg_vec = Some(vec![current_segment]), };
                                 } else {
-                                    match kdata_seg_vec { Some(d) => d.push(current_segment), None => kdata_seg_vec = Some(vec![current_segment]), };
+                                    match kdata_seg_vec { Some(ref mut d) => d.push(current_segment), None => kdata_seg_vec = Some(vec![current_segment]), };
                                 }
+                                current_segment = Segment::new::<u32>(Some(i as u32), None);
                                 current_segment_entry = SegmentEntry::new::<u32, String, Alignment>(None, None, None);
                             }
                             continue 'parse_loop;
                         },
                         "text" => {
                             if parse_mode == ParseMode::Data {
-                                match data_seg_vec { Some(d) => d.push(current_segment), None => data_seg_vec = Some(vec![current_segment]), };
+                                match data_seg_vec { Some(ref mut d) => d.push(current_segment), None => data_seg_vec = Some(vec![current_segment]), };
                             } else {
-                                match kdata_seg_vec { Some(d) => d.push(current_segment), None => kdata_seg_vec = Some(vec![current_segment]), };
+                                match kdata_seg_vec { Some(ref mut d) => d.push(current_segment), None => kdata_seg_vec = Some(vec![current_segment]), };
                             }
                             current_segment = Segment::new::<u32>(Some(match_number(line).map_or(0u32, |i| i as u32)), None);
                             current_segment_entry = SegmentEntry::new::<u32, String, Alignment>(None, None, Some(Alignment::Word));
                         },
+                        "space" => {
+                            if let Some(i) = match_number(line) {
+                                if i < 0 || i == 0 {
+                                    panic!("Cannot allocate negative or zero space: {}", i);
+                                }
+                                let align = i128::from(current_segment_entry.get_alignment());
+                                if i % align != 0 {
+                                    panic!("Requested space size is not a multiple of current alignment: {} % {} != 0", i, align);
+                                }
+                                let mut i = i;
+                                let zero = 0u32;
+                                match current_segment_entry.get_alignment() {
+                                    Alignment::Byte     => while i > 0 { current_segment_entry.add_data(&zero); i -= 1; },
+                                    Alignment::HalfWord => while i > 0 { current_segment_entry.add_data(&zero); i -= 2; },
+                                    Alignment::Word     => while i > 0 { current_segment_entry.add_data(&zero); i -= 4; },
+                                }
+                                current_segment.add_entry(current_segment_entry);
+                                current_segment_entry = SegmentEntry::new::<u32, String, Alignment>(None, None, None);
+                                continue 'parse_loop;
+                            }
+                            panic!("Found space directive without associated number");
+                        },
+                        "bytes" => {
+                            if let Some(i) = match_number(line) {
+
+                            }
+                        },
+                        _ => { unimplemented!(); }
                     }
                     break;
                 }
