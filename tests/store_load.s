@@ -4,7 +4,7 @@
 
 #.text
 main:   
-	li	$v0, 0x1000	# $v0  = 0x10010000	testing lui
+	li	$v0, 0x1000	# $v0  = 0x1000	testing li
 				      
 	lw	$v1, 12($v0)	# $v1  = 0xcafebabe	
 	slt	$t0, $v1, $0	# $t0  = 1	  	testing slt
@@ -33,7 +33,7 @@ skipped:
 	addi	$t7, $zero, 1	# skipped so $t7 remains 0
 	j	skipped	    	# skipped
 
-end:	lui	$s1, 0xf00f0000	# $s1 = 0xf00f0000
+end:	lui	$s1, 0xf00f	# $s1 = 0xf00f0000 testing lui
 	jr $ra
 
 target:
