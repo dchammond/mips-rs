@@ -4,39 +4,39 @@
 
 #.text
 main:   
-	li	$2, 0x1000	# $2  = 0x10010000	testing lui
+	li	$v0, 0x1000	# $v0  = 0x10010000	testing lui
 				      
-	lw	$3, 12($2)	# $3  = 0xcafebabe	
-	slt	$8, $3, $0	# $8  = 1	  	testing slt
-	slt	$9, $2, $0	# $9  = 0
-	slt	$10, $0, $2	# $10 = 1
-	slt	$11, $2, $3	# $11 = 0
+	lw	$v1, 12($v0)	# $v1  = 0xcafebabe	
+	slt	$t0, $v1, $0	# $t0  = 1	  	testing slt
+	slt	$t1, $v0, $0	# $t1  = 0
+	slt	$t2, $0, $v0	# $t2 = 1
+	slt	$t3, $v0, $v1	# $t3 = 0
 
-	bne	$9, $0, end
-	beq	$11, $8, target
+	bne	$t1, $0, end
+	beq	$t3, $t0, target
 
-	lbu	$4, 12($2)	# $4 = be		test load byte unsigned
-	lbu	$5, 13($2)	# $5 = ba
-	lbu	$6, 14($2)	# $6 = fe
-	lbu	$7, 15($2)	# $7 = ca
+	lbu	$a0, 12($v0)	# $a0 = be		test load byte unsigned
+	lbu	$a1, 13($v0)	# $a1 = ba
+	lbu	$a2, 14($v0)	# $a2 = fe
+	lbu	$a3, 15($v0)	# $a3 = ca
 
-	sw	$0, 0($2)	#			test stores
-	lw	$12, 0($2)	# $12 = 0
-	sb	$4, 2($2)	
-	lw	$13, 0($2)	# $13 = 0x00be0000
+	sw	$0, 0($v0)	#			test stores
+	lw	$t4, 0($v0)	# $t4 = 0
+	sb	$a0, 2($v0)	
+	lw	$t5, 0($v0)	# $t5 = 0x00be0000
 
 
-	la	$14, target 	# $14 = target = 0x0000005c
-	jr	$14  		#  PC = 0x0000005c	test indirect branches
+	la	$t6, target 	# $t6 = target = 0x0000005c
+	jr	$t6  		#  PC = 0x0000005c	test indirect branches
 
 skipped:
-	addi	$15, $zero, 1	# skipped so $15 remains 0
+	addi	$t7, $zero, 1	# skipped so $t7 remains 0
 	j	skipped	    	# skipped
 
-end:	lui	$17, 0xf00f0000	# $17 = 0xf00f0000
+end:	lui	$s1, 0xf00f0000	# $s1 = 0xf00f0000
 	jr $ra
 
 target:
-	addi	$16, $zero, 2	# $16 = 2
-	bne	$16, $0, end	# unconditional jump
+	addi	$s0, $zero, 2	# $s0 = 2
+	bne	$s0, $0, end	# unconditional jump
 
