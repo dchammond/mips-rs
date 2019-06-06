@@ -151,7 +151,7 @@ impl From<u32> for IType {
         let opcode = IInst::from(n >> 26);
         let rs = Reg::from(n >> 21);
         let rt = Reg::from(n >> 16);
-        let imm = Imm::from(n);
+        let imm = Imm::from(n & 0xFFFF);
         IType::new(opcode, rs, rt, imm)
     }
 }
