@@ -360,7 +360,7 @@ pub fn parse(program: &String) -> Parsed {
                             }
                             panic!("Found space directive without associated number");
                         },
-                        "bytes" => {
+                        "byte" => {
                             if let Some(i) = match_number(line) {
 
                             }
