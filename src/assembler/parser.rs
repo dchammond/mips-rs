@@ -161,6 +161,17 @@ macro_rules! gen_nom_ints_hex {
     };
 }
 
+gen_nom_ints_dec!(parse_dec_int8, i8);
+gen_nom_ints_dec!(parse_dec_int16, i16);
+gen_nom_ints_dec!(parse_dec_int32, i32);
+gen_nom_ints_dec!(parse_dec_int64, i64);
+gen_nom_ints_dec!(parse_dec_int128, i128);
+gen_nom_ints_hex!(parse_hex_int8, i8);
+gen_nom_ints_hex!(parse_hex_int16, i16);
+gen_nom_ints_hex!(parse_hex_int32, i32);
+gen_nom_ints_hex!(parse_hex_int64, i64);
+gen_nom_ints_hex!(parse_hex_int128, i128);
+
 named!(v_reg_name<&str, &str>,
     preceded!(tag_s!("v"), alt!(tag_s!("0") |
                                 tag_s!("1"))
@@ -258,17 +269,6 @@ named!(register_numbered<&str, &str>,
                                 s_reg_num)
     )
 );
-
-gen_nom_ints_dec!(parse_dec_int8, i8);
-gen_nom_ints_dec!(parse_dec_int16, i16);
-gen_nom_ints_dec!(parse_dec_int32, i32);
-gen_nom_ints_dec!(parse_dec_int64, i64);
-gen_nom_ints_dec!(parse_dec_int128, i128);
-gen_nom_ints_hex!(parse_hex_int8, i8);
-gen_nom_ints_hex!(parse_hex_int16, i16);
-gen_nom_ints_hex!(parse_hex_int32, i32);
-gen_nom_ints_hex!(parse_hex_int64, i64);
-gen_nom_ints_hex!(parse_hex_int128, i128);
 
 pub fn parse(program: &str) -> Parsed {
     let mut parsed = Parsed::default();
