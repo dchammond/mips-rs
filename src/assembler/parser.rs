@@ -1,4 +1,7 @@
-use nom::*;
+use nom::{IResult,
+          branch::{alt},
+          bytes::complete::{tag},
+};
 
 use std::vec::Vec;
 use std::str::*;
@@ -141,10 +144,9 @@ alignment_inv_map!(u64);
 alignment_inv_map!(u128);
 alignment_inv_map!(usize);
 
-named!(sign<&str, &str>,
-    alt!(tag_s!("+") | tag_s!("-"))
-);
-
+fn sign(input: &str) -> IResult<&str, &str> {
+    alt((tag("+"), tag("-")))(input)
+}
 /*
 macro_rules! gen_nom_ints_dec {
     ($name: ident, $type: ty) => {
