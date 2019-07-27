@@ -1,10 +1,11 @@
-use lazy_static::lazy_static;
-use regex::Regex;
+//use lazy_static::lazy_static;
+//use regex::Regex;
 
-use std::{fs, io, path};
-use std::io::Read;
+//use std::{fs, io, path};
+//use std::io::Read;
 
 mod assembler;
+/*
 mod machine;
 mod instructions;
 
@@ -28,4 +29,5 @@ pub fn load_file(state: &mut State, p: &path::Path, offset: Option<u32>) {
     let file_contents: Vec<&str> = file_contents.collect();
     state.load_text_instructions(&file_contents[..], offset);
 }
+*/
 

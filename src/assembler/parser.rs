@@ -145,6 +145,7 @@ named!(sign<&str, &str>,
     alt!(tag_s!("+") | tag_s!("-"))
 );
 
+/*
 macro_rules! gen_nom_ints_dec {
     ($name: ident, $type: ty) => {
         named!($name<&str, (Option<&str>, Result<$type, ParseIntError>)>,
@@ -277,7 +278,7 @@ named!(register_numbered<&str, &str>,
                                 s_reg_num)
     )
 );
-
+*/
 pub fn parse(program: &str) -> Parsed {
     let mut parsed = Parsed::default();
     parsed
