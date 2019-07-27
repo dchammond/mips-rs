@@ -172,6 +172,14 @@ gen_nom_ints_hex!(parse_hex_int32, i32);
 gen_nom_ints_hex!(parse_hex_int64, i64);
 gen_nom_ints_hex!(parse_hex_int128, i128);
 
+named!(parse_int<&str, (Option<&str>)>,
+    alt!(parse_dec_int8   | parse_hex_int8  |
+         parse_dec_int16  | parse_hex_int16 |
+         parse_dec_int32  | parse_hex_int32 |
+         parse_dec_int64  | parse_hex_int64 |
+         parse_dex_int128 | parse_hex_int128)
+);
+
 named!(v_reg_name<&str, &str>,
     preceded!(tag_s!("v"), alt!(tag_s!("0") |
                                 tag_s!("1"))
