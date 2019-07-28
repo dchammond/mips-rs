@@ -2,6 +2,8 @@ use std::str::Lines;
 use std::num::ParseIntError;
 
 use crate::assembler::parsing_functions::*;
+use crate::instructions::rtype::RType;
+
 /*
 #[derive(Clone, Debug)]
 pub struct Parsed {

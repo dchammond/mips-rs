@@ -4,10 +4,10 @@
 //use std::{fs, io, path};
 //use std::io::Read;
 
-mod assembler;
-/*
 mod machine;
+mod assembler;
 mod instructions;
+/*
 
 pub use machine::state::State;
 

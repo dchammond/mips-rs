@@ -1,7 +1,4 @@
-use lazy_static::lazy_static;
-use regex::Regex;
-
-use crate::machine::state::State;
+//use crate::machine::state::State;
 use crate::machine::register::Reg;
 
 #[derive(Copy, Clone, Debug)]
@@ -14,9 +11,10 @@ pub struct RType {
 }
 
 impl RType {
-    pub fn new<X,T,U,W,Q>(funct: X, rs: T, rt: U, rd: Q, shamt: W) -> RType where RInst: From<X>, Reg: From<T> + From<U> + From<Q>, u8: From<W> {
-        RType {rs: Reg::from(rs), rt: Reg::from(rt), rd: Reg::from(rd), shamt: u8::from(shamt), funct: funct.into()}
+    pub fn new(funct: RInst, rs: Reg, rt: Reg, rd: Reg, shamt: u8) -> RType {
+        RType {rs, rt, rd, shamt, funct}
     }
+    /*
     pub fn perform(&self, state: &mut State) {
         let rs = state.read_reg(self.rs);
         let rt = state.read_reg(self.rt);
@@ -61,6 +59,7 @@ impl RType {
                 },
         }
     }
+    
     pub fn convert_from_string(string: &str, _state: &State) -> Option<RType> {
         lazy_static! {
             static ref R_ARITH_RE: Regex = Regex::new(r"^\s*(?P<funct>\w+)\s*(?P<rd>\$[\w\d]+),\s*(?P<rs>\$[\w\d]+),\s*(?P<rt>\$[\w\d]+)\s*$").unwrap();
@@ -88,6 +87,7 @@ impl RType {
         }
         None
     }
+    */
 }
 
 impl From<u32> for RType {
