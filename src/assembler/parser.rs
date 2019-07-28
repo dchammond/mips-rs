@@ -1,6 +1,9 @@
 use nom::{IResult,
           branch::{alt},
           bytes::complete::{tag},
+          character::complete::{digit1, hex_digit1},
+          combinator::{opt, map},
+          sequence::{pair, preceded},
 };
 
 use std::vec::Vec;
@@ -147,20 +150,20 @@ alignment_inv_map!(usize);
 fn sign(input: &str) -> IResult<&str, &str> {
     alt((tag("+"), tag("-")))(input)
 }
-/*
+
 macro_rules! gen_nom_ints_dec {
     ($name: ident, $type: ty) => {
-        named!($name<&str, (Option<&str>, Result<$type, ParseIntError>)>,
-            pair!(opt!(sign), map!(digit, FromStr::from_str))
-        );
+        fn $name(input: &str) -> IResult<&str, (Option<&str>, Result<$type, ParseIntError>)> {
+            pair(opt(sign), map(digit1, |s: &str| FromStr::from_str(s)))(input)
+        }
     };
 }
 
 macro_rules! gen_nom_ints_hex {
     ($name: ident, $type: ty) => {
-        named!($name<&str, (Option<&str>, Result<$type, ParseIntError>)>,
-            tuple!(opt!(sign), preceded!(tag_s!("0x"), map!(digit, |s| <$type>::from_str_radix(s, 16))))
-        );
+        fn $name(input: &str) -> IResult<&str, (Option<&str>, Result<$type, ParseIntError>)> {
+            pair(opt(sign), preceded(tag("0x"), map(hex_digit1, |s: &str| <$type>::from_str_radix(s, 16))))(input)
+        }
     };
 }
 
@@ -174,7 +177,7 @@ gen_nom_ints_hex!(parse_hex_int16, i16);
 gen_nom_ints_hex!(parse_hex_int32, i32);
 gen_nom_ints_hex!(parse_hex_int64, i64);
 gen_nom_ints_hex!(parse_hex_int128, i128);
-
+/*
 named!(parse_int<&str, (Option<&str>)>,
     alt!(parse_dec_int8   | parse_hex_int8  |
          parse_dec_int16  | parse_hex_int16 |
