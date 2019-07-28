@@ -399,6 +399,14 @@ fn i_branch_label(input: &str) -> IResult<&str, (&str, &str, &str, &str)> {
            ))(input)
 }
 
+fn i_mem_imm(input: &str) -> IResult<&str, (&str, &str, (Option<&str>, Result<i64, ParseIntError>), &str)> {
+    tuple((terminated(i_mnemonic, comma_space),
+           terminated(register,   comma_space),
+           terminated(alt((parse_hex_int64, parse_dec_int64)), tag("(")),
+           terminated(register, tag(")"))
+           ))(input)
+}
+
 fn j_label(input: &str) -> IResult<&str, (&str, &str)> {
     pair(terminated(j_mnemonic, space1), label)(input)
 }
