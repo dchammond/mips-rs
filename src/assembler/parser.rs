@@ -232,30 +232,32 @@ fn t_reg_num(input: &str) -> IResult<&str, &str> {
         )(input)
 }
 
+fn s_reg_name(input: &str) -> IResult<&str, &str> {
+    preceded(tag("s"), alt((tag("0"),
+                            tag("1"),
+                            tag("2"),
+                            tag("3"),
+                            tag("4"),
+                            tag("5"),
+                            tag("6"),
+                            tag("7"))
+                           )
+             )(input)
+}
+
+fn s_reg_num(input: &str) -> IResult<&str, &str> {
+    alt((tag("16"),
+         tag("17"),
+         tag("18"),
+         tag("19"),
+         tag("20"),
+         tag("21"),
+         tag("22"),
+         tag("23"))
+        )(input)
+}
+
 /*
-named!(s_reg_name<&str, &str>,
-    preceded!(tag_s!("s"), alt!(tag_s!("0") |
-                                tag_s!("1") |
-                                tag_s!("2") |
-                                tag_s!("3") |
-                                tag_s!("4") |
-                                tag_s!("5") |
-                                tag_s!("6") |
-                                tag_s!("7"))
-    )
-);
-
-named!(s_reg_num<&str, &str>,
-    alt!(tag_s!("16") |
-         tag_s!("17") |
-         tag_s!("18") |
-         tag_s!("19") |
-         tag_s!("20") |
-         tag_s!("21") |
-         tag_s!("22") |
-         tag_s!("23"))
-);
-
 named!(register_named<&str, &str>,
     preceded!(tag_s!("$"), alt!(tag_s!("zero") |
                                 tag_s!("at")   |
