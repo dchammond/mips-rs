@@ -178,17 +178,15 @@ gen_nom_ints_hex!(parse_hex_int32, i32);
 gen_nom_ints_hex!(parse_hex_int64, i64);
 gen_nom_ints_hex!(parse_hex_int128, i128);
 
+fn v_reg_name(input: &str) -> IResult<&str, &str> {
+    preceded(tag("v"), alt((tag("0"), tag("1"))))(input)
+}
+
+fn v_reg_num(input: &str) -> IResult<&str, &str> {
+    alt((tag("2"), tag("3")))(input)
+}
+
 /*
-named!(v_reg_name<&str, &str>,
-    preceded!(tag_s!("v"), alt!(tag_s!("0") |
-                                tag_s!("1"))
-    )
-);
-
-named!(v_reg_num<&str, &str>,
-    alt!(tag_s!("2") | tag_s!("3"))
-);
-
 named!(a_reg_name<&str, &str>,
     preceded!(tag_s!("a"), alt!(tag_s!("0") |
                                 tag_s!("1") |
