@@ -371,6 +371,10 @@ fn r_shift(input: &str) -> IResult<&str, (&str, &str, &str, (Option<&str>, Resul
            ))(input)
 }
 
+fn r_jump(input: &str) -> IResult<&str, (&str, &str)> {
+    pair(terminated(r_mnemonic, space1), register)(input)
+}
+
 fn j_label(input: &str) -> IResult<&str, (&str, &str)> {
     pair(terminated(j_mnemonic, space1), label)(input)
 }
