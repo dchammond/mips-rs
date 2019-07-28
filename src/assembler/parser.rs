@@ -446,6 +446,7 @@ fn parse_text_segment(parsed: &mut Parsed, lines: &mut Lines) {
         if line.is_empty() || entire_line_is_comment(line) {
             continue;
         }
+        // for now assume this line will not be directive
     }
 }
 
