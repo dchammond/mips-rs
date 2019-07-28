@@ -318,6 +318,29 @@ fn r_mnemonic(input: &str) -> IResult<&str, &str> {
          ))(input)
 }
 
+fn i_mnemonic(input: &str) -> IResult<&str, &str> {
+    alt((tag("addi"),
+         tag("addiu"),
+         tag("andi"),
+         tag("beq"),
+         tag("bne"),
+         tag("lbu"),
+         tag("lhu"),
+         tag("ll"),
+         tag("li"),
+         tag("la"),
+         tag("lui"),
+         tag("lw"),
+         tag("ori"),
+         tag("slti"),
+         tag("sltiu"),
+         tag("sb"),
+         tag("sc"),
+         tag("sh"),
+         tag("sw"))
+        )(input)
+}
+
 pub fn parse(program: &str) -> Parsed {
     let mut parsed = Parsed::default();
     parsed
