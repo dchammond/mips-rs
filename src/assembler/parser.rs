@@ -5,7 +5,8 @@ use nom::{IResult,
                                 hex_digit1,
                                 not_line_ending,
                                 alphanumeric1,
-                                space0},
+                                space0,
+                                space1},
           combinator::{opt, map},
           sequence::{pair,
                      tuple,
@@ -368,6 +369,10 @@ fn r_shift(input: &str) -> IResult<&str, (&str, &str, &str, (Option<&str>, Resul
            terminated(register,   comma_space),
            alt((parse_hex_int8, parse_dec_int8))
            ))(input)
+}
+
+fn j_label(input: &str) -> IResult<&str, (&str, &str)> {
+    pair(terminated(j_mnemonic, space1), label)(input)
 }
 
 pub fn parse(program: &str) -> Parsed {
