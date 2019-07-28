@@ -300,6 +300,24 @@ fn directive(input: &str) -> IResult<&str, &str> {
     preceded(tag("."), alphanumeric1)(input)
 }
 
+fn r_mnemonic(input: &str) -> IResult<&str, &str> {
+    alt((tag("add"),
+         tag("addu"),
+         tag("and"),
+         tag("jr"),
+         tag("nor"),
+         tag("or"),
+         tag("slt"),
+         tag("sltu"),
+         tag("sll"),
+         tag("srl"),
+         tag("sub"),
+         tag("subu"),
+         tag("div"),
+         tag("divu")
+         ))(input)
+}
+
 pub fn parse(program: &str) -> Parsed {
     let mut parsed = Parsed::default();
     parsed
