@@ -422,6 +422,13 @@ fn i_load_imm(input: &str) -> IResult<&str, (&str, &str, (Option<&str>, Result<i
            ))(input)
 }
 
+fn i_load_label(input: &str) -> IResult<&str, (&str, &str, &str)> {
+    tuple((terminated(i_mnemonic, comma_space),
+           terminated(register,   comma_space),
+           label,
+           ))(input)
+}
+
 fn j_label(input: &str) -> IResult<&str, (&str, &str)> {
     pair(terminated(j_mnemonic, space1), label)(input)
 }
