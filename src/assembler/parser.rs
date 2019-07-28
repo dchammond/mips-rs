@@ -4,9 +4,11 @@ use nom::{IResult,
           character::complete::{digit1,
                                 hex_digit1,
                                 not_line_ending,
-                                alphanumeric1},
+                                alphanumeric1,
+                                space0},
           combinator::{opt, map},
           sequence::{pair,
+                     tuple,
                      preceded,
                      terminated},
 };
@@ -288,6 +290,10 @@ fn register_numbered(input: &str) -> IResult<&str, &str> {
              )(input)
 }
 
+fn register(input: &str) -> IResult<&str, &str> {
+    alt((register_named, register_numbered))(input)
+}
+
 fn single_line_comment(input: &str) -> IResult<&str, &str> {
     preceded(tag("#"), not_line_ending)(input)
 }
@@ -301,7 +307,7 @@ fn directive(input: &str) -> IResult<&str, &str> {
 }
 
 fn comma_space(input: &str) -> IResult<&str, &str> {
-    tag(", ")(input)
+    preceded(tag(","), space0)(input)
 }
 
 fn r_mnemonic(input: &str) -> IResult<&str, &str> {
@@ -347,6 +353,13 @@ fn i_mnemonic(input: &str) -> IResult<&str, &str> {
 
 fn j_mnemonic(input: &str) -> IResult<&str, &str> {
     alt((tag("j"), tag("jal")))(input)
+}
+
+fn r_arithmetic(input: &str) -> IResult<&str, (&str, &str, &str, &str)> {
+    tuple((terminated(r_mnemonic, comma_space),
+           terminated(register,   comma_space),
+           terminated(register,   comma_space),
+           register))(input)
 }
 
 pub fn parse(program: &str) -> Parsed {
