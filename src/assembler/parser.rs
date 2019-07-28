@@ -186,19 +186,20 @@ fn v_reg_num(input: &str) -> IResult<&str, &str> {
     alt((tag("2"), tag("3")))(input)
 }
 
+fn a_reg_name(input: &str) -> IResult<&str, &str> {
+    preceded(tag("a"), alt((tag("0"),
+                            tag("1"),
+                            tag("2"),
+                            tag("3"))
+                           )
+             )(input)
+}
+
+fn a_reg_num(input: &str) -> IResult<&str, &str> {
+    alt((tag("4"), tag("5"), tag("6"), tag("7")))(input)
+}
+
 /*
-named!(a_reg_name<&str, &str>,
-    preceded!(tag_s!("a"), alt!(tag_s!("0") |
-                                tag_s!("1") |
-                                tag_s!("2") |
-                                tag_s!("3"))
-    )
-);
-
-named!(a_reg_num<&str, &str>,
-    alt!(tag_s!("4") | tag_s!("5") | tag_s!("6") | tag_s!("7"))
-);
-
 named!(t_reg_name<&str, &str>,
     preceded!(tag_s!("t"), alt!(tag_s!("0") |
                                 tag_s!("1") |
