@@ -415,6 +415,13 @@ fn i_mem_label(input: &str) -> IResult<&str, (&str, &str, &str, &str)> {
            ))(input)
 }
 
+fn i_load_imm(input: &str) -> IResult<&str, (&str, &str, (Option<&str>, Result<i64, ParseIntError>))> {
+    tuple((terminated(i_mnemonic, comma_space),
+           terminated(register,   comma_space),
+           alt((parse_hex_int64, parse_dec_int64)),
+           ))(input)
+}
+
 fn j_label(input: &str) -> IResult<&str, (&str, &str)> {
     pair(terminated(j_mnemonic, space1), label)(input)
 }
