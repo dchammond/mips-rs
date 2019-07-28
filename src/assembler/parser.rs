@@ -296,6 +296,10 @@ fn label(input: &str) -> IResult<&str, &str> {
     terminated(alphanumeric1, tag(":"))(input)
 }
 
+fn directive(input: &str) -> IResult<&str, &str> {
+    preceded(tag("."), alphanumeric1)(input)
+}
+
 pub fn parse(program: &str) -> Parsed {
     let mut parsed = Parsed::default();
     parsed
