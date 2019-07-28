@@ -441,7 +441,12 @@ fn j_label(input: &str) -> IResult<&str, (&str, &str)> {
 }
 
 fn parse_text_segment(parsed: &mut Parsed, lines: &mut Lines) {
-
+    while let Some(line) = lines.next() {
+        let line = line.trim();
+        if line.is_empty() || entire_line_is_comment(line) {
+            continue;
+        }
+    }
 }
 
 pub fn parse(program: &str) -> Parsed {
