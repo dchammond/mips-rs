@@ -407,6 +407,14 @@ fn i_mem_imm(input: &str) -> IResult<&str, (&str, &str, (Option<&str>, Result<i6
            ))(input)
 }
 
+fn i_mem_label(input: &str) -> IResult<&str, (&str, &str, &str, &str)> {
+    tuple((terminated(i_mnemonic, comma_space),
+           terminated(register,   comma_space),
+           terminated(label, tag("(")),
+           terminated(register, tag(")"))
+           ))(input)
+}
+
 fn j_label(input: &str) -> IResult<&str, (&str, &str)> {
     pair(terminated(j_mnemonic, space1), label)(input)
 }
