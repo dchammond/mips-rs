@@ -343,27 +343,39 @@ fn r_jump_mnemonic(input: &str) -> IResult<&str, &str> {
     tag("jr")(input)
 }
 
-fn i_mnemonic(input: &str) -> IResult<&str, &str> {
+fn i_arith_mnemonic(input: &str) -> IResult<&str, &str> {
     alt((tag("addi"),
          tag("addiu"),
          tag("andi"),
-         tag("beq"),
-         tag("bne"),
-         tag("lbu"),
-         tag("lhu"),
-         tag("ll"),
-         tag("li"),
-         tag("la"),
-         tag("lui"),
-         tag("lw"),
          tag("ori"),
          tag("slti"),
-         tag("sltiu"),
+         tag("sltiu")
+        ))(input)
+}
+
+fn i_branch_mnemonic(input: &str) -> IResult<&str, &str> {
+    alt((tag("beq"),
+         tag("bne")
+        ))(input)
+}
+
+fn i_mem_mnemonic(input: &str) -> IResult<&str, &str> {
+    alt((tag("lbu"),
+         tag("lhu"),
+         tag("ll"),
+         tag("lw"),
          tag("sb"),
          tag("sc"),
          tag("sh"),
-         tag("sw"))
-        )(input)
+         tag("sw")
+        ))(input)
+}
+
+fn i_load_mnemonic(input: &str) -> IResult<&str, &str> {
+    alt((tag("li"),
+         tag("lui"),
+         tag("la")
+        ))(input)
 }
 
 fn j_mnemonic(input: &str) -> IResult<&str, &str> {
@@ -390,7 +402,7 @@ fn r_jump(input: &str) -> IResult<&str, (&str, &str)> {
 }
 
 fn i_arith(input: &str) -> IResult<&str, (&str, &str, &str, (Option<&str>, Result<i64, ParseIntError>))> {
-    tuple((terminated(i_mnemonic, space1),
+    tuple((terminated(i_arith_mnemonic, space1),
            terminated(register,   comma_space),
            terminated(register,   comma_space),
            alt((parse_hex_int64, parse_dec_int64))
@@ -398,7 +410,7 @@ fn i_arith(input: &str) -> IResult<&str, (&str, &str, &str, (Option<&str>, Resul
 }
 
 fn i_branch_imm(input: &str) -> IResult<&str, (&str, &str, &str, (Option<&str>, Result<i64, ParseIntError>))> {
-    tuple((terminated(i_mnemonic, space1),
+    tuple((terminated(i_branch_mnemonic, space1),
            terminated(register,   comma_space),
            terminated(register,   comma_space),
            alt((parse_hex_int64, parse_dec_int64))
@@ -406,7 +418,7 @@ fn i_branch_imm(input: &str) -> IResult<&str, (&str, &str, &str, (Option<&str>, 
 }
 
 fn i_branch_label(input: &str) -> IResult<&str, (&str, &str, &str, &str)> {
-    tuple((terminated(i_mnemonic, space1),
+    tuple((terminated(i_branch_mnemonic, space1),
            terminated(register,   comma_space),
            terminated(register,   comma_space),
            label
@@ -414,7 +426,7 @@ fn i_branch_label(input: &str) -> IResult<&str, (&str, &str, &str, &str)> {
 }
 
 fn i_mem_imm(input: &str) -> IResult<&str, (&str, &str, (Option<&str>, Result<i64, ParseIntError>), &str)> {
-    tuple((terminated(i_mnemonic, space1),
+    tuple((terminated(i_mem_mnemonic, space1),
            terminated(register,   comma_space),
            terminated(alt((parse_hex_int64, parse_dec_int64)), tag("(")),
            terminated(register, tag(")"))
@@ -422,7 +434,7 @@ fn i_mem_imm(input: &str) -> IResult<&str, (&str, &str, (Option<&str>, Result<i6
 }
 
 fn i_mem_label(input: &str) -> IResult<&str, (&str, &str, &str, &str)> {
-    tuple((terminated(i_mnemonic, space1),
+    tuple((terminated(i_mem_mnemonic, space1),
            terminated(register,   comma_space),
            terminated(label, tag("(")),
            terminated(register, tag(")"))
@@ -430,14 +442,14 @@ fn i_mem_label(input: &str) -> IResult<&str, (&str, &str, &str, &str)> {
 }
 
 fn i_load_imm(input: &str) -> IResult<&str, (&str, &str, (Option<&str>, Result<i64, ParseIntError>))> {
-    tuple((terminated(i_mnemonic, space1),
+    tuple((terminated(i_load_mnemonic, space1),
            terminated(register,   comma_space),
            alt((parse_hex_int64, parse_dec_int64)),
            ))(input)
 }
 
 fn i_load_label(input: &str) -> IResult<&str, (&str, &str, &str)> {
-    tuple((terminated(i_mnemonic, space1),
+    tuple((terminated(i_load_mnemonic, space1),
            terminated(register,   comma_space),
            label,
            ))(input)
