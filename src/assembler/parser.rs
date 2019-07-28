@@ -3,8 +3,8 @@ use nom::{IResult,
           bytes::complete::{tag},
           character::complete::{digit1,
                                 hex_digit1,
-                                line_ending, 
-                                not_line_ending},
+                                not_line_ending,
+                                alphanumeric1},
           combinator::{opt, map},
           sequence::{pair,
                      preceded,
@@ -289,7 +289,11 @@ fn register_numbered(input: &str) -> IResult<&str, &str> {
 }
 
 fn single_line_comment(input: &str) -> IResult<&str, &str> {
-    preceded(tag("#"), terminated(not_line_ending, line_ending))(input)
+    preceded(tag("#"), not_line_ending)(input)
+}
+
+fn label(input: &str) -> IResult<&str, &str> {
+    terminated(alphanumeric1, tag(":"))(input)
 }
 
 pub fn parse(program: &str) -> Parsed {
