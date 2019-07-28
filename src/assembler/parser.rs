@@ -440,6 +440,10 @@ fn j_label(input: &str) -> IResult<&str, (&str, &str)> {
     pair(terminated(j_mnemonic, space1), label)(input)
 }
 
+fn parse_text_segment(parsed: &mut Parsed, lines: &mut Lines) {
+
+}
+
 pub fn parse(program: &str) -> Parsed {
     let mut parsed = Parsed::default();
     let mut lines: Lines = program.lines();
@@ -448,6 +452,8 @@ pub fn parse(program: &str) -> Parsed {
         if line.is_empty() || entire_line_is_comment(line) {
             continue;
         }
+        // pretend we got a .text directive
+        parse_text_segment(&mut parsed, &mut lines);
     }
     parsed
 }
