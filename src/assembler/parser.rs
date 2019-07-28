@@ -300,6 +300,10 @@ fn directive(input: &str) -> IResult<&str, &str> {
     preceded(tag("."), alphanumeric1)(input)
 }
 
+fn comma_space(input: &str) -> IResult<&str, &str> {
+    tag(", ")(input)
+}
+
 fn r_mnemonic(input: &str) -> IResult<&str, &str> {
     alt((tag("add"),
          tag("addu"),
