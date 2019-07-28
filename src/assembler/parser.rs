@@ -299,6 +299,13 @@ fn single_line_comment(input: &str) -> IResult<&str, &str> {
     preceded(tag("#"), not_line_ending)(input)
 }
 
+fn entire_line_is_comment(input: &str) -> bool {
+    match input.get(0..1) {
+        Some(c) => c == "#",
+        None => false
+    }
+}
+
 fn label(input: &str) -> IResult<&str, &str> {
     terminated(alphanumeric1, tag(":"))(input)
 }
@@ -435,5 +442,12 @@ fn j_label(input: &str) -> IResult<&str, (&str, &str)> {
 
 pub fn parse(program: &str) -> Parsed {
     let mut parsed = Parsed::default();
+    let mut lines: Lines = program.lines();
+    while let Some(line) = lines.next() {
+        let line = line.trim();
+        if line.is_empty() || entire_line_is_comment(line) {
+            continue;
+        }
+    }
     parsed
 }
