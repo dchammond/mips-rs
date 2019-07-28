@@ -318,22 +318,29 @@ fn comma_space(input: &str) -> IResult<&str, &str> {
     preceded(tag(","), space0)(input)
 }
 
-fn r_mnemonic(input: &str) -> IResult<&str, &str> {
+fn r_arithmetic_mnemonic(input: &str) -> IResult<&str, &str> {
     alt((tag("add"),
          tag("addu"),
          tag("and"),
-         tag("jr"),
          tag("nor"),
          tag("or"),
          tag("slt"),
          tag("sltu"),
-         tag("sll"),
-         tag("srl"),
          tag("sub"),
          tag("subu"),
          tag("div"),
          tag("divu")
-         ))(input)
+        ))(input)
+}
+
+fn r_shift_mnemonic(input: &str) -> IResult<&str, &str> {
+    alt((tag("sll"),
+         tag("srl")
+        ))(input)
+}
+
+fn r_jump_mnemonic(input: &str) -> IResult<&str, &str> {
+    tag("jr")(input)
 }
 
 fn i_mnemonic(input: &str) -> IResult<&str, &str> {
@@ -364,14 +371,14 @@ fn j_mnemonic(input: &str) -> IResult<&str, &str> {
 }
 
 fn r_arithmetic(input: &str) -> IResult<&str, (&str, &str, &str, &str)> {
-    tuple((terminated(r_mnemonic, space1),
+    tuple((terminated(r_arithmetic_mnemonic, space1),
            terminated(register,   comma_space),
            terminated(register,   comma_space),
            register))(input)
 }
 
 fn r_shift(input: &str) -> IResult<&str, (&str, &str, &str, (Option<&str>, Result<i8, ParseIntError>))> {
-    tuple((terminated(r_mnemonic, space1),
+    tuple((terminated(r_shift_mnemonic, space1),
            terminated(register,   comma_space),
            terminated(register,   comma_space),
            alt((parse_hex_int8, parse_dec_int8))
@@ -379,7 +386,7 @@ fn r_shift(input: &str) -> IResult<&str, (&str, &str, &str, (Option<&str>, Resul
 }
 
 fn r_jump(input: &str) -> IResult<&str, (&str, &str)> {
-    pair(terminated(r_mnemonic, space1), register)(input)
+    pair(terminated(r_jump_mnemonic, space1), register)(input)
 }
 
 fn i_arith(input: &str) -> IResult<&str, (&str, &str, &str, (Option<&str>, Result<i64, ParseIntError>))> {
