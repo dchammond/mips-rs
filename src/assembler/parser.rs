@@ -362,6 +362,14 @@ fn r_arithmetic(input: &str) -> IResult<&str, (&str, &str, &str, &str)> {
            register))(input)
 }
 
+fn r_shift(input: &str) -> IResult<&str, (&str, &str, &str, (Option<&str>, Result<i8, ParseIntError>))> {
+    tuple((terminated(r_mnemonic, comma_space),
+           terminated(register,   comma_space),
+           terminated(register,   comma_space),
+           alt((parse_hex_int8, parse_dec_int8))
+           ))(input)
+}
+
 pub fn parse(program: &str) -> Parsed {
     let mut parsed = Parsed::default();
     parsed
