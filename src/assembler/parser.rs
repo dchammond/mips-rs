@@ -196,37 +196,43 @@ fn a_reg_name(input: &str) -> IResult<&str, &str> {
 }
 
 fn a_reg_num(input: &str) -> IResult<&str, &str> {
-    alt((tag("4"), tag("5"), tag("6"), tag("7")))(input)
+    alt((tag("4"),
+         tag("5"),
+         tag("6"),
+         tag("7"))
+        )(input)
+}
+
+fn t_reg_name(input: &str) -> IResult<&str, &str> {
+    preceded(tag("t"), alt((tag("0"),
+                            tag("1"),
+                            tag("2"),
+                            tag("3"),
+                            tag("4"),
+                            tag("5"),
+                            tag("6"),
+                            tag("7"),
+                            tag("8"),
+                            tag("9"))
+                           )
+             )(input)
+}
+
+fn t_reg_num(input: &str) -> IResult<&str, &str> {
+    alt((tag("8"),
+         tag("9"),
+         tag("10"),
+         tag("11"),
+         tag("12"),
+         tag("13"),
+         tag("14"),
+         tag("15"),
+         tag("24"),
+         tag("25"))
+        )(input)
 }
 
 /*
-named!(t_reg_name<&str, &str>,
-    preceded!(tag_s!("t"), alt!(tag_s!("0") |
-                                tag_s!("1") |
-                                tag_s!("2") |
-                                tag_s!("3") |
-                                tag_s!("4") |
-                                tag_s!("5") |
-                                tag_s!("6") |
-                                tag_s!("7") |
-                                tag_s!("8") |
-                                tag_s!("9"))
-    )
-);
-
-named!(t_reg_num<&str, &str>,
-    alt!(tag_s!("8")  |
-         tag_s!("9")  |
-         tag_s!("10") |
-         tag_s!("11") |
-         tag_s!("12") |
-         tag_s!("13") |
-         tag_s!("14") |
-         tag_s!("15") |
-         tag_s!("24") |
-         tag_s!("25"))
-);
-
 named!(s_reg_name<&str, &str>,
     preceded!(tag_s!("s"), alt!(tag_s!("0") |
                                 tag_s!("1") |
