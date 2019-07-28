@@ -17,13 +17,10 @@ use nom::{IResult,
 use std::vec::Vec;
 use std::str::*;
 use std::num::ParseIntError;
-
+/*
 #[derive(Clone, Debug)]
 pub struct Parsed {
-    pub data_segment:  Option<Segment>,
     pub text_segment:  Option<Segment>,
-    pub kdata_segment: Option<Segment>,
-    pub ktext_segment: Option<Segment>,
 }
 
 impl Parsed {
@@ -43,118 +40,7 @@ impl Parsed {
         }
     }
 }
-
-#[derive(Clone, Debug)]
-pub struct Segment {
-    start: u32,
-    entries: Vec<SegmentEntry>,
-}
-
-impl Segment {
-    pub fn new(start: u32, entries: Vec<SegmentEntry>) -> Segment {
-        Segment {start, entries}
-    }
-
-    pub fn add_entry(&mut self, entry: SegmentEntry) {
-        self.entries.push(entry);
-    }
-
-    pub fn size(&self) -> u32 {
-        self.entries.iter().fold(0, |acc, s| acc + s.size())
-    }
-}
-
-#[derive(Clone, Debug)]
-pub struct SegmentEntry {
-    offset: u32,
-    label: Option<String>,
-    alignment: Alignment,
-    data: Vec<u32>,
-}
-
-impl SegmentEntry {
-    pub fn new(offset: u32,
-               label: Option<String>,
-               alignment: Alignment,
-               data: Vec<u32>) -> SegmentEntry {
-        SegmentEntry {offset, label, alignment, data}
-    }
-
-    pub fn size(&self) -> u32 {
-        (self.data.len() * usize::from(self.alignment)) as u32
-    }
-
-    pub fn add_data(&mut self, data: u32) {
-        self.data.push(data)
-    }
-
-    pub fn get_element_offset(&self, element: u32) -> u32 {
-        element * u32::from(self.alignment)
-    }
-}
-
-#[derive(Copy, Clone, Debug)]
-pub enum Alignment {
-    Byte,
-    HalfWord,
-    Word,
-}
-
-
-macro_rules! alignment_map {
-    ($type_name: ty) => (
-        impl From<$type_name> for Alignment {
-            fn from(n: $type_name) -> Alignment {
-                match n {
-                    1 => Alignment::Byte,
-                    2 => Alignment::HalfWord,
-                    4 => Alignment::Word,
-                    _ => panic!("Invalid alignemnt: {}", n)
-                }
-            }
-        }
-    );
-}
-
-macro_rules! alignment_inv_map {
-    ($type_name: ty) => (
-        impl From<Alignment> for $type_name {
-            fn from(a: Alignment) -> Self {
-                match a {
-                    Alignment::Byte => 1,
-                    Alignment::HalfWord => 2,
-                    Alignment::Word => 4,
-                }
-            }
-        }
-    );
-}
-
-alignment_map!(i8);
-alignment_map!(i16);
-alignment_map!(i32);
-alignment_map!(i64);
-alignment_map!(i128);
-alignment_map!(isize);
-alignment_map!(u8);
-alignment_map!(u16);
-alignment_map!(u32);
-alignment_map!(u64);
-alignment_map!(u128);
-alignment_map!(usize);
-alignment_inv_map!(i8);
-alignment_inv_map!(i16);
-alignment_inv_map!(i32);
-alignment_inv_map!(i64);
-alignment_inv_map!(i128);
-alignment_inv_map!(isize);
-alignment_inv_map!(u8);
-alignment_inv_map!(u16);
-alignment_inv_map!(u32);
-alignment_inv_map!(u64);
-alignment_inv_map!(u128);
-alignment_inv_map!(usize);
-
+*/
 fn sign(input: &str) -> IResult<&str, &str> {
     alt((tag("+"), tag("-")))(input)
 }
@@ -459,7 +345,7 @@ fn j_label(input: &str) -> IResult<&str, (&str, &str)> {
     pair(terminated(j_mnemonic, space1), label)(input)
 }
 
-fn parse_text_segment(parsed: &mut Parsed, lines: &mut Lines) {
+fn parse_text_segment(/*parsed: &mut Parsed,*/ lines: &mut Lines) {
     while let Some(line) = lines.next() {
         let line = line.trim();
         if line.is_empty() || entire_line_is_comment(line) {
@@ -510,7 +396,8 @@ fn parse_text_segment(parsed: &mut Parsed, lines: &mut Lines) {
     }
 }
 
-pub fn parse(program: &str) -> Parsed {
+pub fn parse(program: &str) -> /*Parsed*/() {
+    /*
     let mut parsed = Parsed::default();
     let mut lines: Lines = program.lines();
     while let Some(line) = lines.next() {
@@ -522,4 +409,5 @@ pub fn parse(program: &str) -> Parsed {
         parse_text_segment(&mut parsed, &mut lines);
     }
     parsed
+    */
 }
