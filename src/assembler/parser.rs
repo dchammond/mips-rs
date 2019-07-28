@@ -1,35 +1,23 @@
 use std::str::Lines;
+use std::vec::Vec;
 use std::num::ParseIntError;
 
 use crate::assembler::parsing_functions::*;
-use crate::instructions::rtype::RType;
+use crate::instructions::rtype::*;
+use crate::machine::register::Reg;
 
-/*
 #[derive(Clone, Debug)]
 pub struct Parsed {
-    pub text_segment:  Option<Segment>,
+    pub text_segment: Vec<RType>,
 }
 
 impl Parsed {
-    pub fn new(data_segment:  Option<Segment>,
-               text_segment:  Option<Segment>,
-               kdata_segment: Option<Segment>,
-               ktext_segment: Option<Segment>) -> Parsed {
-        Parsed {data_segment, text_segment, kdata_segment, ktext_segment}
-    }
-
-    pub fn default() -> Parsed {
-        Parsed {
-            data_segment:  None,
-            text_segment:  None,
-            kdata_segment: None,
-            ktext_segment: None,
-        }
+    pub fn new() -> Parsed {
+        Parsed {text_segment: Vec::new()}
     }
 }
-*/
 
-fn parse_text_segment(/*parsed: &mut Parsed,*/ lines: &mut Lines) {
+fn parse_text_segment(parsed: &mut Parsed, lines: &mut Lines) {
     while let Some(line) = lines.next() {
         let line = line.trim();
         if line.is_empty() || entire_line_is_comment(line) {
@@ -37,15 +25,33 @@ fn parse_text_segment(/*parsed: &mut Parsed,*/ lines: &mut Lines) {
         }
         // for now assume this line will not be directive
         match r_arithmetic(line) {
-            Ok((_, (inst, rd, rs, rt))) => continue,
+            Ok((_, (inst, rd, rs, rt))) => {
+                parsed.text_segment.push(RType::new(RInst::from(inst), Reg::from(rs), Reg::from(rt), Reg::from(rd), 0));
+                continue;
+            },
             Err(_) => (),
         }
         match r_shift(line) {
-            Ok((_, (inst, rd, rs, shamt))) => continue,
+            Ok((_, (inst, rd, rt, shamt))) => {
+                if let Some(sign) = shamt.0 {
+                    if sign == "-" {
+                        panic!("Cannot have negative shift amount: {}", line);
+                    }
+                }
+                let shamt_int: u8 = match shamt.1 {
+                    Ok(i) => i as u8,
+                    Err(_) => panic!("Unable to parse shift amount: {}", line),
+                };
+                parsed.text_segment.push(RType::new(RInst::from(inst), Reg::zero, Reg::from(rt), Reg::from(rd), shamt_int));
+                continue;
+            },
             Err(_) => (),
         }
         match r_jump(line) {
-            Ok((_, (inst, rs))) => continue,
+            Ok((_, (inst, rs))) => {
+                parsed.text_segment.push(RType::new(RInst::from(inst), Reg::from(rs), Reg::zero, Reg::zero, 0));
+                continue;
+            },
             Err(_) => (),
         }
         match i_arith(line) {
@@ -80,9 +86,8 @@ fn parse_text_segment(/*parsed: &mut Parsed,*/ lines: &mut Lines) {
     }
 }
 
-pub fn parse(program: &str) -> /*Parsed*/() {
-    /*
-    let mut parsed = Parsed::default();
+pub fn parse(program: &str) -> Parsed {
+    let mut parsed = Parsed::new();
     let mut lines: Lines = program.lines();
     while let Some(line) = lines.next() {
         let line = line.trim();
@@ -93,5 +98,4 @@ pub fn parse(program: &str) -> /*Parsed*/() {
         parse_text_segment(&mut parsed, &mut lines);
     }
     parsed
-    */
 }
