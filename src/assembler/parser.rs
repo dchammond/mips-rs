@@ -341,6 +341,10 @@ fn i_mnemonic(input: &str) -> IResult<&str, &str> {
         )(input)
 }
 
+fn j_mnemonic(input: &str) -> IResult<&str, &str> {
+    alt((tag("j"), tag("jal")))(input)
+}
+
 pub fn parse(program: &str) -> Parsed {
     let mut parsed = Parsed::default();
     parsed
