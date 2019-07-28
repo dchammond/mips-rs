@@ -466,6 +466,47 @@ fn parse_text_segment(parsed: &mut Parsed, lines: &mut Lines) {
             continue;
         }
         // for now assume this line will not be directive
+        match r_arithmetic(line) {
+            Ok((_, (inst, rd, rs, rt))) => continue,
+            Err(_) => (),
+        }
+        match r_shift(line) {
+            Ok((_, (inst, rd, rs, shamt))) => continue,
+            Err(_) => (),
+        }
+        match r_jump(line) {
+            Ok((_, (inst, rs))) => continue,
+            Err(_) => (),
+        }
+        match i_arith(line) {
+            Ok((_, (inst, rt, rs, imm))) => continue,
+            Err(_) => (),
+        }
+        match i_branch_imm(line) {
+            Ok((_, (inst, rt, rs, imm))) => continue,
+            Err(_) => (),
+        }
+        match i_branch_label(line) {
+            Ok((_, (inst, rt, rs, label))) => continue,
+            Err(_) => (),
+        }
+        match i_mem_imm(line) {
+            Ok((_, (inst, rt, imm, rs))) => continue,
+            Err(_) => (),
+        }
+        match i_mem_label(line) {
+            Ok((_, (inst, rt, label, rs))) => continue,
+            Err(_) => (),
+        }
+        match i_load_imm(line) {
+            Ok((_, (inst, rt, imm))) => continue,
+            Err(_) => (),
+        }
+        match i_load_label(line) {
+            Ok((_, (inst, rt, label))) => continue,
+            Err(_) => (),
+        }
+        panic!("Uknown line in text section: {}", line);
     }
 }
 
