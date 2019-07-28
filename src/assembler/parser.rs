@@ -257,33 +257,32 @@ fn s_reg_num(input: &str) -> IResult<&str, &str> {
         )(input)
 }
 
-/*
-named!(register_named<&str, &str>,
-    preceded!(tag_s!("$"), alt!(tag_s!("zero") |
-                                tag_s!("at")   |
-                                tag_s!("sp")   |
-                                tag_s!("fp")   |
-                                tag_s!("ra")   |
-                                v_reg_name     |
-                                a_reg_name     |
-                                t_reg_name     |
-                                s_reg_name)
-    )
-);
+fn register_named(input: &str) -> IResult<&str, &str> {
+    preceded(tag("$"), alt((tag("zero"),
+                            tag("at"),
+                            tag("sp"),
+                            tag("fp"),
+                            tag("ra"),
+                            v_reg_name,
+                            a_reg_name,
+                            t_reg_name,
+                            s_reg_name))
+             )(input)
+}
 
-named!(register_numbered<&str, &str>,
-    preceded!(tag_s!("$"), alt!(tag_s!("0") |
-                                tag_s!("1")  |
-                                tag_s!("29") |
-                                tag_s!("30") |
-                                tag_s!("31") |
-                                v_reg_num    |
-                                a_reg_num    |
-                                t_reg_num    |
-                                s_reg_num)
-    )
-);
-*/
+fn register_numbered(input: &str) -> IResult<&str, &str> {
+    preceded(tag("$"), alt((tag("0"),
+                            tag("1"),
+                            tag("29"),
+                            tag("30"),
+                            tag("31"),
+                            v_reg_num,
+                            a_reg_num,
+                            t_reg_num,
+                            s_reg_num))
+             )(input)
+}
+
 pub fn parse(program: &str) -> Parsed {
     let mut parsed = Parsed::default();
     parsed
