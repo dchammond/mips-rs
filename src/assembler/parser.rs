@@ -1,9 +1,14 @@
 use nom::{IResult,
           branch::{alt},
           bytes::complete::{tag},
-          character::complete::{digit1, hex_digit1},
+          character::complete::{digit1,
+                                hex_digit1,
+                                line_ending, 
+                                not_line_ending},
           combinator::{opt, map},
-          sequence::{pair, preceded},
+          sequence::{pair,
+                     preceded,
+                     terminated},
 };
 
 use std::vec::Vec;
@@ -281,6 +286,10 @@ fn register_numbered(input: &str) -> IResult<&str, &str> {
                             t_reg_num,
                             s_reg_num))
              )(input)
+}
+
+fn single_line_comment(input: &str) -> IResult<&str, &str> {
+    preceded(tag("#"), terminated(not_line_ending, line_ending))(input)
 }
 
 pub fn parse(program: &str) -> Parsed {
