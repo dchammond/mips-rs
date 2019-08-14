@@ -139,6 +139,13 @@ fn parse_text_segment(parsed: &mut Parsed, lines: &mut Lines) {
             },
             Err(_) => (),
         }
+        match j_label(line) {
+            Ok((_, (inst, label))) => {
+                let _ = label; // TODO: convert label to number
+                parsed.text_segment.push(JType::new(JInst::from(inst), Imm::from(0u64)).into())
+            },
+            Err(_) => (),
+        }
         panic!("Uknown line in text section: {}", line);
     }
 }
