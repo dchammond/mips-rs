@@ -3,9 +3,12 @@ use std::vec::Vec;
 use std::num::ParseIntError;
 
 use crate::assembler::parsing_functions::*;
+use crate::instructions::itype::*;
 use crate::instructions::rtype::*;
+use crate::instructions::jtype::*;
 use crate::instructions::Inst;
 use crate::machine::register::Reg;
+use crate::machine::immediate::Imm;
 
 #[derive(Clone, Debug)]
 pub struct Parsed {
@@ -16,6 +19,19 @@ impl Parsed {
     pub fn new() -> Parsed {
         Parsed {text_segment: Vec::new()}
     }
+}
+
+fn i_extract_imm(imm: (Option<&str>, Result<i64, ParseIntError>)) -> Option<i64> {
+    let mut imm_int: i64 = match imm.1 {
+        Ok(i) => i as i64,
+        Err(_) => return None,
+    };
+    if let Some(sign) = imm.0 {
+        if sign == "-" {
+            imm_int *= -1;
+        }
+    };
+    Some(imm_int)
 }
 
 fn parse_text_segment(parsed: &mut Parsed, lines: &mut Lines) {
@@ -56,7 +72,14 @@ fn parse_text_segment(parsed: &mut Parsed, lines: &mut Lines) {
             Err(_) => (),
         }
         match i_arith(line) {
-            Ok((_, (inst, rt, rs, imm))) => continue,
+            Ok((_, (inst, rt, rs, imm))) => {
+                let imm_int = match i_extract_imm(imm) {
+                    Some(i) => i,
+                    None => panic!("Unable to parse immediate: {}", line),
+                };
+                parsed.text_segment.push(IType::new(IInst::from(inst), Reg::from(rs), Reg::from(rt), Imm::from(imm_int as u64)).into());
+                continue;
+            },
             Err(_) => (),
         }
         match i_branch_imm(line) {
