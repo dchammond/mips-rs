@@ -83,27 +83,60 @@ fn parse_text_segment(parsed: &mut Parsed, lines: &mut Lines) {
             Err(_) => (),
         }
         match i_branch_imm(line) {
-            Ok((_, (inst, rt, rs, imm))) => continue,
+            Ok((_, (inst, rt, rs, imm))) => {
+                let imm_int = match i_extract_imm(imm) {
+                    Some(i) => i,
+                    None => panic!("Unable to parse immediate: {}", line),
+                };
+                parsed.text_segment.push(IType::new(IInst::from(inst), Reg::from(rs), Reg::from(rt), Imm::from(imm_int as u64)).into());
+                continue;
+            },
             Err(_) => (),
         }
         match i_branch_label(line) {
-            Ok((_, (inst, rt, rs, label))) => continue,
+            Ok((_, (inst, rt, rs, label))) => {
+                let _ = label; // TODO: convert label to number
+                parsed.text_segment.push(IType::new(IInst::from(inst), Reg::from(rs), Reg::from(rt), Imm::from(0u64)).into());
+                continue;
+            },
             Err(_) => (),
         }
         match i_mem_imm(line) {
-            Ok((_, (inst, rt, imm, rs))) => continue,
+            Ok((_, (inst, rt, imm, rs))) => {
+                let imm_int = match i_extract_imm(imm) {
+                    Some(i) => i,
+                    None => panic!("Unable to parse immediate: {}", line),
+                };
+                parsed.text_segment.push(IType::new(IInst::from(inst), Reg::from(rs), Reg::from(rt), Imm::from(imm_int as u64)).into());
+                continue;
+            },
             Err(_) => (),
         }
         match i_mem_label(line) {
-            Ok((_, (inst, rt, label, rs))) => continue,
+            Ok((_, (inst, rt, label, rs))) => {
+                let _ = label; // TODO: convert label to number
+                parsed.text_segment.push(IType::new(IInst::from(inst), Reg::from(rs), Reg::from(rt), Imm::from(0u64)).into());
+                continue;
+            },
             Err(_) => (),
         }
         match i_load_imm(line) {
-            Ok((_, (inst, rt, imm))) => continue,
+            Ok((_, (inst, rt, imm))) => {
+                let imm_int = match i_extract_imm(imm) {
+                    Some(i) => i,
+                    None => panic!("Unable to parse immediate: {}", line),
+                };
+                parsed.text_segment.push(IType::new(IInst::from(inst), Reg::zero, Reg::from(rt), Imm::from(imm_int as u64)).into());
+                continue;
+            },
             Err(_) => (),
         }
         match i_load_label(line) {
-            Ok((_, (inst, rt, label))) => continue,
+            Ok((_, (inst, rt, label))) => {
+                let _ = label; // TODO: convert label to number
+                parsed.text_segment.push(IType::new(IInst::from(inst), Reg::zero, Reg::from(rt), Imm::from(0u64)).into());
+                continue;
+            },
             Err(_) => (),
         }
         panic!("Uknown line in text section: {}", line);
