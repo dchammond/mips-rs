@@ -4,11 +4,12 @@ use std::num::ParseIntError;
 
 use crate::assembler::parsing_functions::*;
 use crate::instructions::rtype::*;
+use crate::instructions::Inst;
 use crate::machine::register::Reg;
 
 #[derive(Clone, Debug)]
 pub struct Parsed {
-    pub text_segment: Vec<RType>,
+    pub text_segment: Vec<Inst>,
 }
 
 impl Parsed {
@@ -26,7 +27,7 @@ fn parse_text_segment(parsed: &mut Parsed, lines: &mut Lines) {
         // for now assume this line will not be directive
         match r_arithmetic(line) {
             Ok((_, (inst, rd, rs, rt))) => {
-                parsed.text_segment.push(RType::new(RInst::from(inst), Reg::from(rs), Reg::from(rt), Reg::from(rd), 0));
+                parsed.text_segment.push(RType::new(RInst::from(inst), Reg::from(rs), Reg::from(rt), Reg::from(rd), 0).into());
                 continue;
             },
             Err(_) => (),
@@ -42,14 +43,14 @@ fn parse_text_segment(parsed: &mut Parsed, lines: &mut Lines) {
                     Ok(i) => i as u8,
                     Err(_) => panic!("Unable to parse shift amount: {}", line),
                 };
-                parsed.text_segment.push(RType::new(RInst::from(inst), Reg::zero, Reg::from(rt), Reg::from(rd), shamt_int));
+                parsed.text_segment.push(RType::new(RInst::from(inst), Reg::zero, Reg::from(rt), Reg::from(rd), shamt_int).into());
                 continue;
             },
             Err(_) => (),
         }
         match r_jump(line) {
             Ok((_, (inst, rs))) => {
-                parsed.text_segment.push(RType::new(RInst::from(inst), Reg::from(rs), Reg::zero, Reg::zero, 0));
+                parsed.text_segment.push(RType::new(RInst::from(inst), Reg::from(rs), Reg::zero, Reg::zero, 0).into());
                 continue;
             },
             Err(_) => (),
