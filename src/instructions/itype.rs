@@ -1,7 +1,4 @@
-use lazy_static::lazy_static;
-use regex::Regex;
-
-use crate::machine::state::State;
+//use crate::machine::state::State;
 use crate::machine::register::Reg;
 use crate::machine::immediate::Imm;
 
@@ -14,9 +11,10 @@ pub struct IType {
 }
 
 impl IType {
-    pub fn new<W,T,U,Q>(opcode: W, rs: T, rt: U, imm: Q) -> IType where IInst: From<W>, Reg: From<T> + From<U>, Imm: From<Q> {
-        IType {opcode: opcode.into(), rs: Reg::from(rs), rt: Reg::from(rt), imm: Imm::from(imm)}
+    pub fn new(opcode: IInst, rs: Reg, rt: Reg, imm: Imm) -> IType {
+        IType {opcode, rs, rt, imm}
     }
+    /*
     pub fn perform(&self, state: &mut State) {
         let rs = state.read_reg(self.rs);
         let rt = state.read_reg(self.rt);
@@ -144,6 +142,7 @@ impl IType {
         }
         None
     }
+    */
 }
 
 impl From<u32> for IType {

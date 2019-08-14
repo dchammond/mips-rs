@@ -1,9 +1,6 @@
-use lazy_static::lazy_static;
-use regex::Regex;
-
-use crate::machine::state::State;
-use crate::machine::immediate::Imm;
+//use crate::machine::state::State;
 use crate::machine::register::Reg;
+use crate::machine::immediate::Imm;
 
 #[derive(Copy, Clone, Debug)]
 pub struct JType {
@@ -12,9 +9,10 @@ pub struct JType {
 }
 
 impl JType {
-    pub fn new<W,T>(opcode: W, address: T) -> JType where JInst: From<W>, u32: From<T> {
-        JType {opcode: opcode.into(), address: Imm::Address(u32::from(address))}
+    pub fn new(opcode: JInst, address: Imm) -> JType {
+        JType {opcode, address}
     }
+    /*
     pub fn perform(&self, state: &mut State) {
         let address = u32::from(self.address);
         match self.opcode {
@@ -52,6 +50,7 @@ impl JType {
         }
         None
     }
+    */
 }
 
 impl From<u32> for JType {
