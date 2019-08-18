@@ -34,11 +34,12 @@ fn i_extract_imm(imm: (Option<&str>, Result<i64, ParseIntError>)) -> Option<i64>
     Some(imm_int)
 }
 
-fn parse_text_segment(parsed: &mut Parsed, lines: &mut Lines) {
+fn parse_text_segment(parsed: &mut Parsed, lines: &mut Lines) -> Option<String> {
     while let Some(line) = lines.next() {
         let line = line.trim();
         if line.is_empty() || entire_line_is_comment(line) {
-            continue;
+            return Some(line.to_owned());
+            //continue;
         }
         // for now assume this line will not be directive
         match r_arithmetic(line) {
@@ -148,18 +149,24 @@ fn parse_text_segment(parsed: &mut Parsed, lines: &mut Lines) {
         }
         panic!("Uknown line in text section: {}", line);
     }
+    None
 }
 
 pub fn parse(program: &str) -> Parsed {
     let mut parsed = Parsed::new();
     let mut lines: Lines = program.lines();
     while let Some(line) = lines.next() {
-        let line = line.trim();
+        let mut line = line.trim();
         if line.is_empty() || entire_line_is_comment(line) {
             continue;
         }
+        let ret: String;
         // pretend we got a .text directive
-        parse_text_segment(&mut parsed, &mut lines);
+        match parse_text_segment(&mut parsed, &mut lines) {
+            Some(l) => ret = l,
+            None => continue,
+        }
+        line = ret.trim();
     }
     parsed
 }
