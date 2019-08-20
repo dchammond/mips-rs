@@ -385,3 +385,25 @@ pub fn directive_half(input: &str) -> IResult<&str, Vec<(Option<&str>, Result<i3
              )(input)
 }
 
+pub fn directive_kdata(input: &str) -> IResult<&str, Option<(Option<&str>, Result<i64, ParseIntError>)>> {
+    preceded(tag("."),
+             preceded(tag("kdata"),
+                      opt(preceded(space1,
+                                   alt((parse_hex_int64, parse_dec_int64))
+                                   )
+                          )
+                      )
+             )(input)
+}
+
+pub fn directive_ktext(input: &str) -> IResult<&str, Option<(Option<&str>, Result<i64, ParseIntError>)>> {
+    preceded(tag("."),
+             preceded(tag("ktext"),
+                      opt(preceded(space1,
+                                   alt((parse_hex_int64, parse_dec_int64))
+                                   )
+                          )
+                      )
+             )(input)
+}
+
