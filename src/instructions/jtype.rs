@@ -56,7 +56,7 @@ impl JType {
 impl From<u32> for JType {
     fn from(n: u32) -> JType {
         let opcode = JInst::from(n >> 26);
-        let addr = Imm::Address(n & 0x3FFFFFF);
+        let addr = Imm::Address(n & 0x3FF_FFFF);
         JType::new(opcode, addr)
     }
 }
