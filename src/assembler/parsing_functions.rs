@@ -323,3 +323,13 @@ pub fn j_label(input: &str) -> IResult<&str, (&str, &str)> {
     pair(terminated(j_mnemonic, space1), label)(input)
 }
 
+pub fn directive_align(input: &str) -> IResult<&str, (Option<&str>, Result<i64, ParseIntError>)> {
+    preceded(tag("."),
+             preceded(tag("align"),
+                      preceded(space1,
+                               alt((parse_hex_int64, parse_dec_int64))
+                               )
+                      )
+             )(input)
+}
+
