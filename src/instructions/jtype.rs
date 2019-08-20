@@ -1,5 +1,5 @@
 //use crate::machine::state::State;
-use crate::machine::register::Reg;
+
 use crate::machine::immediate::Imm;
 
 #[derive(Copy, Clone, Debug)]
