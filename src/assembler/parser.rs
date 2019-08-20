@@ -129,10 +129,18 @@ pub fn parse(program: &str) -> Parsed {
             continue;
         }
         let ret: String;
-        // pretend we got a .text directive
-        match parse_text_segment(&mut parsed, &mut lines) {
-            Some(l) => ret = l,
-            None => continue,
+        let addr: i64;
+        if let Ok((_, Some(imm))) = directive_text(line) {
+            match i_extract_imm(imm) {
+                Some(x) => addr = x,
+                None => continue,
+            }
+            match parse_text_segment(&mut parsed, &mut lines) {
+                Some(l) => ret = l,
+                None => continue,
+            }
+        } else {
+            continue;
         }
         line = ret.trim();
     }
