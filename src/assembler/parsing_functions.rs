@@ -373,3 +373,15 @@ pub fn directive_data(input: &str) -> IResult<&str, Option<(Option<&str>, Result
              )(input)
 }
 
+pub fn directive_half(input: &str) -> IResult<&str, Vec<(Option<&str>, Result<i32, ParseIntError>)>> {
+    preceded(tag("."),
+             preceded(tag("half"),
+                      preceded(space0,
+                               separated_nonempty_list(pair(tag(","), space0),
+                                                       alt((parse_hex_int32, parse_dec_int32))
+                                                       )
+                               )
+                      )
+             )(input)
+}
+
