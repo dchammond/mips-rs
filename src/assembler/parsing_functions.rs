@@ -353,7 +353,7 @@ pub fn directive_asciiz(input: &str) -> IResult<&str, &str> {
 pub fn directive_byte(input: &str) -> IResult<&str, Vec<(Option<&str>, Result<i16, ParseIntError>)>> {
     preceded(tag("."),
              preceded(tag("byte"),
-                      preceded(space0,
+                      preceded(space1,
                                separated_nonempty_list(pair(tag(","), space0),
                                                        alt((parse_hex_int16, parse_dec_int16))
                                                        )
@@ -376,7 +376,7 @@ pub fn directive_data(input: &str) -> IResult<&str, Option<(Option<&str>, Result
 pub fn directive_half(input: &str) -> IResult<&str, Vec<(Option<&str>, Result<i32, ParseIntError>)>> {
     preceded(tag("."),
              preceded(tag("half"),
-                      preceded(space0,
+                      preceded(space1,
                                separated_nonempty_list(pair(tag(","), space0),
                                                        alt((parse_hex_int32, parse_dec_int32))
                                                        )
@@ -403,6 +403,39 @@ pub fn directive_ktext(input: &str) -> IResult<&str, Option<(Option<&str>, Resul
                                    alt((parse_hex_int64, parse_dec_int64))
                                    )
                           )
+                      )
+             )(input)
+}
+
+pub fn directive_space(input: &str) -> IResult<&str, (Option<&str>, Result<i64, ParseIntError>)> {
+    preceded(tag("."),
+             preceded(tag("space"),
+                      preceded(space1,
+                               alt((parse_hex_int64, parse_dec_int64))
+                               )
+                      )
+             )(input)
+}
+
+pub fn directive_text(input: &str) -> IResult<&str, Option<(Option<&str>, Result<i64, ParseIntError>)>> {
+    preceded(tag("."),
+             preceded(tag("text"),
+                      opt(preceded(space1,
+                                   alt((parse_hex_int64, parse_dec_int64))
+                                   )
+                          )
+                      )
+             )(input)
+}
+
+pub fn directive_word(input: &str) -> IResult<&str, Vec<(Option<&str>, Result<i64, ParseIntError>)>> {
+    preceded(tag("."),
+             preceded(tag("word"),
+                      preceded(space1,
+                               separated_nonempty_list(pair(tag(","), space0),
+                                                       alt((parse_hex_int64, parse_dec_int64))
+                                                       )
+                               )
                       )
              )(input)
 }
