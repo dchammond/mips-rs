@@ -107,7 +107,7 @@ impl From<RType> for u32 {
         x |= u32::from(r.rs) << 21;
         x |= u32::from(r.rt) << 16;
         x |= u32::from(r.rd) << 11;
-        x |= (r.shamt as u32) << 6;
+        x |= u32::from(r.shamt) << 6;
         x |= u32::from(r.funct);
         x
     }
