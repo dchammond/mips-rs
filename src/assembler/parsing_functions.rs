@@ -340,4 +340,12 @@ pub fn directive_ascii(input: &str) -> IResult<&str, &str> {
                       )
              )(input)
 }
- 
+
+pub fn directive_asciiz(input: &str) -> IResult<&str, &str> {
+    preceded(tag("."),
+             preceded(tag("asciiz"),
+                      preceded(space1, not_line_ending)
+                      )
+             )(input)
+}
+
