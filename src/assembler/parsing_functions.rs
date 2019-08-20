@@ -14,6 +14,7 @@ use nom::{IResult,
                      tuple,
                      preceded,
                      terminated},
+          multi::{separated_nonempty_list},
 };
 
 use std::str::FromStr;
@@ -347,5 +348,11 @@ pub fn directive_asciiz(input: &str) -> IResult<&str, &str> {
                       preceded(space1, not_line_ending)
                       )
              )(input)
+}
+
+pub fn directive_byte(input: &str) -> IResult<&str, Vec<(Option<&str>, Result<i16, ParseIntError>)>> {
+    separated_nonempty_list(pair(tag(","), space0),
+                            alt((parse_hex_int16, parse_dec_int16))
+                            )(input)
 }
 
