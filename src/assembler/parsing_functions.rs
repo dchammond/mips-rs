@@ -356,3 +356,14 @@ pub fn directive_byte(input: &str) -> IResult<&str, Vec<(Option<&str>, Result<i1
                             )(input)
 }
 
+pub fn directive_data(input: &str) -> IResult<&str, Option<(Option<&str>, Result<i64, ParseIntError>)>> {
+    preceded(tag("."),
+             preceded(tag("data"),
+                      opt(preceded(space1,
+                                   alt((parse_hex_int64, parse_dec_int64))
+                                   )
+                          )
+                      )
+             )(input)
+}
+
