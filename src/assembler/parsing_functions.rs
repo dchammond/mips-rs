@@ -351,9 +351,15 @@ pub fn directive_asciiz(input: &str) -> IResult<&str, &str> {
 }
 
 pub fn directive_byte(input: &str) -> IResult<&str, Vec<(Option<&str>, Result<i16, ParseIntError>)>> {
-    separated_nonempty_list(pair(tag(","), space0),
-                            alt((parse_hex_int16, parse_dec_int16))
-                            )(input)
+    preceded(tag("."),
+             preceded(tag("byte"),
+                      preceded(space0,
+                               separated_nonempty_list(pair(tag(","), space0),
+                                                       alt((parse_hex_int16, parse_dec_int16))
+                                                       )
+                               )
+                      )
+             )(input)
 }
 
 pub fn directive_data(input: &str) -> IResult<&str, Option<(Option<&str>, Result<i64, ParseIntError>)>> {
