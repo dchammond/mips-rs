@@ -333,3 +333,11 @@ pub fn directive_align(input: &str) -> IResult<&str, (Option<&str>, Result<i64, 
              )(input)
 }
 
+pub fn directive_ascii(input: &str) -> IResult<&str, &str> {
+    preceded(tag("."),
+             preceded(tag("ascii"),
+                      preceded(space1, not_line_ending)
+                      )
+             )(input)
+}
+ 
