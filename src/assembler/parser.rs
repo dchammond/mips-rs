@@ -122,7 +122,7 @@ fn parse_text_segment(parsed: &mut Parsed, lines: &mut Lines) -> Option<String> 
 
 pub fn parse(program: &str) -> Parsed {
     let mut parsed = Parsed::new();
-    let mut lines: Lines = program.lines();
+    let mut lines = program.lines();
     while let Some(line) = lines.next() {
         let mut line = line.trim();
         if line.is_empty() || entire_line_is_comment(line) {
