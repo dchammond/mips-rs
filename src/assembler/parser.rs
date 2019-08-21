@@ -11,8 +11,31 @@ use crate::machine::register::Reg;
 use crate::machine::immediate::Imm;
 
 #[derive(Clone, Debug)]
+pub struct Address {
+    pub numeric: u32,
+    pub label: Option<String>,
+}
+
+impl Address {
+    pub fn new(numeric: u32, label: Option<String>) -> Address {
+        Address {numeric, label}
+    }
+}
+
+#[derive(Clone, Debug)]
+pub struct TextSegment {
+    pub instructions: Vec<(Address, Inst)>,
+}
+
+impl TextSegment {
+    pub fn new() -> TextSegment {
+        TextSegment {instructions: Vec::new()}
+    }
+}
+
+#[derive(Clone, Debug)]
 pub struct Parsed {
-    pub text_segment: Vec<Inst>,
+    pub text_segment: Vec<TextSegment>,
 }
 
 impl Parsed {
