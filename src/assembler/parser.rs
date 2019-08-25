@@ -1,6 +1,6 @@
 use std::str::Lines;
 use std::vec::Vec;
-use std::num::ParseIntError;
+use std::num::{ParseIntError, NonZeroU32};
 
 use crate::assembler::parsing_functions::*;
 use crate::instructions::itype::*;
@@ -12,12 +12,12 @@ use crate::machine::immediate::Imm;
 
 #[derive(Clone, Debug)]
 pub struct Address {
-    pub numeric: u32,
+    pub numeric: Option<NonZeroU32>,
     pub label: Option<String>,
 }
 
 impl Address {
-    pub fn new(numeric: u32, label: Option<String>) -> Address {
+    pub fn new(numeric: Option<NonZeroU32>, label: Option<String>) -> Address {
         Address {numeric, label}
     }
 }
@@ -29,7 +29,15 @@ pub struct TextSegment {
 
 impl TextSegment {
     pub fn new() -> TextSegment {
-        TextSegment {instructions: Vec::new(), start_address: None}
+        TextSegment {instructions: Vec::new()}
+    }
+
+    pub fn push_instruction(&mut self, inst: Inst) {
+        self.instructions.push((Address::new(None, None), inst));
+    }
+
+    pub fn push_addressed_instruction(&mut self, addr: Address, inst: Inst) {
+        self.instructions.push((addr, inst));
     }
 }
 
@@ -66,7 +74,7 @@ fn parse_text_segment(parsed: &mut Parsed, lines: &mut Lines) -> Option<String> 
         }
         // for now assume this line will not be directive
         if let Ok((_, (inst, rd, rs, rt))) = r_arithmetic(line) {
-            text_segment.instructions.push(RType::new(RInst::from(inst), Reg::from(rs), Reg::from(rt), Reg::from(rd), 0).into());
+            text_segment.push_instruction(RType::new(RInst::from(inst), Reg::from(rs), Reg::from(rt), Reg::from(rd), 0).into());
             continue;
         }
         if let Ok((_, (inst, rd, rt, shamt))) = r_shift(line) {
@@ -79,11 +87,11 @@ fn parse_text_segment(parsed: &mut Parsed, lines: &mut Lines) -> Option<String> 
                 Ok(i) => i as u8,
                 Err(p) => panic!("Unable to parse shift amount: {} because {}", line, p),
             };
-            text_segment.instructions.push(RType::new(RInst::from(inst), Reg::zero, Reg::from(rt), Reg::from(rd), shamt_int).into());
+            text_segment.push_instruction(RType::new(RInst::from(inst), Reg::zero, Reg::from(rt), Reg::from(rd), shamt_int).into());
             continue;
         }
         if let Ok((_, (inst, rs))) = r_jump(line) {
-            text_segment.instructions.push(RType::new(RInst::from(inst), Reg::from(rs), Reg::zero, Reg::zero, 0).into());
+            text_segment.push_instruction(RType::new(RInst::from(inst), Reg::from(rs), Reg::zero, Reg::zero, 0).into());
             continue;
         }
         if let Ok((_, (inst, rt, rs, imm))) = i_arith(line) {
@@ -91,7 +99,7 @@ fn parse_text_segment(parsed: &mut Parsed, lines: &mut Lines) -> Option<String> 
                 Some(i) => i,
                 None => panic!("Unable to parse immediate: {}", line),
             };
-            text_segment.instructions.push(IType::new(IInst::from(inst), Reg::from(rs), Reg::from(rt), Imm::from(imm_int as u64)).into());
+            text_segment.push_instruction(IType::new(IInst::from(inst), Reg::from(rs), Reg::from(rt), Imm::from(imm_int as u64)).into());
             continue;
         }
         if let Ok((_, (inst, rt, rs, imm))) = i_branch_imm(line) {
@@ -99,12 +107,12 @@ fn parse_text_segment(parsed: &mut Parsed, lines: &mut Lines) -> Option<String> 
                 Some(i) => i,
                 None => panic!("Unable to parse immediate: {}", line),
             };
-            text_segment.instructions.push(IType::new(IInst::from(inst), Reg::from(rs), Reg::from(rt), Imm::from(imm_int as u64)).into());
+            text_segment.push_instruction(IType::new(IInst::from(inst), Reg::from(rs), Reg::from(rt), Imm::from(imm_int as u64)).into());
             continue;
         }
         if let Ok((_, (inst, rt, rs, label))) = i_branch_label(line) {
             let _ = label; // TODO: convert label to number
-            text_segment.instructions.push(IType::new(IInst::from(inst), Reg::from(rs), Reg::from(rt), Imm::from(0u64)).into());
+            text_segment.push_instruction(IType::new(IInst::from(inst), Reg::from(rs), Reg::from(rt), Imm::from(0u64)).into());
             continue;
         }
         if let Ok((_, (inst, rt, imm, rs))) = i_mem_imm(line) {
@@ -112,12 +120,12 @@ fn parse_text_segment(parsed: &mut Parsed, lines: &mut Lines) -> Option<String> 
                 Some(i) => i,
                 None => panic!("Unable to parse immediate: {}", line),
             };
-            text_segment.instructions.push(IType::new(IInst::from(inst), Reg::from(rs), Reg::from(rt), Imm::from(imm_int as u64)).into());
+            text_segment.push_instruction(IType::new(IInst::from(inst), Reg::from(rs), Reg::from(rt), Imm::from(imm_int as u64)).into());
             continue;
         }
         if let Ok((_, (inst, rt, label, rs))) = i_mem_label(line) {
             let _ = label; // TODO: convert label to number
-            text_segment.instructions.push(IType::new(IInst::from(inst), Reg::from(rs), Reg::from(rt), Imm::from(0u64)).into());
+            text_segment.push_instruction(IType::new(IInst::from(inst), Reg::from(rs), Reg::from(rt), Imm::from(0u64)).into());
             continue;
         }
         if let Ok((_, (inst, rt, imm))) = i_load_imm(line) {
@@ -125,17 +133,17 @@ fn parse_text_segment(parsed: &mut Parsed, lines: &mut Lines) -> Option<String> 
                 Some(i) => i,
                 None => panic!("Unable to parse immediate: {}", line),
             };
-            text_segment.instructions.push(IType::new(IInst::from(inst), Reg::zero, Reg::from(rt), Imm::from(imm_int as u64)).into());
+            text_segment.push_instruction(IType::new(IInst::from(inst), Reg::zero, Reg::from(rt), Imm::from(imm_int as u64)).into());
             continue;
         }
         if let Ok((_, (inst, rt, label))) = i_load_label(line) {
             let _ = label; // TODO: convert label to number
-            text_segment.instructions.push(IType::new(IInst::from(inst), Reg::zero, Reg::from(rt), Imm::from(0u64)).into());
+            text_segment.push_instruction(IType::new(IInst::from(inst), Reg::zero, Reg::from(rt), Imm::from(0u64)).into());
             continue;
         }
         if let Ok((_, (inst, label))) = j_label(line) {
             let _ = label; // TODO: convert label to number
-            text_segment.instructions.push(JType::new(JInst::from(inst), Imm::from(0u64)).into());
+            text_segment.push_instruction(JType::new(JInst::from(inst), Imm::from(0u64)).into());
             continue;
         }
         panic!("Uknown line in text section: {}", line);
