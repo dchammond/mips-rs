@@ -24,20 +24,21 @@ impl Address {
 
 #[derive(Clone, Debug)]
 pub struct TextSegment {
-    pub instructions: Vec<(Address, Inst)>,
+    pub instructions: Vec<(Option<Address>, Inst)>,
+    pub start_address: Option<Address>,
 }
 
 impl TextSegment {
     pub fn new() -> TextSegment {
-        TextSegment {instructions: Vec::new()}
+        TextSegment {instructions: Vec::new(), start_address: None}
     }
 
     pub fn push_instruction(&mut self, inst: Inst) {
-        self.instructions.push((Address::new(None, None), inst));
+        self.instructions.push((None, inst));
     }
 
     pub fn push_addressed_instruction(&mut self, addr: Address, inst: Inst) {
-        self.instructions.push((addr, inst));
+        self.instructions.push((Some(addr), inst));
     }
 }
 
@@ -65,8 +66,7 @@ fn i_extract_imm(imm: (Option<&str>, Result<i64, ParseIntError>)) -> Option<i64>
     Some(imm_int)
 }
 
-fn parse_text_segment(parsed: &mut Parsed, lines: &mut Lines) -> Option<String> {
-    let mut text_segment = TextSegment::new();
+fn parse_text_segment(lines: &mut Lines, text_segment: &mut TextSegment) -> Option<String> {
     for line in lines {
         let line = line.trim();
         if line.is_empty() || entire_line_is_comment(line) {
@@ -148,9 +148,6 @@ fn parse_text_segment(parsed: &mut Parsed, lines: &mut Lines) -> Option<String> 
         }
         panic!("Uknown line in text section: {}", line);
     }
-    if text_segment.instructions.len() > 0 {
-        parsed.text_segment.push(text_segment);
-    }
     None
 }
 
@@ -158,22 +155,28 @@ pub fn parse(program: &str) -> Parsed {
     let mut parsed = Parsed::new();
     let mut lines = program.lines();
     while let Some(line) = lines.next() {
+        // restructure this loop. the common case is that a directive parse function will return a line for a new section
+        // when a directive function does _not_ return a line, we are at the end of a well-formed program
         let mut line = line.trim();
         if line.is_empty() || entire_line_is_comment(line) {
             continue;
         }
         let ret: String;
-        let addr: i64;
         if let Ok((_, Some(imm))) = directive_text(line) {
-            match i_extract_imm(imm) {
-                Some(x) => addr = x,
-                None => continue,
-            }
             let mut text_segment = TextSegment::new();
 
-            match parse_text_segment(&mut parsed, &mut lines) {
+            match i_extract_imm(imm) {
+                Some(i) => text_segment.start_address = Some(Address::new(NonZeroU32::new(i as u32), None)),
+                None => (),
+            }
+
+            match parse_text_segment(&mut lines, &mut text_segment) {
                 Some(l) => ret = l,
-                None => continue,
+                None => (),
+            }
+            
+            if text_segment.instructions.len() > 0 {
+                parsed.text_segment.push(text_segment);
             }
         } else {
             continue;
