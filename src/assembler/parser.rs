@@ -154,15 +154,19 @@ fn parse_text_segment(lines: &mut Lines, text_segment: &mut TextSegment) -> Opti
 pub fn parse(program: &str) -> Parsed {
     let mut parsed = Parsed::new();
     let mut lines = program.lines();
-    while let Some(line) = lines.next() {
-        // restructure this loop. the common case is that a directive parse function will return a line for a new section
-        // when a directive function does _not_ return a line, we are at the end of a well-formed program
-        let mut line = line.trim();
-        if line.is_empty() || entire_line_is_comment(line) {
+
+    let mut line: String;
+    match lines.next() {
+        Some(l) => line = l.to_string(),
+        None => return parsed,
+    }
+
+    loop {
+        line = line.trim().to_string();
+        if line.is_empty() || entire_line_is_comment(&line) {
             continue;
         }
-        let ret: String;
-        if let Ok((_, Some(imm))) = directive_text(line) {
+        if let Ok((_, Some(imm))) = directive_text(&line) {
             let mut text_segment = TextSegment::new();
 
             match i_extract_imm(imm) {
@@ -171,17 +175,16 @@ pub fn parse(program: &str) -> Parsed {
             }
 
             match parse_text_segment(&mut lines, &mut text_segment) {
-                Some(l) => ret = l,
-                None => (),
+                Some(l) => line = l,
+                None => break,
             }
             
             if text_segment.instructions.len() > 0 {
                 parsed.text_segment.push(text_segment);
             }
-        } else {
+
             continue;
         }
-        line = ret.trim();
     }
     parsed
 }
