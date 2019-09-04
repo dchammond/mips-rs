@@ -162,11 +162,11 @@ pub fn parse(program: &str) -> Parsed {
     }
 
     loop {
-        line = line.trim().to_string();
-        if line.is_empty() || entire_line_is_comment(&line) {
+        let trim = line.trim();
+        if trim.is_empty() || entire_line_is_comment(trim) {
             continue;
         }
-        if let Ok((_, Some(imm))) = directive_text(&line) {
+        if let Ok((_, Some(imm))) = directive_text(trim) {
             let mut text_segment = TextSegment::new();
 
             match i_extract_imm(imm) {
