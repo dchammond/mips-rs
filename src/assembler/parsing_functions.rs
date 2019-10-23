@@ -324,7 +324,9 @@ pub fn j_label(input: &str) -> IResult<&str, (&str, &str)> {
     pair(terminated(j_mnemonic, space1), label)(input)
 }
 
-pub fn directive_align(input: &str) -> IResult<&str, (Option<&str>, Result<i64, ParseIntError>)> {
+pub type DirectiveAlignResult<'a> = IResult<&'a str, (Option<&'a str>, Result<i64, ParseIntError>)>;
+
+pub fn directive_align<'a>(input: &'a str) -> DirectiveAlignResult {
     preceded(tag("."),
              preceded(tag("align"),
                       preceded(space1,
@@ -334,7 +336,9 @@ pub fn directive_align(input: &str) -> IResult<&str, (Option<&str>, Result<i64, 
              )(input)
 }
 
-pub fn directive_ascii(input: &str) -> IResult<&str, &str> {
+pub type DirectiveAsciiResult<'a> = IResult<&'a str, &'a str>;
+
+pub fn directive_ascii<'a>(input: &'a str) -> DirectiveAsciiResult {
     preceded(tag("."),
              preceded(tag("ascii"),
                       preceded(space1, not_line_ending)
@@ -342,7 +346,9 @@ pub fn directive_ascii(input: &str) -> IResult<&str, &str> {
              )(input)
 }
 
-pub fn directive_asciiz(input: &str) -> IResult<&str, &str> {
+pub type DirectiveAsciizResult<'a> = IResult<&'a str, &'a str>;
+
+pub fn directive_asciiz<'a>(input: &'a str) -> DirectiveAsciizResult {
     preceded(tag("."),
              preceded(tag("asciiz"),
                       preceded(space1, not_line_ending)
@@ -350,7 +356,9 @@ pub fn directive_asciiz(input: &str) -> IResult<&str, &str> {
              )(input)
 }
 
-pub fn directive_byte(input: &str) -> IResult<&str, Vec<(Option<&str>, Result<i16, ParseIntError>)>> {
+pub type DirectiveByteResult<'a> = IResult<&'a str, Vec<(Option<&'a str>, Result<i16, ParseIntError>)>>;
+
+pub fn directive_byte<'a>(input: &'a str) -> DirectiveByteResult {
     preceded(tag("."),
              preceded(tag("byte"),
                       preceded(space1,
@@ -362,7 +370,9 @@ pub fn directive_byte(input: &str) -> IResult<&str, Vec<(Option<&str>, Result<i1
              )(input)
 }
 
-pub fn directive_data(input: &str) -> IResult<&str, Option<(Option<&str>, Result<i64, ParseIntError>)>> {
+pub type DirectiveDataResult<'a> = IResult<&'a str, Option<(Option<&'a str>, Result<i64, ParseIntError>)>>;
+
+pub fn directive_data<'a>(input: &'a str) -> DirectiveDataResult {
     preceded(tag("."),
              preceded(tag("data"),
                       opt(preceded(space1,
@@ -373,7 +383,9 @@ pub fn directive_data(input: &str) -> IResult<&str, Option<(Option<&str>, Result
              )(input)
 }
 
-pub fn directive_half(input: &str) -> IResult<&str, Vec<(Option<&str>, Result<i32, ParseIntError>)>> {
+pub type DirectiveHalfResult<'a> = IResult<&'a str, Vec<(Option<&'a str>, Result<i32, ParseIntError>)>>;
+
+pub fn directive_half<'a>(input: &'a str) -> DirectiveHalfResult {
     preceded(tag("."),
              preceded(tag("half"),
                       preceded(space1,
@@ -385,7 +397,9 @@ pub fn directive_half(input: &str) -> IResult<&str, Vec<(Option<&str>, Result<i3
              )(input)
 }
 
-pub fn directive_kdata(input: &str) -> IResult<&str, Option<(Option<&str>, Result<i64, ParseIntError>)>> {
+pub type DirectiveKDataResult<'a> = IResult<&'a str, Option<(Option<&'a str>, Result<i64, ParseIntError>)>>;
+
+pub fn directive_kdata<'a>(input: &'a str) -> DirectiveKDataResult {
     preceded(tag("."),
              preceded(tag("kdata"),
                       opt(preceded(space1,
@@ -396,7 +410,9 @@ pub fn directive_kdata(input: &str) -> IResult<&str, Option<(Option<&str>, Resul
              )(input)
 }
 
-pub fn directive_ktext(input: &str) -> IResult<&str, Option<(Option<&str>, Result<i64, ParseIntError>)>> {
+pub type DirectiveKTextResult<'a>= IResult<&'a str, Option<(Option<&'a str>, Result<i64, ParseIntError>)>>;
+
+pub fn directive_ktext<'a>(input: &'a str) -> DirectiveKTextResult {
     preceded(tag("."),
              preceded(tag("ktext"),
                       opt(preceded(space1,
@@ -407,7 +423,9 @@ pub fn directive_ktext(input: &str) -> IResult<&str, Option<(Option<&str>, Resul
              )(input)
 }
 
-pub fn directive_space(input: &str) -> IResult<&str, (Option<&str>, Result<i64, ParseIntError>)> {
+pub type DirectiveSpaceResult<'a> = IResult<&'a str, (Option<&'a str>, Result<i64, ParseIntError>)>;
+
+pub fn directive_space<'a>(input: &'a str) -> DirectiveSpaceResult {
     preceded(tag("."),
              preceded(tag("space"),
                       preceded(space1,
@@ -417,7 +435,9 @@ pub fn directive_space(input: &str) -> IResult<&str, (Option<&str>, Result<i64, 
              )(input)
 }
 
-pub fn directive_text(input: &str) -> IResult<&str, Option<(Option<&str>, Result<i64, ParseIntError>)>> {
+pub type DirectiveTextResult<'a> = IResult<&'a str, Option<(Option<&'a str>, Result<i64, ParseIntError>)>>;
+
+pub fn directive_text<'a>(input: &'a str) -> DirectiveTextResult {
     preceded(tag("."),
              preceded(tag("text"),
                       opt(preceded(space1,
@@ -428,7 +448,9 @@ pub fn directive_text(input: &str) -> IResult<&str, Option<(Option<&str>, Result
              )(input)
 }
 
-pub fn directive_word(input: &str) -> IResult<&str, Vec<(Option<&str>, Result<i64, ParseIntError>)>> {
+pub type DirectiveWordResult<'a> = IResult<&'a str, Vec<(Option<&'a str>, Result<i64, ParseIntError>)>>;
+
+pub fn directive_word<'a>(input: &'a str) -> DirectiveWordResult {
     preceded(tag("."),
              preceded(tag("word"),
                       preceded(space1,
@@ -438,5 +460,19 @@ pub fn directive_word(input: &str) -> IResult<&str, Vec<(Option<&str>, Result<i6
                                )
                       )
              )(input)
+}
+
+pub enum ParsedDirective<'a> {
+    Align(DirectiveAlignResult<'a>),
+    Ascii(DirectiveAsciiResult<'a>),
+    Asciiz(DirectiveAsciizResult<'a>),
+    Byte(DirectiveByteResult<'a>),
+    Data(DirectiveDataResult<'a>),
+    Half(DirectiveHalfResult<'a>),
+    KData(DirectiveKDataResult<'a>),
+    KText(DirectiveKTextResult<'a>),
+    Space(DirectiveSpaceResult<'a>),
+    Text(DirectiveTextResult<'a>),
+    Word(DirectiveWordResult<'a>),
 }
 
