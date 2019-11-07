@@ -1,3 +1,5 @@
+#![allow(dead_code)]
+
 use std::str::Lines;
 use std::vec::Vec;
 use std::num::{ParseIntError, NonZeroU32};
@@ -64,6 +66,50 @@ fn i_extract_imm(imm: (Option<&str>, Result<i64, ParseIntError>)) -> Option<i64>
         }
     };
     Some(imm_int)
+}
+
+fn parse_directive<'a>(lines: &'a mut Lines) -> Option<ParsedDirective<'a>> {
+    for line in lines {
+        let line = line.trim();
+        if line.is_empty() || entire_line_is_comment(line) {
+            continue;
+        }
+        if let Ok(align) = directive_align(line) {
+            return Some(ParsedDirective::Align(Ok(align)));
+        }
+        if let Ok(ascii) = directive_ascii(line) {
+            return Some(ParsedDirective::Ascii(Ok(ascii)));
+        }
+        if let Ok(asciiz) = directive_asciiz(line) {
+            return Some(ParsedDirective::Asciiz(Ok(asciiz)));
+        }
+        if let Ok(byte) = directive_byte(line) {
+            return Some(ParsedDirective::Byte(Ok(byte)));
+        }
+        if let Ok(data) = directive_data(line) {
+            return Some(ParsedDirective::Data(Ok(data)));
+        }
+        if let Ok(half) = directive_half(line) {
+            return Some(ParsedDirective::Half(Ok(half)));
+        }
+        if let Ok(kdata) = directive_kdata(line) {
+            return Some(ParsedDirective::KData(Ok(kdata)));
+        }
+        if let Ok(ktext) = directive_ktext(line) {
+            return Some(ParsedDirective::KText(Ok(ktext)));
+        }
+        if let Ok(space) = directive_space(line) {
+            return Some(ParsedDirective::Space(Ok(space)));
+        }
+        if let Ok(text) = directive_text(line) {
+            return Some(ParsedDirective::Text(Ok(text)));
+        }
+        if let Ok(word) = directive_word(line) {
+            return Some(ParsedDirective::Word(Ok(word)));
+        }
+        return None;
+    }
+    None
 }
 
 fn parse_text_segment(lines: &mut Lines, text_segment: &mut TextSegment) -> Option<String> {
@@ -166,24 +212,28 @@ pub fn parse(program: &str) -> Parsed {
         if trim.is_empty() || entire_line_is_comment(trim) {
             continue;
         }
-        if let Ok((_, Some(imm))) = directive_text(trim) {
-            let mut text_segment = TextSegment::new();
+        match parse_directive(&mut lines) {
+            Some(ParsedDirective::Text(Ok((_, Some(imm))))) => {
+                let mut text_segment = TextSegment::new();
 
-            match i_extract_imm(imm) {
-                Some(i) => text_segment.start_address = Some(Address::new(NonZeroU32::new(i as u32), None)),
-                None => (),
-            }
+                match i_extract_imm(imm) {
+                    Some(i) => text_segment.start_address = Some(Address::new(NonZeroU32::new(i as u32), None)),
+                    None => (),
+                }
 
-            match parse_text_segment(&mut lines, &mut text_segment) {
-                Some(l) => line = l,
-                None => break,
-            }
-            
-            if text_segment.instructions.len() > 0 {
-                parsed.text_segment.push(text_segment);
-            }
+                match parse_text_segment(&mut lines, &mut text_segment) {
+                    Some(l) => line = l,
+                    None => break,
+                }
+                
+                if text_segment.instructions.len() > 0 {
+                    parsed.text_segment.push(text_segment);
+                }
 
-            continue;
+                continue;
+            },
+            None => panic!("Expected a directive"),
+            _ => unimplemented!(),
         }
     }
     parsed
