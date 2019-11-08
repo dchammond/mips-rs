@@ -337,12 +337,26 @@ fn parse_data_segment(lines: &mut Lines, data_segment: &mut DataSegment) -> Opti
             continue;
         }
         if let Ok((_, bytes)) = directive_byte(line) {
+            let addr = match current_label {
+                Some(s) => {
+                    current_label = None;
+                    Some(Address::new(None, Some(s)))
+                },
+                None => None
+            };
+            let mut byte_vec = Vec::new();
             for entry in bytes {
                 let imm = match i_extract_imm(entry) {
                     Some(b) => b as u8,
                     None => panic!("Syntax error in byte directive: {}", line)
                 };
+                byte_vec.push(imm);
             }
+            let data_bytes = DataBytes {
+                bytes: (addr, byte_vec)
+            };
+            data_segment.data_entries.push(DataEntry::Bytes(data_bytes));
+            continue;
         }
         // it may be a new directive
         return Some(line.to_owned());
