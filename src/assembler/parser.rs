@@ -499,7 +499,7 @@ pub fn parse(program: &str) -> Parsed {
                     None => break,
                 }
             },
-            Some(_) => panic!("Unexpected Directive"),
+            Some(_) => panic!("Unexpected Directive: {}", line),
             None => break,
         }
     }
