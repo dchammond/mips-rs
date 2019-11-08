@@ -402,6 +402,24 @@ fn parse_data_segment(lines: &mut Lines, data_segment: &mut DataSegment) -> Opti
             data_segment.data_entries.push(DataEntry::Words(data_words));
             continue;
         }
+        if let Ok((_, imm)) = directive_space(line) {
+            let addr = match current_label {
+                Some(s) => {
+                    current_label = None;
+                    Some(Address::new(None, Some(s)))
+                },
+                None => None
+            };
+            let imm = match i_extract_imm(imm) {
+                Some(i) => i as u32,
+                None => panic!("Expected amount of space after space directive: {}", line)
+            };
+            let data_space = DataSpace {
+                spaces: (addr, vec![0; imm as usize])
+            };
+            data_segment.data_entries.push(DataEntry::Space(data_space));
+            continue;
+        }
         // it may be a new directive
         return Some(line.to_owned());
     }
