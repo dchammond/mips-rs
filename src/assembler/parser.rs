@@ -118,7 +118,6 @@ fn parse_text_segment(lines: &mut Lines, text_segment: &mut TextSegment) -> Opti
         if line.is_empty() || entire_line_is_comment(line) {
             return Some(line.to_owned());
         }
-        // for now assume this line will not be directive
         if let Ok((_, (inst, rd, rs, rt))) = r_arithmetic(line) {
             text_segment.push_instruction(RType::new(RInst::from(inst), Reg::from(rs), Reg::from(rt), Reg::from(rd), 0).into());
             continue;
@@ -229,11 +228,9 @@ pub fn parse(program: &str) -> Parsed {
                 if text_segment.instructions.len() > 0 {
                     parsed.text_segment.push(text_segment);
                 }
-
-                continue;
             },
-            None => panic!("Expected a directive"),
-            _ => unimplemented!(),
+            Some(_) => unimplemented!(),
+            None => break,
         }
     }
     parsed
