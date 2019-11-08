@@ -98,6 +98,19 @@ pub struct DataSegment {
     pub data_entries: Vec<DataEntry>
 }
 
+#[derive(Clone, Debug)]
+pub struct KDataSegment {
+    pub data_entries: Vec<DataEntry>
+}
+
+impl From<DataSegment> for KDataSegment {
+    fn from(d: DataSegment) -> Self {
+        KDataSegment {
+            data_entries: d.data_entries
+        }
+    }
+}
+
 #[derive(Clone, Debug, Default)]
 pub struct Parsed {
     pub text_segment: Vec<TextSegment>,
