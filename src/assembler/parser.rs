@@ -59,6 +59,45 @@ impl From<TextSegment> for KTextSegment {
     }
 }
 
+#[derive(Clone, Debug)]
+pub struct DataCString {
+    pub chars: (Option<Address>, Vec<u8>)
+}
+
+#[derive(Clone, Debug)]
+pub struct DataBytes {
+    pub bytes: (Option<Address>, Vec<u8>)
+}
+
+#[derive(Clone, Debug)]
+pub struct DataHalfs {
+    pub halfs: (Option<Address>, Vec<u16>)
+}
+
+#[derive(Clone, Debug)]
+pub struct DataWords {
+    pub words: (Option<Address>, Vec<u32>)
+}
+
+#[derive(Clone, Debug)]
+pub struct DataSpace {
+    pub spaces: (Option<Address>, Vec<u8>)
+}
+
+#[derive(Clone, Debug)]
+pub enum DataEntry {
+    CString(DataCString),
+    Bytes(DataBytes),
+    Halfs(DataHalfs),
+    Words(DataWords),
+    Space(DataSpace),
+}
+
+#[derive(Clone, Debug)]
+pub struct DataSegment {
+    pub data_entries: Vec<DataEntry>
+}
+
 #[derive(Clone, Debug, Default)]
 pub struct Parsed {
     pub text_segment: Vec<TextSegment>,
