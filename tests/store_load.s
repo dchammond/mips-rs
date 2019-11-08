@@ -1,7 +1,8 @@
 # Basic lw and beq tests
 
 .data
-array:  .word   1,  255,    1024,   0xcafebabe
+array:
+.word   1,  255,    1024,   0xcafebabe
 
 .text
 main:   
