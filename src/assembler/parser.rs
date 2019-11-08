@@ -45,14 +45,24 @@ impl TextSegment {
 }
 
 #[derive(Clone, Debug)]
-pub struct Parsed {
-    pub text_segment: Vec<TextSegment>,
+pub struct KTextSegment {
+    pub instructions: Vec<(Option<Address>, Inst)>,
+    pub start_address: Option<Address>,
 }
 
-impl Parsed {
-    pub fn new() -> Parsed {
-        Parsed {text_segment: Vec::new()}
+impl From<TextSegment> for KTextSegment {
+    fn from(t: TextSegment) -> Self {
+        KTextSegment {
+            instructions: t.instructions,
+            start_address: t.start_address,
+        }
     }
+}
+
+#[derive(Clone, Debug, Default)]
+pub struct Parsed {
+    pub text_segment: Vec<TextSegment>,
+    pub ktext_segment: Vec<KTextSegment>,
 }
 
 fn i_extract_imm(imm: (Option<&str>, Result<i64, ParseIntError>)) -> Option<i64> {
@@ -198,7 +208,7 @@ fn parse_text_segment(lines: &mut Lines, text_segment: &mut TextSegment) -> Opti
 }
 
 pub fn parse(program: &str) -> Parsed {
-    let mut parsed = Parsed::new();
+    let mut parsed = Parsed::default();
     let mut lines = program.lines();
 
     let mut line: String;
@@ -228,6 +238,23 @@ pub fn parse(program: &str) -> Parsed {
                 
                 if text_segment.instructions.len() > 0 {
                     parsed.text_segment.push(text_segment);
+                }
+            },
+            Some(ParsedDirective::KText(Ok((_, Some(imm))))) => {
+                let mut text_segment = TextSegment::new();
+
+                match i_extract_imm(imm) {
+                    Some(i) => text_segment.start_address = Some(Address::new(NonZeroU32::new(i as u32), None)),
+                    None => (),
+                }
+
+                match parse_text_segment(&mut lines, &mut text_segment) {
+                    Some(l) => line = l,
+                    None => break,
+                }
+                
+                if text_segment.instructions.len() > 0 {
+                    parsed.ktext_segment.push(KTextSegment::from(text_segment));
                 }
             },
             Some(_) => unimplemented!(),
