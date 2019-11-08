@@ -190,9 +190,9 @@ fn parse_text_segment(lines: &mut Lines, text_segment: &mut TextSegment) -> Opti
     for line in lines {
         let line = line.trim();
         if line.is_empty() || entire_line_is_comment(line) {
-            return Some(line.to_owned());
+            continue;
         }
-        if let Ok((_, l)) = label(line) {
+        if let Ok((_, l)) = new_label(line) {
             current_label = Some(l.to_owned());
             continue;
         }
@@ -357,9 +357,9 @@ fn parse_data_segment(lines: &mut Lines, data_segment: &mut DataSegment) -> Opti
     for line in lines {
         let line = line.trim();
         if line.is_empty() || entire_line_is_comment(line) {
-            return Some(line.to_owned());
+            continue;
         }
-        if let Ok((_, l)) = label(line) {
+        if let Ok((_, l)) = new_label(line) {
             current_label = Some(l.to_owned());
             continue;
         }

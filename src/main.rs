@@ -10,6 +10,6 @@ pub fn main() {
         return;
     }
     let s = load_file(path::Path::new(&args[1]));
-    println!("registers:\n{:?}", parse(&s));
+    println!("{:#?}", parse(&s));
 }
 

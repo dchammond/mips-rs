@@ -173,8 +173,12 @@ pub fn entire_line_is_comment(input: &str) -> bool {
     }
 }
 
-pub fn label(input: &str) -> IResult<&str, &str> {
+pub fn new_label(input: &str) -> IResult<&str, &str> {
     terminated(alphanumeric1, tag(":"))(input)
+}
+
+pub fn label(input: &str) -> IResult<&str, &str> {
+    alphanumeric1(input)
 }
 
 pub fn directive(input: &str) -> IResult<&str, &str> {
