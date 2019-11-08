@@ -66,7 +66,8 @@ pub struct DataAlignment {
 
 #[derive(Clone, Debug)]
 pub struct DataCString {
-    pub chars: (Option<Address>, Vec<u8>)
+    pub chars: (Option<Address>, Vec<u8>),
+    pub null_terminated: bool
 }
 
 #[derive(Clone, Debug)]
@@ -277,10 +278,15 @@ fn parse_text_segment(lines: &mut Lines, text_segment: &mut TextSegment) -> Opti
 }
 
 fn parse_data_segment(lines: &mut Lines, data_segment: &mut DataSegment) -> Option<String> {
+    let mut current_label: Option<String> = None;
     for line in lines {
         let line = line.trim();
         if line.is_empty() || entire_line_is_comment(line) {
             return Some(line.to_owned());
+        }
+        if let Ok((_, l)) = label(line) {
+            current_label = Some(l.to_owned());
+            continue;
         }
         if let Ok((_, imm)) = directive_align(line) {
             let imm_int = match i_extract_imm(imm) {
@@ -299,7 +305,35 @@ fn parse_data_segment(lines: &mut Lines, data_segment: &mut DataSegment) -> Opti
             continue;
         }
         if let Ok((_, s)) = directive_ascii(line) {
-            //s.as_bytes().to_vec();
+            let addr = match current_label {
+                Some(s) => {
+                    current_label = None;
+                    Some(Address::new(None, Some(s)))
+                },
+                None => None
+            };
+            let cstring = DataCString {
+                chars: (addr, s.as_bytes().to_vec()), // Rust strings aren't null terminated
+                null_terminated: false
+            };
+            data_segment.data_entries.push(DataEntry::CString(cstring));
+            continue;
+        }
+        if let Ok((_, s)) = directive_asciiz(line) {
+            let addr = match current_label {
+                Some(s) => {
+                    current_label = None;
+                    Some(Address::new(None, Some(s)))
+                },
+                None => None
+            };
+            let mut cstring = DataCString {
+                chars: (addr, s.as_bytes().to_vec()), // Rust strings aren't null terminated
+                null_terminated: true
+            };
+            cstring.chars.1.push(0);
+            data_segment.data_entries.push(DataEntry::CString(cstring));
+            continue;
         }
         // it may be a new directive
         return Some(line.to_owned());
