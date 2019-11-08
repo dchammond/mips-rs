@@ -141,9 +141,16 @@ fn i_extract_imm<T>(imm: (Option<&str>, Result<T, ParseIntError>)) -> Option<T>
     Some(imm_int)
 }
 
-fn parse_directive<'a>(lines: &'a mut Lines) -> Option<ParsedDirective<'a>> {
+fn parse_directive<'a>(current_line: &'a str, lines: &'a mut Lines) -> Option<ParsedDirective<'a>> {
+    let mut first = Some(current_line);
     for line in lines {
-        let line = line.trim();
+        let line = match first {
+            Some(f) => {
+                first = None;
+                f.trim()
+            },
+            None => line.trim()
+        };
         if line.is_empty() || entire_line_is_comment(line) {
             continue;
         }
@@ -511,7 +518,7 @@ pub fn parse(program: &str) -> Parsed {
     }
 
     loop {
-        match parse_directive(&mut lines) {
+        match parse_directive(&line, &mut lines) {
             Some(ParsedDirective::Text(Ok((_, imm)))) => {
                 let mut text_segment = TextSegment::new();
 
