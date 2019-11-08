@@ -271,6 +271,14 @@ fn parse_text_segment(lines: &mut Lines, text_segment: &mut TextSegment) -> Opti
 }
 
 fn parse_data_segment(lines: &mut Lines, data_segment: &mut DataSegment) -> Option<String> {
+    for line in lines {
+        let line = line.trim();
+        if line.is_empty() || entire_line_is_comment(line) {
+            return Some(line.to_owned());
+        }
+        // it may be a new directive
+        return Some(line.to_owned());
+    }
     None
 }
 
@@ -347,7 +355,7 @@ pub fn parse(program: &str) -> Parsed {
                     None => break,
                 }
             },
-            Some(_) => unimplemented!(),
+            Some(_) => panic!("Unexpected Directive"),
             None => break,
         }
     }
