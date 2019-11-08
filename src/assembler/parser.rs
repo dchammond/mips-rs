@@ -358,6 +358,28 @@ fn parse_data_segment(lines: &mut Lines, data_segment: &mut DataSegment) -> Opti
             data_segment.data_entries.push(DataEntry::Bytes(data_bytes));
             continue;
         }
+        if let Ok((_, halfs)) = directive_half(line) {
+            let addr = match current_label {
+                Some(s) => {
+                    current_label = None;
+                    Some(Address::new(None, Some(s)))
+                },
+                None => None
+            };
+            let mut half_vec = Vec::new();
+            for entry in halfs {
+                let imm = match i_extract_imm(entry) {
+                    Some(b) => b as u16,
+                    None => panic!("Syntax error in half directive: {}", line)
+                };
+                half_vec.push(imm);
+            }
+            let data_halfs = DataHalfs {
+                halfs: (addr, half_vec)
+            };
+            data_segment.data_entries.push(DataEntry::Halfs(data_halfs));
+            continue;
+        }
         // it may be a new directive
         return Some(line.to_owned());
     }
