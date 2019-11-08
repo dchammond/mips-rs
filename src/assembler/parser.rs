@@ -271,10 +271,26 @@ fn parse_text_segment(lines: &mut Lines, text_segment: &mut TextSegment) -> Opti
 }
 
 fn parse_data_segment(lines: &mut Lines, data_segment: &mut DataSegment) -> Option<String> {
+    let mut current_alignment = 4;
     for line in lines {
         let line = line.trim();
         if line.is_empty() || entire_line_is_comment(line) {
             return Some(line.to_owned());
+        }
+        if let Ok((_, imm)) = directive_align(line) {
+            let imm_int = match i_extract_imm(imm) {
+                Some(i) => i,
+                None => panic!("Unable to parse immediate for align directive: {}", line),
+            };
+            if imm_int < 0 {
+                panic!("Cannot have negative aligment: {}", line);
+            }
+            let imm_int = imm_int as u32;
+            if imm_int & (imm_int - 1) != 0 {
+                panic!("Alignment must be power of 2: {}", line);
+            }
+            current_alignment = imm_int;
+            continue;
         }
         // it may be a new directive
         return Some(line.to_owned());
