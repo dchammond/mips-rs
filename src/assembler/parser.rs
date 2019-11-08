@@ -113,8 +113,10 @@ impl From<DataSegment> for KDataSegment {
 
 #[derive(Clone, Debug, Default)]
 pub struct Parsed {
-    pub text_segment: Vec<TextSegment>,
+    pub text_segment:  Vec<TextSegment>,
     pub ktext_segment: Vec<KTextSegment>,
+    pub data_segment:  Vec<DataSegment>,
+    pub kdata_segment: Vec<KDataSegment>,
 }
 
 fn i_extract_imm(imm: (Option<&str>, Result<i64, ParseIntError>)) -> Option<i64> {
