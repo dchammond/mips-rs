@@ -380,6 +380,28 @@ fn parse_data_segment(lines: &mut Lines, data_segment: &mut DataSegment) -> Opti
             data_segment.data_entries.push(DataEntry::Halfs(data_halfs));
             continue;
         }
+        if let Ok((_, words)) = directive_word(line) {
+            let addr = match current_label {
+                Some(s) => {
+                    current_label = None;
+                    Some(Address::new(None, Some(s)))
+                },
+                None => None
+            };
+            let mut word_vec = Vec::new();
+            for entry in words {
+                let imm = match i_extract_imm(entry) {
+                    Some(b) => b as u32,
+                    None => panic!("Syntax error in word directive: {}", line)
+                };
+                word_vec.push(imm);
+            }
+            let data_words = DataWords {
+                words: (addr, word_vec)
+            };
+            data_segment.data_entries.push(DataEntry::Words(data_words));
+            continue;
+        }
         // it may be a new directive
         return Some(line.to_owned());
     }
