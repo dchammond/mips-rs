@@ -59,6 +59,11 @@ impl From<TextSegment> for KTextSegment {
     }
 }
 
+#[derive(Copy, Clone, Debug)]
+pub struct DataAlignment {
+    pub alignment: u32
+}
+
 #[derive(Clone, Debug)]
 pub struct DataCString {
     pub chars: (Option<Address>, Vec<u8>)
@@ -86,6 +91,7 @@ pub struct DataSpace {
 
 #[derive(Clone, Debug)]
 pub enum DataEntry {
+    Alignment(DataAlignment),
     CString(DataCString),
     Bytes(DataBytes),
     Halfs(DataHalfs),
@@ -271,7 +277,6 @@ fn parse_text_segment(lines: &mut Lines, text_segment: &mut TextSegment) -> Opti
 }
 
 fn parse_data_segment(lines: &mut Lines, data_segment: &mut DataSegment) -> Option<String> {
-    let mut current_alignment = 4;
     for line in lines {
         let line = line.trim();
         if line.is_empty() || entire_line_is_comment(line) {
@@ -289,8 +294,12 @@ fn parse_data_segment(lines: &mut Lines, data_segment: &mut DataSegment) -> Opti
             if imm_int & (imm_int - 1) != 0 {
                 panic!("Alignment must be power of 2: {}", line);
             }
-            current_alignment = imm_int;
+            let alignment = DataAlignment { alignment: imm_int };
+            data_segment.data_entries.push(DataEntry::Alignment(alignment));
             continue;
+        }
+        if let Ok((_, s)) = directive_ascii(line) {
+            //s.as_bytes().to_vec();
         }
         // it may be a new directive
         return Some(line.to_owned());
