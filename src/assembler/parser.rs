@@ -191,7 +191,8 @@ fn parse_text_segment(lines: &mut Lines, text_segment: &mut TextSegment) -> Opti
             text_segment.push_instruction(JType::new(JInst::from(inst), Imm::from(0u64)).into());
             continue;
         }
-        panic!("Uknown line in text section: {}", line);
+        // it may be a new directive
+        return Some(line.to_owned());
     }
     None
 }
