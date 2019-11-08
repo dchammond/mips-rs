@@ -9,7 +9,7 @@ use nom::{IResult,
                                 alphanumeric1,
                                 space0,
                                 space1},
-          combinator::{opt, map},
+          combinator::{opt, map, recognize},
           sequence::{pair,
                      tuple,
                      preceded,
@@ -131,28 +131,30 @@ pub fn s_reg_num(input: &str) -> IResult<&str, &str> {
 }
 
 pub fn register_named(input: &str) -> IResult<&str, &str> {
-    preceded(tag("$"), alt((tag("zero"),
-                            tag("at"),
-                            tag("sp"),
-                            tag("fp"),
-                            tag("ra"),
-                            v_reg_name,
-                            a_reg_name,
-                            t_reg_name,
-                            s_reg_name))
+    recognize(preceded(tag("$"), alt((tag("zero"),
+                                tag("at"),
+                                tag("sp"),
+                                tag("fp"),
+                                tag("ra"),
+                                v_reg_name,
+                                a_reg_name,
+                                t_reg_name,
+                                s_reg_name))
+                      )
              )(input)
 }
 
 pub fn register_numbered(input: &str) -> IResult<&str, &str> {
-    preceded(tag("$"), alt((tag("0"),
-                            tag("1"),
-                            tag("29"),
-                            tag("30"),
-                            tag("31"),
-                            v_reg_num,
-                            a_reg_num,
-                            t_reg_num,
-                            s_reg_num))
+    recognize(preceded(tag("$"), alt((tag("0"),
+                                tag("1"),
+                                tag("29"),
+                                tag("30"),
+                                tag("31"),
+                                v_reg_num,
+                                a_reg_num,
+                                t_reg_num,
+                                s_reg_num))
+                      )
              )(input)
 }
 
