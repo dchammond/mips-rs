@@ -34,14 +34,6 @@ impl TextSegment {
     pub fn new() -> TextSegment {
         TextSegment {instructions: Vec::new(), start_address: None}
     }
-
-    pub fn push_instruction(&mut self, inst: Inst) {
-        self.instructions.push((None, inst));
-    }
-
-    pub fn push_addressed_instruction(&mut self, addr: Address, inst: Inst) {
-        self.instructions.push((Some(addr), inst));
-    }
 }
 
 #[derive(Clone, Debug)]
@@ -194,16 +186,35 @@ fn parse_directive<'a>(lines: &'a mut Lines) -> Option<ParsedDirective<'a>> {
 }
 
 fn parse_text_segment(lines: &mut Lines, text_segment: &mut TextSegment) -> Option<String> {
+    let mut current_label: Option<String> = None;
     for line in lines {
         let line = line.trim();
         if line.is_empty() || entire_line_is_comment(line) {
             return Some(line.to_owned());
         }
+        if let Ok((_, l)) = label(line) {
+            current_label = Some(l.to_owned());
+            continue;
+        }
         if let Ok((_, (inst, rd, rs, rt))) = r_arithmetic(line) {
-            text_segment.push_instruction(RType::new(RInst::from(inst), Reg::from(rs), Reg::from(rt), Reg::from(rd), 0).into());
+            let addr = match current_label {
+                Some(s) => {
+                    current_label = None;
+                    Some(Address::new(None, Some(s)))
+                },
+                None => None
+            };
+            text_segment.instructions.push((addr, RType::new(RInst::from(inst), Reg::from(rs), Reg::from(rt), Reg::from(rd), 0).into()));
             continue;
         }
         if let Ok((_, (inst, rd, rt, shamt))) = r_shift(line) {
+            let addr = match current_label {
+                Some(s) => {
+                    current_label = None;
+                    Some(Address::new(None, Some(s)))
+                },
+                None => None
+            };
             if let Some(sign) = shamt.0 {
                 if sign == "-" {
                     panic!("Cannot have negative shift amount: {}", line);
@@ -213,63 +224,126 @@ fn parse_text_segment(lines: &mut Lines, text_segment: &mut TextSegment) -> Opti
                 Ok(i) => i as u8,
                 Err(p) => panic!("Unable to parse shift amount: {} because {}", line, p),
             };
-            text_segment.push_instruction(RType::new(RInst::from(inst), Reg::zero, Reg::from(rt), Reg::from(rd), shamt_int).into());
+            text_segment.instructions.push((addr, RType::new(RInst::from(inst), Reg::zero, Reg::from(rt), Reg::from(rd), shamt_int).into()));
             continue;
         }
         if let Ok((_, (inst, rs))) = r_jump(line) {
-            text_segment.push_instruction(RType::new(RInst::from(inst), Reg::from(rs), Reg::zero, Reg::zero, 0).into());
+            let addr = match current_label {
+                Some(s) => {
+                    current_label = None;
+                    Some(Address::new(None, Some(s)))
+                },
+                None => None
+            };
+            text_segment.instructions.push((addr, RType::new(RInst::from(inst), Reg::from(rs), Reg::zero, Reg::zero, 0).into()));
             continue;
         }
         if let Ok((_, (inst, rt, rs, imm))) = i_arith(line) {
+            let addr = match current_label {
+                Some(s) => {
+                    current_label = None;
+                    Some(Address::new(None, Some(s)))
+                },
+                None => None
+            };
             let imm_int = match i_extract_imm(imm) {
                 Some(i) => i,
                 None => panic!("Unable to parse immediate: {}", line),
             };
-            text_segment.push_instruction(IType::new(IInst::from(inst), Reg::from(rs), Reg::from(rt), Imm::from(imm_int as u64)).into());
+            text_segment.instructions.push((addr, IType::new(IInst::from(inst), Reg::from(rs), Reg::from(rt), Imm::from(imm_int as u64)).into()));
             continue;
         }
         if let Ok((_, (inst, rt, rs, imm))) = i_branch_imm(line) {
+            let addr = match current_label {
+                Some(s) => {
+                    current_label = None;
+                    Some(Address::new(None, Some(s)))
+                },
+                None => None
+            };
             let imm_int = match i_extract_imm(imm) {
                 Some(i) => i,
                 None => panic!("Unable to parse immediate: {}", line),
             };
-            text_segment.push_instruction(IType::new(IInst::from(inst), Reg::from(rs), Reg::from(rt), Imm::from(imm_int as u64)).into());
+            text_segment.instructions.push((addr, IType::new(IInst::from(inst), Reg::from(rs), Reg::from(rt), Imm::from(imm_int as u64)).into()));
             continue;
         }
         if let Ok((_, (inst, rt, rs, label))) = i_branch_label(line) {
+            let addr = match current_label {
+                Some(s) => {
+                    current_label = None;
+                    Some(Address::new(None, Some(s)))
+                },
+                None => None
+            };
             let _ = label; // TODO: convert label to number
-            text_segment.push_instruction(IType::new(IInst::from(inst), Reg::from(rs), Reg::from(rt), Imm::from(0u64)).into());
+            text_segment.instructions.push((addr, IType::new(IInst::from(inst), Reg::from(rs), Reg::from(rt), Imm::from(0u64)).into()));
             continue;
         }
         if let Ok((_, (inst, rt, imm, rs))) = i_mem_imm(line) {
+            let addr = match current_label {
+                Some(s) => {
+                    current_label = None;
+                    Some(Address::new(None, Some(s)))
+                },
+                None => None
+            };
             let imm_int = match i_extract_imm(imm) {
                 Some(i) => i,
                 None => panic!("Unable to parse immediate: {}", line),
             };
-            text_segment.push_instruction(IType::new(IInst::from(inst), Reg::from(rs), Reg::from(rt), Imm::from(imm_int as u64)).into());
+            text_segment.instructions.push((addr, IType::new(IInst::from(inst), Reg::from(rs), Reg::from(rt), Imm::from(imm_int as u64)).into()));
             continue;
         }
         if let Ok((_, (inst, rt, label, rs))) = i_mem_label(line) {
+            let addr = match current_label {
+                Some(s) => {
+                    current_label = None;
+                    Some(Address::new(None, Some(s)))
+                },
+                None => None
+            };
             let _ = label; // TODO: convert label to number
-            text_segment.push_instruction(IType::new(IInst::from(inst), Reg::from(rs), Reg::from(rt), Imm::from(0u64)).into());
+            text_segment.instructions.push((addr, IType::new(IInst::from(inst), Reg::from(rs), Reg::from(rt), Imm::from(0u64)).into()));
             continue;
         }
         if let Ok((_, (inst, rt, imm))) = i_load_imm(line) {
+            let addr = match current_label {
+                Some(s) => {
+                    current_label = None;
+                    Some(Address::new(None, Some(s)))
+                },
+                None => None
+            };
             let imm_int = match i_extract_imm(imm) {
                 Some(i) => i,
                 None => panic!("Unable to parse immediate: {}", line),
             };
-            text_segment.push_instruction(IType::new(IInst::from(inst), Reg::zero, Reg::from(rt), Imm::from(imm_int as u64)).into());
+            text_segment.instructions.push((addr, IType::new(IInst::from(inst), Reg::zero, Reg::from(rt), Imm::from(imm_int as u64)).into()));
             continue;
         }
         if let Ok((_, (inst, rt, label))) = i_load_label(line) {
+            let addr = match current_label {
+                Some(s) => {
+                    current_label = None;
+                    Some(Address::new(None, Some(s)))
+                },
+                None => None
+            };
             let _ = label; // TODO: convert label to number
-            text_segment.push_instruction(IType::new(IInst::from(inst), Reg::zero, Reg::from(rt), Imm::from(0u64)).into());
+            text_segment.instructions.push((addr, IType::new(IInst::from(inst), Reg::zero, Reg::from(rt), Imm::from(0u64)).into()));
             continue;
         }
         if let Ok((_, (inst, label))) = j_label(line) {
+            let addr = match current_label {
+                Some(s) => {
+                    current_label = None;
+                    Some(Address::new(None, Some(s)))
+                },
+                None => None
+            };
             let _ = label; // TODO: convert label to number
-            text_segment.push_instruction(JType::new(JInst::from(inst), Imm::from(0u64)).into());
+            text_segment.instructions.push((addr, JType::new(JInst::from(inst), Imm::from(0u64)).into()));
             continue;
         }
         // it may be a new directive
@@ -437,17 +511,15 @@ pub fn parse(program: &str) -> Parsed {
     }
 
     loop {
-        let trim = line.trim();
-        if trim.is_empty() || entire_line_is_comment(trim) {
-            continue;
-        }
         match parse_directive(&mut lines) {
-            Some(ParsedDirective::Text(Ok((_, Some(imm))))) => {
+            Some(ParsedDirective::Text(Ok((_, imm)))) => {
                 let mut text_segment = TextSegment::new();
 
-                match i_extract_imm(imm) {
-                    Some(i) => text_segment.start_address = Some(Address::new(NonZeroU32::new(i as u32), None)),
-                    None => (),
+                if let Some(imm) = imm {
+                    match i_extract_imm(imm) {
+                        Some(i) => text_segment.start_address = Some(Address::new(NonZeroU32::new(i as u32), None)),
+                        None => (),
+                    }
                 }
 
                 let more_lines = parse_text_segment(&mut lines, &mut text_segment);
@@ -461,12 +533,14 @@ pub fn parse(program: &str) -> Parsed {
                     None => break,
                 }
             },
-            Some(ParsedDirective::KText(Ok((_, Some(imm))))) => {
+            Some(ParsedDirective::KText(Ok((_, imm)))) => {
                 let mut text_segment = TextSegment::new();
 
-                match i_extract_imm(imm) {
-                    Some(i) => text_segment.start_address = Some(Address::new(NonZeroU32::new(i as u32), None)),
-                    None => (),
+                if let Some(imm) = imm {
+                    match i_extract_imm(imm) {
+                        Some(i) => text_segment.start_address = Some(Address::new(NonZeroU32::new(i as u32), None)),
+                        None => (),
+                    }
                 }
 
                 let more_lines = parse_text_segment(&mut lines, &mut text_segment);
@@ -480,18 +554,41 @@ pub fn parse(program: &str) -> Parsed {
                     None => break,
                 }
             },
-            Some(ParsedDirective::Data(Ok((_, Some(imm))))) => {
+            Some(ParsedDirective::Data(Ok((_, imm)))) => {
                 let mut data_segment = DataSegment::new();
 
-                match i_extract_imm(imm) {
-                    Some(i) => data_segment.start_address = Some(Address::new(NonZeroU32::new(i as u32), None)),
-                    None => (),
+                if let Some(imm) = imm {
+                    match i_extract_imm(imm) {
+                        Some(i) => data_segment.start_address = Some(Address::new(NonZeroU32::new(i as u32), None)),
+                        None => (),
+                    }
                 }
 
                 let more_lines = parse_data_segment(&mut lines, &mut data_segment);
 
                 if data_segment.data_entries.len() > 0 {
                     parsed.data_segment.push(data_segment);
+                }
+
+                match more_lines {
+                    Some(l) => line = l,
+                    None => break,
+                }
+            },
+            Some(ParsedDirective::KData(Ok((_, imm)))) => {
+                let mut data_segment = DataSegment::new();
+
+                if let Some(imm) = imm {
+                    match i_extract_imm(imm) {
+                        Some(i) => data_segment.start_address = Some(Address::new(NonZeroU32::new(i as u32), None)),
+                        None => (),
+                    }
+                }
+
+                let more_lines = parse_data_segment(&mut lines, &mut data_segment);
+
+                if data_segment.data_entries.len() > 0 {
+                    parsed.kdata_segment.push(KDataSegment::from(data_segment));
                 }
 
                 match more_lines {

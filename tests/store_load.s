@@ -2,7 +2,7 @@
 #.data
 #array:	.word	1	255	1024	0xcafebabe	target
 
-#.text
+.text
 main:   
 	li	$v0, 0x1000	# $v0  = 0x1000	testing li
 				      
