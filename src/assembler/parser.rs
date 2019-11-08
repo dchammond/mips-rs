@@ -135,40 +135,15 @@ pub struct Parsed {
     pub kdata_segment: Vec<KDataSegment>,
 }
 
-fn i_extract_imm_i64(imm: (Option<&str>, Result<i64, ParseIntError>)) -> Option<i64> {
-    let mut imm_int: i64 = match imm.1 {
-        Ok(i) => i as i64,
+fn i_extract_imm<T>(imm: (Option<&str>, Result<T, ParseIntError>)) -> Option<T> 
+    where T: std::ops::MulAssign + From<i8> {
+    let mut imm_int: T = match imm.1 {
+        Ok(i) => i as T,
         Err(_) => return None,
     };
     if let Some(sign) = imm.0 {
         if sign == "-" {
-            imm_int *= -1;
-        }
-    };
-    Some(imm_int)
-}
-
-fn i_extract_imm_i32(imm: (Option<&str>, Result<i32, ParseIntError>)) -> Option<i32> {
-    let mut imm_int: i32 = match imm.1 {
-        Ok(i) => i as i32,
-        Err(_) => return None,
-    };
-    if let Some(sign) = imm.0 {
-        if sign == "-" {
-            imm_int *= -1;
-        }
-    };
-    Some(imm_int)
-}
-
-fn i_extract_imm_i16(imm: (Option<&str>, Result<i16, ParseIntError>)) -> Option<i16> {
-    let mut imm_int: i16 = match imm.1 {
-        Ok(i) => i as i16,
-        Err(_) => return None,
-    };
-    if let Some(sign) = imm.0 {
-        if sign == "-" {
-            imm_int *= -1;
+            imm_int *= T::from(-1i8);
         }
     };
     Some(imm_int)
@@ -246,7 +221,7 @@ fn parse_text_segment(lines: &mut Lines, text_segment: &mut TextSegment) -> Opti
             continue;
         }
         if let Ok((_, (inst, rt, rs, imm))) = i_arith(line) {
-            let imm_int = match i_extract_imm_i64(imm) {
+            let imm_int = match i_extract_imm(imm) {
                 Some(i) => i,
                 None => panic!("Unable to parse immediate: {}", line),
             };
@@ -254,7 +229,7 @@ fn parse_text_segment(lines: &mut Lines, text_segment: &mut TextSegment) -> Opti
             continue;
         }
         if let Ok((_, (inst, rt, rs, imm))) = i_branch_imm(line) {
-            let imm_int = match i_extract_imm_i64(imm) {
+            let imm_int = match i_extract_imm(imm) {
                 Some(i) => i,
                 None => panic!("Unable to parse immediate: {}", line),
             };
@@ -267,7 +242,7 @@ fn parse_text_segment(lines: &mut Lines, text_segment: &mut TextSegment) -> Opti
             continue;
         }
         if let Ok((_, (inst, rt, imm, rs))) = i_mem_imm(line) {
-            let imm_int = match i_extract_imm_i64(imm) {
+            let imm_int = match i_extract_imm(imm) {
                 Some(i) => i,
                 None => panic!("Unable to parse immediate: {}", line),
             };
@@ -280,7 +255,7 @@ fn parse_text_segment(lines: &mut Lines, text_segment: &mut TextSegment) -> Opti
             continue;
         }
         if let Ok((_, (inst, rt, imm))) = i_load_imm(line) {
-            let imm_int = match i_extract_imm_i64(imm) {
+            let imm_int = match i_extract_imm(imm) {
                 Some(i) => i,
                 None => panic!("Unable to parse immediate: {}", line),
             };
@@ -315,7 +290,7 @@ fn parse_data_segment(lines: &mut Lines, data_segment: &mut DataSegment) -> Opti
             continue;
         }
         if let Ok((_, imm)) = directive_align(line) {
-            let imm_int = match i_extract_imm_i64(imm) {
+            let imm_int = match i_extract_imm(imm) {
                 Some(i) => i,
                 None => panic!("Unable to parse immediate for align directive: {}", line),
             };
@@ -363,7 +338,7 @@ fn parse_data_segment(lines: &mut Lines, data_segment: &mut DataSegment) -> Opti
         }
         if let Ok((_, bytes)) = directive_byte(line) {
             for entry in bytes {
-                let imm = match i_extract_imm_i16(entry) {
+                let imm = match i_extract_imm(entry) {
                     Some(b) => b as u8,
                     None => panic!("Syntax error in byte directive: {}", line)
                 };
@@ -394,7 +369,7 @@ pub fn parse(program: &str) -> Parsed {
             Some(ParsedDirective::Text(Ok((_, Some(imm))))) => {
                 let mut text_segment = TextSegment::new();
 
-                match i_extract_imm_i64(imm) {
+                match i_extract_imm(imm) {
                     Some(i) => text_segment.start_address = Some(Address::new(NonZeroU32::new(i as u32), None)),
                     None => (),
                 }
@@ -413,7 +388,7 @@ pub fn parse(program: &str) -> Parsed {
             Some(ParsedDirective::KText(Ok((_, Some(imm))))) => {
                 let mut text_segment = TextSegment::new();
 
-                match i_extract_imm_i64(imm) {
+                match i_extract_imm(imm) {
                     Some(i) => text_segment.start_address = Some(Address::new(NonZeroU32::new(i as u32), None)),
                     None => (),
                 }
@@ -432,7 +407,7 @@ pub fn parse(program: &str) -> Parsed {
             Some(ParsedDirective::Data(Ok((_, Some(imm))))) => {
                 let mut data_segment = DataSegment::new();
 
-                match i_extract_imm_i64(imm) {
+                match i_extract_imm(imm) {
                     Some(i) => data_segment.start_address = Some(Address::new(NonZeroU32::new(i as u32), None)),
                     None => (),
                 }
