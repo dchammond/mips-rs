@@ -95,18 +95,27 @@ pub enum DataEntry {
 
 #[derive(Clone, Debug)]
 pub struct DataSegment {
-    pub data_entries: Vec<DataEntry>
+    pub data_entries: Vec<DataEntry>,
+    pub start_address: Option<Address>
+}
+
+impl DataSegment {
+    pub fn new() -> DataSegment {
+        DataSegment {data_entries: Vec::new(), start_address: None}
+    }
 }
 
 #[derive(Clone, Debug)]
 pub struct KDataSegment {
-    pub data_entries: Vec<DataEntry>
+    pub data_entries: Vec<DataEntry>,
+    pub start_address: Option<Address>
 }
 
 impl From<DataSegment> for KDataSegment {
     fn from(d: DataSegment) -> Self {
         KDataSegment {
-            data_entries: d.data_entries
+            data_entries: d.data_entries,
+            start_address: d.start_address
         }
     }
 }
@@ -261,6 +270,10 @@ fn parse_text_segment(lines: &mut Lines, text_segment: &mut TextSegment) -> Opti
     None
 }
 
+fn parse_data_segment(lines: &mut Lines, data_segment: &mut DataSegment) -> Option<String> {
+    None
+}
+
 pub fn parse(program: &str) -> Parsed {
     let mut parsed = Parsed::default();
     let mut lines = program.lines();
@@ -285,13 +298,15 @@ pub fn parse(program: &str) -> Parsed {
                     None => (),
                 }
 
-                match parse_text_segment(&mut lines, &mut text_segment) {
-                    Some(l) => line = l,
-                    None => break,
-                }
+                let more_lines = parse_text_segment(&mut lines, &mut text_segment);
                 
                 if text_segment.instructions.len() > 0 {
                     parsed.text_segment.push(text_segment);
+                }
+
+                match more_lines {
+                    Some(l) => line = l,
+                    None => break,
                 }
             },
             Some(ParsedDirective::KText(Ok((_, Some(imm))))) => {
@@ -302,13 +317,34 @@ pub fn parse(program: &str) -> Parsed {
                     None => (),
                 }
 
-                match parse_text_segment(&mut lines, &mut text_segment) {
-                    Some(l) => line = l,
-                    None => break,
-                }
+                let more_lines = parse_text_segment(&mut lines, &mut text_segment);
                 
                 if text_segment.instructions.len() > 0 {
                     parsed.ktext_segment.push(KTextSegment::from(text_segment));
+                }
+
+                match more_lines {
+                    Some(l) => line = l,
+                    None => break,
+                }
+            },
+            Some(ParsedDirective::Data(Ok((_, Some(imm))))) => {
+                let mut data_segment = DataSegment::new();
+
+                match i_extract_imm(imm) {
+                    Some(i) => data_segment.start_address = Some(Address::new(NonZeroU32::new(i as u32), None)),
+                    None => (),
+                }
+
+                let more_lines = parse_data_segment(&mut lines, &mut data_segment);
+
+                if data_segment.data_entries.len() > 0 {
+                    parsed.data_segment.push(data_segment);
+                }
+
+                match more_lines {
+                    Some(l) => line = l,
+                    None => break,
                 }
             },
             Some(_) => unimplemented!(),
