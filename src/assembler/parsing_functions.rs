@@ -460,10 +460,15 @@ pub fn directive_word<'a>(input: &'a str) -> DirectiveWordResult {
     preceded(tag("."),
              preceded(tag("word"),
                       preceded(space1,
-                               separated_nonempty_list(pair(tag(","), space0),
-                                                       alt((parse_hex_int64, parse_dec_int64))
-                                                       )
-                               )
+                     //          alt((
+                                separated_nonempty_list(pair(tag(","), space0),
+                                                        alt((parse_hex_int64, parse_dec_int64))
+                                                       ),
+                                separated_nonempty_list(space1,
+                                                        alt((parse_hex_int64, parse_dec_int64))
+                                                       ),
+                     //          ))
+                              )
                       )
              )(input)
 }

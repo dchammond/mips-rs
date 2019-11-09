@@ -2,7 +2,7 @@
 
 .data
 array:
-.word   1,  255,    1024,   0xcafebabe
+.word   1  255    1024   0xcafebabe
 
 .text
 main:   
