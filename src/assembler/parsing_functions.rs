@@ -342,6 +342,19 @@ pub fn directive_align<'a>(input: &'a str) -> DirectiveAlignResult {
              )(input)
 }
 
+pub type DirectiveDataResult<'a> = IResult<&'a str, Option<(Option<&'a str>, Result<i64, ParseIntError>)>>;
+
+pub fn directive_data<'a>(input: &'a str) -> DirectiveDataResult {
+    preceded(tag("."),
+             preceded(tag("data"),
+                      opt(preceded(space1,
+                                   alt((parse_hex_int64, parse_dec_int64))
+                                   )
+                          )
+                      )
+             )(input)
+}
+
 pub type DirectiveAsciiResult<'a> = IResult<&'a str, &'a str>;
 
 pub fn directive_ascii<'a>(input: &'a str) -> DirectiveAsciiResult {
@@ -368,23 +381,10 @@ pub fn directive_byte<'a>(input: &'a str) -> DirectiveByteResult {
     preceded(tag("."),
              preceded(tag("byte"),
                       preceded(space1,
-                               separated_nonempty_list(pair(tag(","), space0),
+                               separated_nonempty_list(alt((pair(tag(","), space0), pair(tag(""), space1))), // alt needs all options to return the same type
                                                        alt((parse_hex_int16, parse_dec_int16))
                                                        )
                                )
-                      )
-             )(input)
-}
-
-pub type DirectiveDataResult<'a> = IResult<&'a str, Option<(Option<&'a str>, Result<i64, ParseIntError>)>>;
-
-pub fn directive_data<'a>(input: &'a str) -> DirectiveDataResult {
-    preceded(tag("."),
-             preceded(tag("data"),
-                      opt(preceded(space1,
-                                   alt((parse_hex_int64, parse_dec_int64))
-                                   )
-                          )
                       )
              )(input)
 }
@@ -395,9 +395,35 @@ pub fn directive_half<'a>(input: &'a str) -> DirectiveHalfResult {
     preceded(tag("."),
              preceded(tag("half"),
                       preceded(space1,
-                               separated_nonempty_list(pair(tag(","), space0),
+                               separated_nonempty_list(alt((pair(tag(","), space0), pair(tag(""), space1))), // alt needs all options to return the same type
                                                        alt((parse_hex_int32, parse_dec_int32))
                                                        )
+                               )
+                      )
+             )(input)
+}
+
+pub type DirectiveWordResult<'a> = IResult<&'a str, Vec<(Option<&'a str>, Result<i64, ParseIntError>)>>;
+
+pub fn directive_word<'a>(input: &'a str) -> DirectiveWordResult {
+    preceded(tag("."),
+             preceded(tag("word"),
+                      preceded(space1,
+                               separated_nonempty_list(alt((pair(tag(","), space0), pair(tag(""), space1))), // alt needs all options to return the same type
+                                                        alt((parse_hex_int64, parse_dec_int64))
+                                                       )
+                              )
+                      )
+             )(input)
+}
+
+pub type DirectiveSpaceResult<'a> = IResult<&'a str, (Option<&'a str>, Result<i64, ParseIntError>)>;
+
+pub fn directive_space<'a>(input: &'a str) -> DirectiveSpaceResult {
+    preceded(tag("."),
+             preceded(tag("space"),
+                      preceded(space1,
+                               alt((parse_hex_int64, parse_dec_int64))
                                )
                       )
              )(input)
@@ -429,18 +455,6 @@ pub fn directive_ktext<'a>(input: &'a str) -> DirectiveKTextResult {
              )(input)
 }
 
-pub type DirectiveSpaceResult<'a> = IResult<&'a str, (Option<&'a str>, Result<i64, ParseIntError>)>;
-
-pub fn directive_space<'a>(input: &'a str) -> DirectiveSpaceResult {
-    preceded(tag("."),
-             preceded(tag("space"),
-                      preceded(space1,
-                               alt((parse_hex_int64, parse_dec_int64))
-                               )
-                      )
-             )(input)
-}
-
 pub type DirectiveTextResult<'a> = IResult<&'a str, Option<(Option<&'a str>, Result<i64, ParseIntError>)>>;
 
 pub fn directive_text<'a>(input: &'a str) -> DirectiveTextResult {
@@ -450,20 +464,6 @@ pub fn directive_text<'a>(input: &'a str) -> DirectiveTextResult {
                                    alt((parse_hex_int64, parse_dec_int64))
                                    )
                           )
-                      )
-             )(input)
-}
-
-pub type DirectiveWordResult<'a> = IResult<&'a str, Vec<(Option<&'a str>, Result<i64, ParseIntError>)>>;
-
-pub fn directive_word<'a>(input: &'a str) -> DirectiveWordResult {
-    preceded(tag("."),
-             preceded(tag("word"),
-                      preceded(space1,
-                                separated_nonempty_list(alt((pair(tag(","), space0), pair(tag(""), space1))), // alt needs all options to return the same type
-                                                        alt((parse_hex_int64, parse_dec_int64))
-                                                       )
-                              )
                       )
              )(input)
 }
