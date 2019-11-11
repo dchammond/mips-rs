@@ -425,10 +425,14 @@ fn parse_text_segment(lines: &mut Lines, text_segment: &mut TextSegment) -> Opti
                 }
                 None => None,
             };
-            let _ = label; // TODO: convert label to number
-            text_segment
-                .instructions
-                .push((addr, JType::new(JInst::from(inst), Imm::from(0u64)).into()));
+            text_segment.instructions.push((
+                addr,
+                JType::new(
+                    JInst::from(inst),
+                    Address::new(None, Some(label.to_string())),
+                )
+                .into(),
+            ));
             continue;
         }
         // it may be a new directive

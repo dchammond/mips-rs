@@ -1,15 +1,16 @@
 //use crate::machine::state::State;
+use std::{convert::TryFrom, num::NonZeroU32};
 
-use crate::machine::immediate::Imm;
+use crate::instructions::address::Address;
 
-#[derive(Copy, Clone, Debug)]
+#[derive(Clone, Debug)]
 pub struct JType {
     opcode: JInst,
-    address: Imm,
+    address: Address,
 }
 
 impl JType {
-    pub fn new(opcode: JInst, address: Imm) -> JType {
+    pub fn new(opcode: JInst, address: Address) -> JType {
         JType { opcode, address }
     }
     /*
@@ -56,17 +57,34 @@ impl JType {
 impl From<u32> for JType {
     fn from(n: u32) -> JType {
         let opcode = JInst::from(n >> 26);
-        let addr = Imm::Address(n & 0x3FF_FFFF);
+        let addr_raw = n & 0x3FF_FFFF;
+        if addr_raw == 0 {
+            panic!("Cannot convert 0x{:08X} into JType because address is 0", n);
+        }
+        let addr;
+        unsafe {
+            addr = Address::new(Some(NonZeroU32::new_unchecked(addr_raw)), None);
+        }
         JType::new(opcode, addr)
     }
 }
 
-impl From<JType> for u32 {
-    fn from(j: JType) -> u32 {
-        let mut x = 0u32;
-        x |= u32::from(j.opcode) << 26;
-        x |= u32::from(j.address);
-        x
+impl TryFrom<JType> for u32 {
+    type Error = String;
+
+    fn try_from(j: JType) -> Result<Self, Self::Error> {
+        match j.address.numeric {
+            Some(nz) => {
+                let mut x = 0u32;
+                x |= u32::from(j.opcode) << 26;
+                x |= nz.get();
+                Ok(x)
+            }
+            None => Err(format!(
+                "Cannot convert JType to u32, address is {:#?}",
+                j.address
+            )),
+        }
     }
 }
 
