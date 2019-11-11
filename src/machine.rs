@@ -1,3 +1,3 @@
 //pub mod state;
-pub mod immediate;
+pub mod address;
 pub mod register;

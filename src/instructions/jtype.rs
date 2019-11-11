@@ -1,7 +1,7 @@
 //use crate::machine::state::State;
 use std::{convert::TryFrom, num::NonZeroU32};
 
-use crate::instructions::address::Address;
+use crate::machine::address::Address;
 
 #[derive(Clone, Debug)]
 pub struct JType {
@@ -77,7 +77,7 @@ impl TryFrom<JType> for u32 {
             Some(nz) => {
                 let mut x = 0u32;
                 x |= u32::from(j.opcode) << 26;
-                x |= nz.get();
+                x |= nz.get() & 0x3FF_FFFF;
                 Ok(x)
             }
             None => Err(format!(

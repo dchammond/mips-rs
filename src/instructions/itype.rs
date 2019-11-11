@@ -1,18 +1,27 @@
 //use crate::machine::state::State;
-use crate::machine::immediate::Imm;
-use crate::machine::register::Reg;
+use std::{convert::TryFrom, num::NonZeroU32};
 
-#[derive(Copy, Clone, Debug)]
-pub struct IType {
+use crate::machine::{address::Address, register::Reg};
+
+#[derive(Clone, Debug)]
+pub struct ITypeImm {
     opcode: IInst,
     rs: Reg,
     rt: Reg,
-    imm: Imm,
+    imm: u16,
 }
 
-impl IType {
-    pub fn new(opcode: IInst, rs: Reg, rt: Reg, imm: Imm) -> IType {
-        IType {
+#[derive(Clone, Debug)]
+pub struct ITypeLabel {
+    opcode: IInst,
+    rs: Reg,
+    rt: Reg,
+    label: Address,
+}
+
+impl ITypeImm {
+    pub fn new(opcode: IInst, rs: Reg, rt: Reg, imm: u16) -> ITypeImm {
+        ITypeImm {
             opcode,
             rs,
             rt,
@@ -150,24 +159,76 @@ impl IType {
     */
 }
 
-impl From<u32> for IType {
-    fn from(n: u32) -> IType {
-        let opcode = IInst::from(n >> 26);
-        let rs = Reg::from(n >> 21);
-        let rt = Reg::from(n >> 16);
-        let imm = Imm::from(n & 0xFFFF);
-        IType::new(opcode, rs, rt, imm)
+impl ITypeLabel {
+    pub fn new(opcode: IInst, rs: Reg, rt: Reg, label: Address) -> ITypeLabel {
+        ITypeLabel {
+            opcode,
+            rs,
+            rt,
+            label,
+        }
     }
 }
 
-impl From<IType> for u32 {
-    fn from(i: IType) -> u32 {
+impl From<u32> for ITypeImm {
+    fn from(n: u32) -> ITypeImm {
+        let opcode = IInst::from(n >> 26);
+        let rs = Reg::from(n >> 21);
+        let rt = Reg::from(n >> 16);
+        let imm = (n & 0xFFFF) as u16;
+        ITypeImm::new(opcode, rs, rt, imm)
+    }
+}
+
+impl From<ITypeImm> for u32 {
+    fn from(i: ITypeImm) -> Self {
         let mut x = 0u32;
         x |= u32::from(i.opcode) << 26;
         x |= u32::from(i.rs) << 21;
         x |= u32::from(i.rt) << 16;
         x |= u32::from(i.imm);
         x
+    }
+}
+
+impl From<u32> for ITypeLabel {
+    fn from(n: u32) -> Self {
+        let opcode = IInst::from(n >> 26);
+        let rs = Reg::from(n >> 21);
+        let rt = Reg::from(n >> 16);
+        let addr_raw = n & 0xFFFF;
+        if addr_raw == 0 {
+            panic!(
+                "Cannot convert 0x{:08X} into ITypeLabel because immediate is 0",
+                n
+            );
+        }
+        let addr;
+        unsafe {
+            addr = Address::new(Some(NonZeroU32::new_unchecked(addr_raw)), None);
+        }
+        ITypeLabel::new(opcode, rs, rt, addr)
+    }
+}
+
+impl TryFrom<ITypeLabel> for u32 {
+    type Error = String;
+
+    fn try_from(i: ITypeLabel) -> Result<Self, Self::Error> {
+        match i.label.numeric {
+            Some(nz) => {
+                let mut x = 0u32;
+                x |= u32::from(i.opcode) << 26;
+                x |= u32::from(i.rs) << 21;
+                x |= u32::from(i.rt) << 16;
+                x |= nz.get() & 0xFFFF;
+                Ok(x)
+            }
+            None => Err(format!(
+                "Cannot convert ITypeLabel to u32, immediate is {:#?}",
+                i.label
+            )),
+        }
     }
 }
 

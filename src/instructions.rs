@@ -1,20 +1,27 @@
-pub mod address;
 pub mod itype;
 pub mod jtype;
 pub mod rtype;
 
 #[derive(Clone, Debug)]
 pub enum Inst {
-    I(itype::IType),
+    IImm(itype::ITypeImm),
+    ILabel(itype::ITypeLabel),
     R(rtype::RType),
     J(jtype::JType),
 }
 
-impl From<itype::IType> for Inst {
-    fn from(i: itype::IType) -> Self {
-        Inst::I(i)
+impl From<itype::ITypeImm> for Inst {
+    fn from(i: itype::ITypeImm) -> Self {
+        Inst::IImm(i)
     }
 }
+
+impl From<itype::ITypeLabel> for Inst {
+    fn from(i: itype::ITypeLabel) -> Self {
+        Inst::ILabel(i)
+    }
+}
+
 
 impl From<rtype::RType> for Inst {
     fn from(r: rtype::RType) -> Self {
