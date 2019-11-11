@@ -1,7 +1,7 @@
 use std::{env, path};
 
-use mips_rs::*;
 use mips_rs::assembler::parser::*;
+use mips_rs::*;
 
 pub fn main() {
     let args: Vec<String> = env::args().collect();
@@ -12,4 +12,3 @@ pub fn main() {
     let s = load_file(path::Path::new(&args[1]));
     println!("{:#?}", parse(&s));
 }
-

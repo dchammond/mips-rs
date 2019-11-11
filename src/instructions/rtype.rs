@@ -12,7 +12,13 @@ pub struct RType {
 
 impl RType {
     pub fn new(funct: RInst, rs: Reg, rt: Reg, rd: Reg, shamt: u8) -> RType {
-        RType {rs, rt, rd, shamt, funct}
+        RType {
+            rs,
+            rt,
+            rd,
+            shamt,
+            funct,
+        }
     }
     /*
     pub fn perform(&self, state: &mut State) {
@@ -59,7 +65,7 @@ impl RType {
                 },
         }
     }
-    
+
     pub fn convert_from_string(string: &str, _state: &State) -> Option<RType> {
         lazy_static! {
             static ref R_ARITH_RE: Regex = Regex::new(r"^\s*(?P<funct>\w+)\s*(?P<rd>\$[\w\d]+),\s*(?P<rs>\$[\w\d]+),\s*(?P<rt>\$[\w\d]+)\s*$").unwrap();
@@ -148,8 +154,9 @@ impl From<RInst> for String {
             RInst::sub => "sub",
             RInst::subu => "subu",
             RInst::div => "div",
-            RInst::divu => "divu"
-        }.to_owned()
+            RInst::divu => "divu",
+        }
+        .to_owned()
     }
 }
 
@@ -160,23 +167,23 @@ impl From<&str> for RInst {
             "addu" => RInst::addu,
             "and" => RInst::and,
             "jr" => RInst::jr,
-            "nor" =>  RInst::nor,
-            "or" =>  RInst::or,
+            "nor" => RInst::nor,
+            "or" => RInst::or,
             "slt" => RInst::slt,
             "sltu" => RInst::sltu,
             "sll" => RInst::sll,
             "srl" => RInst::srl,
             "sub" => RInst::sub,
             "subu" => RInst::subu,
-            "div" =>  RInst::div,
+            "div" => RInst::div,
             "divu" => RInst::divu,
-            _ => panic!("No match for RType: {}", s)
+            _ => panic!("No match for RType: {}", s),
         }
     }
 }
 
 macro_rules! rinst_map {
-    ($type_name: ty) => (
+    ($type_name: ty) => {
         impl From<$type_name> for RInst {
             fn from(num: $type_name) -> Self {
                 match num & 0x3F {
@@ -194,15 +201,15 @@ macro_rules! rinst_map {
                     0x23 => RInst::subu,
                     0x1A => RInst::div,
                     0x1B => RInst::divu,
-                    _    => panic!("No match for RType funct code: 0x{:08X}", num),
+                    _ => panic!("No match for RType funct code: 0x{:08X}", num),
                 }
             }
         }
-    );
+    };
 }
 
 macro_rules! rinst_inv_map {
-    ($type_name: ty) => (
+    ($type_name: ty) => {
         impl From<RInst> for $type_name {
             fn from(r: RInst) -> Self {
                 match r {
@@ -223,7 +230,7 @@ macro_rules! rinst_inv_map {
                 }
             }
         }
-    );
+    };
 }
 
 rinst_map!(u8);
@@ -246,4 +253,3 @@ rinst_inv_map!(i16);
 rinst_inv_map!(i32);
 rinst_inv_map!(i64);
 rinst_inv_map!(i128);
-

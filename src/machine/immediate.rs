@@ -6,13 +6,13 @@ pub enum Imm {
 }
 
 macro_rules! imm_map {
-    ($type_name: ty) => (
+    ($type_name: ty) => {
         impl From<$type_name> for Imm {
             fn from(n: $type_name) -> Imm {
                 Imm::Raw(n as u32)
             }
         }
-    );
+    };
 }
 
 imm_map!(u8);
@@ -22,7 +22,7 @@ imm_map!(u64);
 imm_map!(u128);
 
 macro_rules! imm_inv_map {
-    ($type_name: ty) => (
+    ($type_name: ty) => {
         impl From<Imm> for $type_name {
             fn from(i: Imm) -> $type_name {
                 match i {
@@ -32,7 +32,7 @@ macro_rules! imm_inv_map {
                 }
             }
         }
-    );
+    };
 }
 
 imm_inv_map!(i32);
@@ -52,4 +52,3 @@ impl From<Imm> for String {
         }
     }
 }
-

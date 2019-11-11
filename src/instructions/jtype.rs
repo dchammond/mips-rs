@@ -10,7 +10,7 @@ pub struct JType {
 
 impl JType {
     pub fn new(opcode: JInst, address: Imm) -> JType {
-        JType {opcode, address}
+        JType { opcode, address }
     }
     /*
     pub fn perform(&self, state: &mut State) {
@@ -82,7 +82,8 @@ impl From<JInst> for String {
         match j {
             JInst::j => "j",
             JInst::jal => "jal",
-        }.to_owned()
+        }
+        .to_owned()
     }
 }
 
@@ -91,27 +92,27 @@ impl From<&str> for JInst {
         match s.to_lowercase().as_ref() {
             "j" => JInst::j,
             "jal" => JInst::jal,
-            _ => panic!("No such JType: {}", s)
+            _ => panic!("No such JType: {}", s),
         }
     }
 }
 
 macro_rules! jinst_map {
-    ($type_name: ty) => (
+    ($type_name: ty) => {
         impl From<$type_name> for JInst {
             fn from(num: $type_name) -> Self {
                 match num & 0x3F {
                     0x02 => JInst::j,
                     0x03 => JInst::jal,
-                    _    => panic!("No match for JType op-code: 0x{:08X}", num),
+                    _ => panic!("No match for JType op-code: 0x{:08X}", num),
                 }
             }
         }
-    );
+    };
 }
 
 macro_rules! jinst_inv_map {
-    ($type_name: ty) => (
+    ($type_name: ty) => {
         impl From<JInst> for $type_name {
             fn from(j: JInst) -> Self {
                 match j {
@@ -120,7 +121,7 @@ macro_rules! jinst_inv_map {
                 }
             }
         }
-    );
+    };
 }
 
 jinst_map!(u8);
@@ -143,4 +144,3 @@ jinst_inv_map!(i16);
 jinst_inv_map!(i32);
 jinst_inv_map!(i64);
 jinst_inv_map!(i128);
-

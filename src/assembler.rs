@@ -1,3 +1,3 @@
-pub mod parser;
 pub mod compiler;
+pub mod parser;
 mod parsing_functions;

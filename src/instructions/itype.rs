@@ -1,6 +1,6 @@
 //use crate::machine::state::State;
-use crate::machine::register::Reg;
 use crate::machine::immediate::Imm;
+use crate::machine::register::Reg;
 
 #[derive(Copy, Clone, Debug)]
 pub struct IType {
@@ -12,7 +12,12 @@ pub struct IType {
 
 impl IType {
     pub fn new(opcode: IInst, rs: Reg, rt: Reg, imm: Imm) -> IType {
-        IType {opcode, rs, rt, imm}
+        IType {
+            opcode,
+            rs,
+            rt,
+            imm,
+        }
     }
     /*
     pub fn perform(&self, state: &mut State) {
@@ -48,7 +53,7 @@ impl IType {
         let imm_str = format!("0x{:08X}", u16::from(self.imm));
         match self.opcode {
             IInst::addi  |
-                IInst::addiu | 
+                IInst::addiu |
                 IInst::andi  |
                 IInst::ori   |
                 IInst::slti  |
@@ -211,8 +216,9 @@ impl From<IInst> for String {
             IInst::sb => "sb",
             IInst::sc => "sc",
             IInst::sh => "sh",
-            IInst::sw => "sw"
-        }.to_owned()
+            IInst::sw => "sw",
+        }
+        .to_owned()
     }
 }
 
@@ -244,7 +250,7 @@ impl From<&str> for IInst {
 }
 
 macro_rules! iinst_map {
-    ($type_name: ty) => (
+    ($type_name: ty) => {
         impl From<$type_name> for IInst {
             fn from(num: $type_name) -> Self {
                 match num & 0x3F {
@@ -267,15 +273,15 @@ macro_rules! iinst_map {
                     0x38 => IInst::sc,
                     0x29 => IInst::sh,
                     0x2B => IInst::sw,
-                    _    => panic!("No match for IType op-code: 0x{:08X}", num),
+                    _ => panic!("No match for IType op-code: 0x{:08X}", num),
                 }
             }
         }
-    );
+    };
 }
 
 macro_rules! iinst_inv_map {
-    ($type_name: ty) => (
+    ($type_name: ty) => {
         impl From<IInst> for $type_name {
             fn from(i: IInst) -> Self {
                 match i {
@@ -301,7 +307,7 @@ macro_rules! iinst_inv_map {
                 }
             }
         }
-    );
+    };
 }
 
 iinst_map!(u8);
@@ -324,4 +330,3 @@ iinst_inv_map!(i16);
 iinst_inv_map!(i32);
 iinst_inv_map!(i64);
 iinst_inv_map!(i128);
-

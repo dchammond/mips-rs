@@ -1,6 +1,6 @@
 pub mod itype;
-pub mod rtype;
 pub mod jtype;
+pub mod rtype;
 //pub mod label;
 
 #[derive(Clone, Debug)]
@@ -27,4 +27,3 @@ impl From<jtype::JType> for Inst {
         Inst::J(j)
     }
 }
-
