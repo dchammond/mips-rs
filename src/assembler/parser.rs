@@ -1,28 +1,16 @@
 #![allow(dead_code)]
 
-use std::num::{NonZeroU32, ParseIntError};
-use std::str::Lines;
-use std::vec::Vec;
+use std::{
+    num::{NonZeroU32, ParseIntError},
+    str::Lines,
+    vec::Vec,
+};
 
-use crate::assembler::parsing_functions::*;
-use crate::instructions::itype::*;
-use crate::instructions::jtype::*;
-use crate::instructions::rtype::*;
-use crate::instructions::Inst;
-use crate::machine::immediate::Imm;
-use crate::machine::register::Reg;
-
-#[derive(Clone, Debug)]
-pub struct Address {
-    pub numeric: Option<NonZeroU32>,
-    pub label: Option<String>,
-}
-
-impl Address {
-    pub fn new(numeric: Option<NonZeroU32>, label: Option<String>) -> Address {
-        Address { numeric, label }
-    }
-}
+use crate::{
+    assembler::parsing_functions::*,
+    instructions::{address::*, itype::*, jtype::*, rtype::*, Inst},
+    machine::{immediate::Imm, register::Reg},
+};
 
 #[derive(Clone, Debug)]
 pub struct TextSegment {

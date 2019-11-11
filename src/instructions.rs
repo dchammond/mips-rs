@@ -1,7 +1,7 @@
+pub mod address;
 pub mod itype;
 pub mod jtype;
 pub mod rtype;
-//pub mod label;
 
 #[derive(Clone, Debug)]
 pub enum Inst {
