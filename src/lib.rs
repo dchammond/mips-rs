@@ -2,6 +2,7 @@ use std::io::Read;
 use std::{fs, io, path};
 
 pub mod assembler;
+pub mod parser;
 mod instructions;
 mod machine;
 
