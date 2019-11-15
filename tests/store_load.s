@@ -1,6 +1,7 @@
 # Basic lw and beq tests
 
 .data
+array_again:
 array:
 .word   1  255    1024   0xcafebabe
 array2: .word   1,255,    1024,   0xcafebabe
@@ -32,10 +33,12 @@ main:
     la  $t6, target     # $t6 = target = 0x0000005c
     jr  $t6         #  PC = 0x0000005c  test indirect branches
 
+skipped2:
 skipped:
     addi    $t7, $zero, 1   # skipped so $t7 remains 0
     j   skipped         # skipped
 
+end2:
 end:    lui $s1, 0xf00f # $s1 = 0xf00f0000 testing lui
     jr $ra
 

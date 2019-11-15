@@ -3,6 +3,7 @@
 use nom::Err;
 
 use std::{
+    iter::FromIterator,
     num::{NonZeroU32, ParseIntError},
     str::Lines,
     vec::Vec,
@@ -16,7 +17,7 @@ use crate::{
 
 #[derive(Clone, Debug)]
 pub struct TextSegment {
-    pub instructions: Vec<(Option<Address>, Inst)>,
+    pub instructions: Vec<(Option<Vec<Address>>, Inst)>,
     pub start_address: Option<Address>,
 }
 
@@ -31,7 +32,7 @@ impl TextSegment {
 
 #[derive(Clone, Debug)]
 pub struct KTextSegment {
-    pub instructions: Vec<(Option<Address>, Inst)>,
+    pub instructions: Vec<(Option<Vec<Address>>, Inst)>,
     pub start_address: Option<Address>,
 }
 
@@ -51,28 +52,28 @@ pub struct DataAlignment {
 
 #[derive(Clone, Debug)]
 pub struct DataCString {
-    pub chars: (Option<Address>, Vec<u8>),
+    pub chars: (Option<Vec<Address>>, Vec<u8>),
     pub null_terminated: bool,
 }
 
 #[derive(Clone, Debug)]
 pub struct DataBytes {
-    pub bytes: (Option<Address>, Vec<u8>),
+    pub bytes: (Option<Vec<Address>>, Vec<u8>),
 }
 
 #[derive(Clone, Debug)]
 pub struct DataHalfs {
-    pub halfs: (Option<Address>, Vec<u16>),
+    pub halfs: (Option<Vec<Address>>, Vec<u16>),
 }
 
 #[derive(Clone, Debug)]
 pub struct DataWords {
-    pub words: (Option<Address>, Vec<u32>),
+    pub words: (Option<Vec<Address>>, Vec<u32>),
 }
 
 #[derive(Clone, Debug)]
 pub struct DataSpace {
-    pub spaces: (Option<Address>, Vec<u8>),
+    pub spaces: (Option<Vec<Address>>, Vec<u8>),
 }
 
 #[derive(Clone, Debug)]
@@ -141,8 +142,9 @@ where
 
 fn parse_label(
     current_line: &str,
-) -> Result<(&str, Option<&str>), Err<(&str, nom::error::ErrorKind)>> {
+) -> Result<(String, Option<&str>), Err<(&str, nom::error::ErrorKind)>> {
     let (rest, l) = new_label(current_line)?;
+    let l = String::from_iter(l.into_iter());
     let rest = rest.trim();
     if !rest.is_empty() && !entire_line_is_comment(rest) {
         Ok((l, Some(rest)))
@@ -203,14 +205,17 @@ fn parse_directive<'a>(current_line: &'a str, lines: &'a mut Lines) -> Option<Pa
 }
 
 fn parse_text_segment(lines: &mut Lines, text_segment: &mut TextSegment) -> Option<String> {
-    let mut current_label: Option<String> = None;
+    let mut current_labels: Option<Vec<String>> = None;
     for line in lines {
         let mut line = line.trim();
         if line.is_empty() || entire_line_is_comment(line) {
             continue;
         }
         if let Ok((l, rest)) = parse_label(line) {
-            current_label = Some(l.to_owned());
+            match current_labels {
+                Some(ref mut v) => v.push(l),
+                None => current_labels = Some(vec![l]),
+            };
             if let Some(rest) = rest {
                 line = rest;
             } else {
@@ -218,13 +223,11 @@ fn parse_text_segment(lines: &mut Lines, text_segment: &mut TextSegment) -> Opti
             }
         }
         if let Ok((_, (inst, rd, rs, rt))) = r_arithmetic(line) {
-            let addr = match current_label {
-                Some(s) => {
-                    current_label = None;
-                    Some(Address::new(None, Some(s)))
-                }
-                None => None,
-            };
+            let addr = current_labels.map_or_else(
+                || None,
+                |v| Some(v.into_iter().map(|s| Address::from(s)).collect()),
+            );
+            current_labels = None;
             text_segment.instructions.push((
                 addr,
                 RType::new(
@@ -239,13 +242,11 @@ fn parse_text_segment(lines: &mut Lines, text_segment: &mut TextSegment) -> Opti
             continue;
         }
         if let Ok((_, (inst, rd, rt, shamt))) = r_shift(line) {
-            let addr = match current_label {
-                Some(s) => {
-                    current_label = None;
-                    Some(Address::new(None, Some(s)))
-                }
-                None => None,
-            };
+            let addr = current_labels.map_or_else(
+                || None,
+                |v| Some(v.into_iter().map(|s| Address::from(s)).collect()),
+            );
+            current_labels = None;
             if let Some(sign) = shamt.0 {
                 if sign == "-" {
                     panic!("Cannot have negative shift amount: {}", line);
@@ -269,13 +270,11 @@ fn parse_text_segment(lines: &mut Lines, text_segment: &mut TextSegment) -> Opti
             continue;
         }
         if let Ok((_, (inst, rs))) = r_jump(line) {
-            let addr = match current_label {
-                Some(s) => {
-                    current_label = None;
-                    Some(Address::new(None, Some(s)))
-                }
-                None => None,
-            };
+            let addr = current_labels.map_or_else(
+                || None,
+                |v| Some(v.into_iter().map(|s| Address::from(s)).collect()),
+            );
+            current_labels = None;
             text_segment.instructions.push((
                 addr,
                 RType::new(RInst::from(inst), Reg::from(rs), Reg::zero, Reg::zero, 0).into(),
@@ -283,13 +282,11 @@ fn parse_text_segment(lines: &mut Lines, text_segment: &mut TextSegment) -> Opti
             continue;
         }
         if let Ok((_, (inst, rt, rs, imm))) = i_arith(line) {
-            let addr = match current_label {
-                Some(s) => {
-                    current_label = None;
-                    Some(Address::new(None, Some(s)))
-                }
-                None => None,
-            };
+            let addr = current_labels.map_or_else(
+                || None,
+                |v| Some(v.into_iter().map(|s| Address::from(s)).collect()),
+            );
+            current_labels = None;
             let imm_int = match i_extract_imm(imm) {
                 Some(i) => i as u16,
                 None => panic!("Unable to parse immediate: {}", line),
@@ -301,13 +298,11 @@ fn parse_text_segment(lines: &mut Lines, text_segment: &mut TextSegment) -> Opti
             continue;
         }
         if let Ok((_, (inst, rt, rs, imm))) = i_branch_imm(line) {
-            let addr = match current_label {
-                Some(s) => {
-                    current_label = None;
-                    Some(Address::new(None, Some(s)))
-                }
-                None => None,
-            };
+            let addr = current_labels.map_or_else(
+                || None,
+                |v| Some(v.into_iter().map(|s| Address::from(s)).collect()),
+            );
+            current_labels = None;
             let imm_int = match i_extract_imm(imm) {
                 Some(i) => i as u16,
                 None => panic!("Unable to parse immediate: {}", line),
@@ -319,33 +314,30 @@ fn parse_text_segment(lines: &mut Lines, text_segment: &mut TextSegment) -> Opti
             continue;
         }
         if let Ok((_, (inst, rt, rs, label))) = i_branch_label(line) {
-            let addr = match current_label {
-                Some(s) => {
-                    current_label = None;
-                    Some(Address::new(None, Some(s)))
-                }
-                None => None,
-            };
+            let label = String::from_iter(label.into_iter());
+            let addr = current_labels.map_or_else(
+                || None,
+                |v| Some(v.into_iter().map(|s| Address::from(s)).collect()),
+            );
+            current_labels = None;
             text_segment.instructions.push((
                 addr,
                 ITypeLabel::new(
                     IInst::from(inst),
                     Reg::from(rs),
                     Reg::from(rt),
-                    Address::new(None, Some(label.to_string())),
+                    Address::new(None, Some(label)),
                 )
                 .into(),
             ));
             continue;
         }
         if let Ok((_, (inst, rt, imm, rs))) = i_mem_imm(line) {
-            let addr = match current_label {
-                Some(s) => {
-                    current_label = None;
-                    Some(Address::new(None, Some(s)))
-                }
-                None => None,
-            };
+            let addr = current_labels.map_or_else(
+                || None,
+                |v| Some(v.into_iter().map(|s| Address::from(s)).collect()),
+            );
+            current_labels = None;
             let imm_int = match i_extract_imm(imm) {
                 Some(i) => i as u16,
                 None => panic!("Unable to parse immediate: {}", line),
@@ -357,33 +349,30 @@ fn parse_text_segment(lines: &mut Lines, text_segment: &mut TextSegment) -> Opti
             continue;
         }
         if let Ok((_, (inst, rt, label, rs))) = i_mem_label(line) {
-            let addr = match current_label {
-                Some(s) => {
-                    current_label = None;
-                    Some(Address::new(None, Some(s)))
-                }
-                None => None,
-            };
+            let label = String::from_iter(label.into_iter());
+            let addr = current_labels.map_or_else(
+                || None,
+                |v| Some(v.into_iter().map(|s| Address::from(s)).collect()),
+            );
+            current_labels = None;
             text_segment.instructions.push((
                 addr,
                 ITypeLabel::new(
                     IInst::from(inst),
                     Reg::from(rs),
                     Reg::from(rt),
-                    Address::new(None, Some(label.to_owned())),
+                    Address::new(None, Some(label)),
                 )
                 .into(),
             ));
             continue;
         }
         if let Ok((_, (inst, rt, imm))) = i_load_imm(line) {
-            let addr = match current_label {
-                Some(s) => {
-                    current_label = None;
-                    Some(Address::new(None, Some(s)))
-                }
-                None => None,
-            };
+            let addr = current_labels.map_or_else(
+                || None,
+                |v| Some(v.into_iter().map(|s| Address::from(s)).collect()),
+            );
+            current_labels = None;
             let imm_int = match i_extract_imm(imm) {
                 Some(i) => i as u16,
                 None => panic!("Unable to parse immediate: {}", line),
@@ -395,40 +384,34 @@ fn parse_text_segment(lines: &mut Lines, text_segment: &mut TextSegment) -> Opti
             continue;
         }
         if let Ok((_, (inst, rt, label))) = i_load_label(line) {
-            let addr = match current_label {
-                Some(s) => {
-                    current_label = None;
-                    Some(Address::new(None, Some(s)))
-                }
-                None => None,
-            };
+            let label = String::from_iter(label.into_iter());
+            let addr = current_labels.map_or_else(
+                || None,
+                |v| Some(v.into_iter().map(|s| Address::from(s)).collect()),
+            );
+            current_labels = None;
             text_segment.instructions.push((
                 addr,
                 ITypeLabel::new(
                     IInst::from(inst),
                     Reg::zero,
                     Reg::from(rt),
-                    Address::new(None, Some(label.to_owned())),
+                    Address::new(None, Some(label)),
                 )
                 .into(),
             ));
             continue;
         }
         if let Ok((_, (inst, label))) = j_label(line) {
-            let addr = match current_label {
-                Some(s) => {
-                    current_label = None;
-                    Some(Address::new(None, Some(s)))
-                }
-                None => None,
-            };
+            let label = String::from_iter(label.into_iter());
+            let addr = current_labels.map_or_else(
+                || None,
+                |v| Some(v.into_iter().map(|s| Address::from(s)).collect()),
+            );
+            current_labels = None;
             text_segment.instructions.push((
                 addr,
-                JType::new(
-                    JInst::from(inst),
-                    Address::new(None, Some(label.to_string())),
-                )
-                .into(),
+                JType::new(JInst::from(inst), Address::new(None, Some(label))).into(),
             ));
             continue;
         }
@@ -439,14 +422,17 @@ fn parse_text_segment(lines: &mut Lines, text_segment: &mut TextSegment) -> Opti
 }
 
 fn parse_data_segment(lines: &mut Lines, data_segment: &mut DataSegment) -> Option<String> {
-    let mut current_label: Option<String> = None;
+    let mut current_labels: Option<Vec<String>> = None;
     for line in lines {
         let mut line = line.trim();
         if line.is_empty() || entire_line_is_comment(line) {
             continue;
         }
         if let Ok((l, rest)) = parse_label(line) {
-            current_label = Some(l.to_owned());
+            match current_labels {
+                Some(ref mut v) => v.push(l),
+                None => current_labels = Some(vec![l]),
+            };
             if let Some(rest) = rest {
                 line = rest;
             } else {
@@ -472,13 +458,11 @@ fn parse_data_segment(lines: &mut Lines, data_segment: &mut DataSegment) -> Opti
             continue;
         }
         if let Ok((_, s)) = directive_ascii(line) {
-            let addr = match current_label {
-                Some(s) => {
-                    current_label = None;
-                    Some(Address::new(None, Some(s)))
-                }
-                None => None,
-            };
+            let addr = current_labels.map_or_else(
+                || None,
+                |v| Some(v.into_iter().map(|s| Address::from(s)).collect()),
+            );
+            current_labels = None;
             let cstring = DataCString {
                 chars: (addr, s.as_bytes().to_vec()), // Rust strings aren't null terminated
                 null_terminated: false,
@@ -487,13 +471,11 @@ fn parse_data_segment(lines: &mut Lines, data_segment: &mut DataSegment) -> Opti
             continue;
         }
         if let Ok((_, s)) = directive_asciiz(line) {
-            let addr = match current_label {
-                Some(s) => {
-                    current_label = None;
-                    Some(Address::new(None, Some(s)))
-                }
-                None => None,
-            };
+            let addr = current_labels.map_or_else(
+                || None,
+                |v| Some(v.into_iter().map(|s| Address::from(s)).collect()),
+            );
+            current_labels = None;
             let mut cstring = DataCString {
                 chars: (addr, s.as_bytes().to_vec()), // Rust strings aren't null terminated
                 null_terminated: true,
@@ -503,13 +485,11 @@ fn parse_data_segment(lines: &mut Lines, data_segment: &mut DataSegment) -> Opti
             continue;
         }
         if let Ok((_, bytes)) = directive_byte(line) {
-            let addr = match current_label {
-                Some(s) => {
-                    current_label = None;
-                    Some(Address::new(None, Some(s)))
-                }
-                None => None,
-            };
+            let addr = current_labels.map_or_else(
+                || None,
+                |v| Some(v.into_iter().map(|s| Address::from(s)).collect()),
+            );
+            current_labels = None;
             let mut byte_vec = Vec::new();
             for entry in bytes {
                 let imm = match i_extract_imm(entry) {
@@ -525,13 +505,11 @@ fn parse_data_segment(lines: &mut Lines, data_segment: &mut DataSegment) -> Opti
             continue;
         }
         if let Ok((_, halfs)) = directive_half(line) {
-            let addr = match current_label {
-                Some(s) => {
-                    current_label = None;
-                    Some(Address::new(None, Some(s)))
-                }
-                None => None,
-            };
+            let addr = current_labels.map_or_else(
+                || None,
+                |v| Some(v.into_iter().map(|s| Address::from(s)).collect()),
+            );
+            current_labels = None;
             let mut half_vec = Vec::new();
             for entry in halfs {
                 let imm = match i_extract_imm(entry) {
@@ -547,13 +525,11 @@ fn parse_data_segment(lines: &mut Lines, data_segment: &mut DataSegment) -> Opti
             continue;
         }
         if let Ok((_, words)) = directive_word(line) {
-            let addr = match current_label {
-                Some(s) => {
-                    current_label = None;
-                    Some(Address::new(None, Some(s)))
-                }
-                None => None,
-            };
+            let addr = current_labels.map_or_else(
+                || None,
+                |v| Some(v.into_iter().map(|s| Address::from(s)).collect()),
+            );
+            current_labels = None;
             let mut word_vec = Vec::new();
             for entry in words {
                 let imm = match i_extract_imm(entry) {
@@ -569,13 +545,11 @@ fn parse_data_segment(lines: &mut Lines, data_segment: &mut DataSegment) -> Opti
             continue;
         }
         if let Ok((_, imm)) = directive_space(line) {
-            let addr = match current_label {
-                Some(s) => {
-                    current_label = None;
-                    Some(Address::new(None, Some(s)))
-                }
-                None => None,
-            };
+            let addr = current_labels.map_or_else(
+                || None,
+                |v| Some(v.into_iter().map(|s| Address::from(s)).collect()),
+            );
+            current_labels = None;
             let imm = match i_extract_imm(imm) {
                 Some(i) => i as u32,
                 None => panic!("Expected amount of space after space directive: {}", line),
