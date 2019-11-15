@@ -108,6 +108,10 @@ where
             data: Compressed::compress(data),
         }
     }
+
+    pub fn len(&self) -> usize {
+        self.data.len()
+    }
 }
 
 impl<T> Eq for CompressedVec<T> where T: Compressable {}
@@ -122,3 +126,22 @@ impl<T> Index<usize> for CompressedVec<T> where T: Compressable {
         }
     }
 }
+
+pub struct CompressedVecIter<T> where T: Compressable {
+    data: CompressedVec<T>,
+    idx: usize
+}
+
+impl<T> Iterator for CompressedVecIter<T> where T: Compressable {
+    type Item = T;
+
+    fn next(&mut self) -> Option<Self::Item> {
+        if self.idx < self.data.len() {
+            self.idx += 1;
+            Some(self.data[self.idx].clone())
+        } else {
+            None
+        }
+    }
+}
+
