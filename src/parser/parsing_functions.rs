@@ -5,7 +5,7 @@ use nom::{
     bytes::complete::tag,
     character::complete::{alphanumeric1, digit1, hex_digit1, not_line_ending, space0, space1},
     combinator::{map, opt, recognize},
-    multi::separated_nonempty_list,
+    multi::{many1, separated_nonempty_list},
     sequence::{pair, preceded, terminated, tuple},
     IResult,
 };
@@ -15,6 +15,10 @@ use std::str::FromStr;
 
 pub fn sign(input: &str) -> IResult<&str, &str> {
     alt((tag("+"), tag("-")))(input)
+}
+
+pub fn identifier(input: &str) -> IResult<&str, Vec<&str>> {
+    many1(alt((alphanumeric1, tag("_"))))(input)
 }
 
 macro_rules! gen_nom_ints_dec {
@@ -177,16 +181,12 @@ pub fn entire_line_is_comment(input: &str) -> bool {
     }
 }
 
-pub fn new_label(input: &str) -> IResult<&str, &str> {
-    terminated(alphanumeric1, tag(":"))(input)
+pub fn new_label(input: &str) -> IResult<&str, Vec<&str>> {
+    terminated(identifier, tag(":"))(input)
 }
 
-pub fn label(input: &str) -> IResult<&str, &str> {
-    alphanumeric1(input)
-}
-
-pub fn directive(input: &str) -> IResult<&str, &str> {
-    preceded(tag("."), alphanumeric1)(input)
+pub fn directive(input: &str) -> IResult<&str, Vec<&str>> {
+    preceded(tag("."), identifier)(input)
 }
 
 pub fn comma_space(input: &str) -> IResult<&str, &str> {
@@ -299,12 +299,12 @@ pub fn i_branch_imm(
     ))(input)
 }
 
-pub fn i_branch_label(input: &str) -> IResult<&str, (&str, &str, &str, &str)> {
+pub fn i_branch_label(input: &str) -> IResult<&str, (&str, &str, &str, Vec<&str>)> {
     tuple((
         terminated(i_branch_mnemonic, space1),
         terminated(register, comma_space),
         terminated(register, comma_space),
-        label,
+        identifier,
     ))(input)
 }
 
@@ -319,11 +319,11 @@ pub fn i_mem_imm(
     ))(input)
 }
 
-pub fn i_mem_label(input: &str) -> IResult<&str, (&str, &str, &str, &str)> {
+pub fn i_mem_label(input: &str) -> IResult<&str, (&str, &str, Vec<&str>, &str)> {
     tuple((
         terminated(i_mem_mnemonic, space1),
         terminated(register, comma_space),
-        terminated(label, tag("(")),
+        terminated(identifier, tag("(")),
         terminated(register, tag(")")),
     ))(input)
 }
@@ -338,16 +338,16 @@ pub fn i_load_imm(
     ))(input)
 }
 
-pub fn i_load_label(input: &str) -> IResult<&str, (&str, &str, &str)> {
+pub fn i_load_label(input: &str) -> IResult<&str, (&str, &str, Vec<&str>)> {
     tuple((
         terminated(i_load_mnemonic, space1),
         terminated(register, comma_space),
-        label,
+        identifier,
     ))(input)
 }
 
-pub fn j_label(input: &str) -> IResult<&str, (&str, &str)> {
-    pair(terminated(j_mnemonic, space1), label)(input)
+pub fn j_label(input: &str) -> IResult<&str, (&str, Vec<&str>)> {
+    pair(terminated(j_mnemonic, space1), identifier)(input)
 }
 
 pub type DirectiveAlignResult<'a> = IResult<&'a str, (Option<&'a str>, Result<i64, ParseIntError>)>;
