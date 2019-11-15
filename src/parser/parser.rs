@@ -9,9 +9,9 @@ use std::{
 };
 
 use crate::{
-    parser::parsing_functions::*,
     instructions::{itype::*, jtype::*, rtype::*, Inst},
     machine::{address::Address, register::Reg},
+    parser::parsing_functions::*,
 };
 
 #[derive(Clone, Debug)]
@@ -139,7 +139,9 @@ where
     Some(imm_int)
 }
 
-fn parse_label(current_line: &str) -> Result<(&str, Option<&str>), Err<(&str, nom::error::ErrorKind)>> {
+fn parse_label(
+    current_line: &str,
+) -> Result<(&str, Option<&str>), Err<(&str, nom::error::ErrorKind)>> {
     let (rest, l) = new_label(current_line)?;
     let rest = rest.trim();
     if !rest.is_empty() && !entire_line_is_comment(rest) {
