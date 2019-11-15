@@ -346,14 +346,13 @@ fn parse_text_segment(lines: &mut Lines, text_segment: &mut TextSegment) -> Opti
                 }
                 None => None,
             };
-            let _ = label; // TODO: convert label to number
             text_segment.instructions.push((
                 addr,
-                IType::new(
+                ITypeLabel::new(
                     IInst::from(inst),
                     Reg::from(rs),
                     Reg::from(rt),
-                    Imm::from(0u64),
+                    Address::new(None, Some(label.to_owned())),
                 )
                 .into(),
             ));
@@ -368,18 +367,12 @@ fn parse_text_segment(lines: &mut Lines, text_segment: &mut TextSegment) -> Opti
                 None => None,
             };
             let imm_int = match i_extract_imm(imm) {
-                Some(i) => i,
+                Some(i) => i as u16,
                 None => panic!("Unable to parse immediate: {}", line),
             };
             text_segment.instructions.push((
                 addr,
-                IType::new(
-                    IInst::from(inst),
-                    Reg::zero,
-                    Reg::from(rt),
-                    Imm::from(imm_int as u64),
-                )
-                .into(),
+                ITypeImm::new(IInst::from(inst), Reg::zero, Reg::from(rt), imm_int).into(),
             ));
             continue;
         }
@@ -391,10 +384,15 @@ fn parse_text_segment(lines: &mut Lines, text_segment: &mut TextSegment) -> Opti
                 }
                 None => None,
             };
-            let _ = label; // TODO: convert label to number
             text_segment.instructions.push((
                 addr,
-                IType::new(IInst::from(inst), Reg::zero, Reg::from(rt), Imm::from(0u64)).into(),
+                ITypeLabel::new(
+                    IInst::from(inst),
+                    Reg::zero,
+                    Reg::from(rt),
+                    Address::new(None, Some(label.to_owned())),
+                )
+                .into(),
             ));
             continue;
         }
