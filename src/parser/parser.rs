@@ -1,5 +1,3 @@
-#![allow(dead_code)]
-
 use nom::Err;
 
 use std::{
