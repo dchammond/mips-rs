@@ -7,7 +7,7 @@ use std::{
 };
 
 use crate::{
-    assembler::parsing_functions::*,
+    parser::parsing_functions::*,
     instructions::{itype::*, jtype::*, rtype::*, Inst},
     machine::{address::Address, register::Reg},
 };
