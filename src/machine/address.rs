@@ -11,3 +11,16 @@ impl Address {
         Address { numeric, label }
     }
 }
+
+impl From<NonZeroU32> for Address {
+    fn from(n: NonZeroU32) -> Self {
+        Address::new(Some(n), None)
+    }
+}
+
+impl From<String> for Address {
+    fn from(l: String) -> Self {
+        Address::new(None, Some(l))
+    }
+}
+
