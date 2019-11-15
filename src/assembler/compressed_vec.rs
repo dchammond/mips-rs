@@ -3,6 +3,7 @@ use std::{
     fmt::Debug,
     mem,
     num::NonZeroUsize,
+    ops::Index,
 };
 
 pub trait Compressable: Clone + Debug + Eq + PartialEq {}
@@ -110,3 +111,14 @@ where
 }
 
 impl<T> Eq for CompressedVec<T> where T: Compressable {}
+
+impl<T> Index<usize> for CompressedVec<T> where T: Compressable {
+    type Output = T;
+
+    fn index(&self, idx: usize) -> &Self::Output {
+        match &self.data[idx] {
+            Entry::Data(d) => &d,
+            Entry::Ptr(c) => c.get_ref(),
+        }
+    }
+}
