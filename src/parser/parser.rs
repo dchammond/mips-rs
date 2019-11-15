@@ -1,5 +1,7 @@
 #![allow(dead_code)]
 
+use nom::Err;
+
 use std::{
     num::{NonZeroU32, ParseIntError},
     str::Lines,
@@ -137,6 +139,16 @@ where
     Some(imm_int)
 }
 
+fn parse_label(current_line: &str) -> Result<(&str, Option<&str>), Err<(&str, nom::error::ErrorKind)>> {
+    let (rest, l) = new_label(current_line)?;
+    let rest = rest.trim();
+    if !rest.is_empty() && !entire_line_is_comment(rest) {
+        Ok((l, Some(rest)))
+    } else {
+        Ok((l, None))
+    }
+}
+
 fn parse_directive<'a>(current_line: &'a str, lines: &'a mut Lines) -> Option<ParsedDirective<'a>> {
     let mut first = Some(current_line);
     for line in lines {
@@ -191,13 +203,17 @@ fn parse_directive<'a>(current_line: &'a str, lines: &'a mut Lines) -> Option<Pa
 fn parse_text_segment(lines: &mut Lines, text_segment: &mut TextSegment) -> Option<String> {
     let mut current_label: Option<String> = None;
     for line in lines {
-        let line = line.trim();
+        let mut line = line.trim();
         if line.is_empty() || entire_line_is_comment(line) {
             continue;
         }
-        if let Ok((_, l)) = new_label(line) {
+        if let Ok((l, rest)) = parse_label(line) {
             current_label = Some(l.to_owned());
-            continue;
+            if let Some(rest) = rest {
+                line = rest;
+            } else {
+                continue;
+            }
         }
         if let Ok((_, (inst, rd, rs, rt))) = r_arithmetic(line) {
             let addr = match current_label {
@@ -423,13 +439,17 @@ fn parse_text_segment(lines: &mut Lines, text_segment: &mut TextSegment) -> Opti
 fn parse_data_segment(lines: &mut Lines, data_segment: &mut DataSegment) -> Option<String> {
     let mut current_label: Option<String> = None;
     for line in lines {
-        let line = line.trim();
+        let mut line = line.trim();
         if line.is_empty() || entire_line_is_comment(line) {
             continue;
         }
-        if let Ok((_, l)) = new_label(line) {
+        if let Ok((l, rest)) = parse_label(line) {
             current_label = Some(l.to_owned());
-            continue;
+            if let Some(rest) = rest {
+                line = rest;
+            } else {
+                continue;
+            }
         }
         if let Ok((_, imm)) = directive_align(line) {
             let imm_int = match i_extract_imm(imm) {
