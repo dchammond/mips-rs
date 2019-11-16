@@ -143,5 +143,10 @@ impl<T> Iterator for CompressedVecIter<T> where T: Compressable {
             None
         }
     }
+
+    fn size_hint(&self) -> (usize, Option<usize>) {
+        let remain = self.data.len() - self.idx;
+        (remain, Some(remain))
+    }
 }
 
