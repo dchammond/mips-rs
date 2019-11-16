@@ -3,11 +3,11 @@ use crate::machine::register::Reg;
 
 #[derive(Copy, Clone, Debug)]
 pub struct RType {
-    rs: Reg,
-    rt: Reg,
-    rd: Reg,
-    shamt: u8,
-    funct: RInst,
+    pub rs: Reg,
+    pub rt: Reg,
+    pub rd: Reg,
+    pub shamt: u8,
+    pub funct: RInst,
 }
 
 impl RType {

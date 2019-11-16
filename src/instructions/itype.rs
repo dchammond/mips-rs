@@ -5,18 +5,18 @@ use crate::machine::{address::Address, register::Reg};
 
 #[derive(Clone, Debug)]
 pub struct ITypeImm {
-    opcode: IInst,
-    rs: Reg,
-    rt: Reg,
-    imm: u16,
+    pub opcode: IInst,
+    pub rs: Reg,
+    pub rt: Reg,
+    pub imm: u16,
 }
 
 #[derive(Clone, Debug)]
 pub struct ITypeLabel {
-    opcode: IInst,
-    rs: Reg,
-    rt: Reg,
-    label: Address,
+    pub opcode: IInst,
+    pub rs: Reg,
+    pub rt: Reg,
+    pub label: Address,
 }
 
 impl ITypeImm {

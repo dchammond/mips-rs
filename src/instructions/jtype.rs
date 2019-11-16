@@ -5,8 +5,8 @@ use crate::machine::address::Address;
 
 #[derive(Clone, Debug)]
 pub struct JType {
-    opcode: JInst,
-    address: Address,
+    pub opcode: JInst,
+    pub address: Address,
 }
 
 impl JType {
