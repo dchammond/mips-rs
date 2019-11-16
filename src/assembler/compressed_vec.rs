@@ -127,6 +127,15 @@ impl<T> Index<usize> for CompressedVec<T> where T: Compressable {
     }
 }
 
+impl<T> IntoIterator for CompressedVec<T> where T: Compressable {
+    type Item = T;
+    type IntoIter = CompressedVecIter<Self::Item>;
+
+    fn into_iter(self) -> Self::IntoIter {
+        CompressedVecIter { data: self, idx: 0 }
+    }
+}
+
 pub struct CompressedVecIter<T> where T: Compressable {
     data: CompressedVec<T>,
     idx: usize
