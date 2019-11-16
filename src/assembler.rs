@@ -1,2 +1,2 @@
 pub mod assembler;
-mod compressed_vec;
+//mod compressed_vec;
