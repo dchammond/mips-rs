@@ -7,6 +7,8 @@ use crate::{
     },
 };
 
+use std::{collections::HashMap, num::NonZeroU32};
+
 pub struct Assembled {}
 
 /*
@@ -16,7 +18,7 @@ fn expand_pseudo(text_segments: &mut [TextSegment]) {
         for (instr_idx, instruction) in text_segment.instructions.iter().enumerate() {
             match &instruction.1 {
                 Inst::ILabel(ITypeLabel{opcode: IInst::la, rs, rt, label}) => {
-                    
+
                 },
                 _ => (),
             }
@@ -25,14 +27,18 @@ fn expand_pseudo(text_segments: &mut [TextSegment]) {
 }
 */
 
-fn assign_text_segment_addresses(text_segment: &mut [TextSegment]) {
+fn assign_text_segment_addresses(text_segment: &mut TextSegment) {}
+
+fn layout_text_segment(text_segment_entries: &mut [TextSegment], labels: &mut HashMap<String, NonZeroU32>) {
+
 }
 
-fn assign_addresses(parsed: &mut Parsed) {
-    assign_text_segment_addresses(&mut parsed.text_segment);
+fn assign_addresses(parsed: &mut Parsed, labels: &mut HashMap<String, NonZeroU32>) {
+    layout_text_segment(&mut parsed.text_segment, &mut labels);
 }
 
 pub fn assemble(mut parsed: Parsed) {
-    assign_addresses(&mut parsed);
+    let mut labels: HashMap<String, NonZeroU32> = HashMap::new();
+    assign_addresses(&mut parsed, &mut labels);
     //expand_pseudo(&mut parsed.text_segment);
 }
