@@ -34,7 +34,7 @@ fn layout_text_segment(text_segment_entries: &mut [TextSegment], labels: &mut Ha
 }
 
 fn assign_addresses(parsed: &mut Parsed, labels: &mut HashMap<String, NonZeroU32>) {
-    layout_text_segment(&mut parsed.text_segment, &mut labels);
+    layout_text_segment(&mut parsed.text_segment, labels);
 }
 
 pub fn assemble(mut parsed: Parsed) {
