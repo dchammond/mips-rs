@@ -15,7 +15,7 @@ use crate::{
 
 #[derive(Clone, Debug)]
 pub struct TextSegment {
-    pub instructions: Vec<(Option<Vec<Address>>, Inst)>,
+    pub instructions: Vec<(Option<Address>, Inst)>,
     pub start_address: Option<Address>,
 }
 
@@ -30,7 +30,7 @@ impl TextSegment {
 
 #[derive(Clone, Debug)]
 pub struct KTextSegment {
-    pub instructions: Vec<(Option<Vec<Address>>, Inst)>,
+    pub instructions: Vec<(Option<Address>, Inst)>,
     pub start_address: Option<Address>,
 }
 
@@ -223,7 +223,7 @@ fn parse_text_segment(lines: &mut Lines, text_segment: &mut TextSegment) -> Opti
         if let Ok((_, (inst, rd, rs, rt))) = r_arithmetic(line) {
             let addr = current_labels.map_or_else(
                 || None,
-                |v| Some(v.into_iter().map(|s| Address::from(s)).collect()),
+                |v| Some(Address::from(v.as_slice())),
             );
             current_labels = None;
             text_segment.instructions.push((
@@ -242,7 +242,7 @@ fn parse_text_segment(lines: &mut Lines, text_segment: &mut TextSegment) -> Opti
         if let Ok((_, (inst, rd, rt, shamt))) = r_shift(line) {
             let addr = current_labels.map_or_else(
                 || None,
-                |v| Some(v.into_iter().map(|s| Address::from(s)).collect()),
+                |v| Some(Address::from(v.as_slice())),
             );
             current_labels = None;
             if let Some(sign) = shamt.0 {
@@ -270,7 +270,7 @@ fn parse_text_segment(lines: &mut Lines, text_segment: &mut TextSegment) -> Opti
         if let Ok((_, (inst, rs))) = r_jump(line) {
             let addr = current_labels.map_or_else(
                 || None,
-                |v| Some(v.into_iter().map(|s| Address::from(s)).collect()),
+                |v| Some(Address::from(v.as_slice())),
             );
             current_labels = None;
             text_segment.instructions.push((
@@ -282,7 +282,7 @@ fn parse_text_segment(lines: &mut Lines, text_segment: &mut TextSegment) -> Opti
         if let Ok((_, (inst, rt, rs, imm))) = i_arith(line) {
             let addr = current_labels.map_or_else(
                 || None,
-                |v| Some(v.into_iter().map(|s| Address::from(s)).collect()),
+                |v| Some(Address::from(v.as_slice())),
             );
             current_labels = None;
             let imm_int = match i_extract_imm(imm) {
@@ -298,7 +298,7 @@ fn parse_text_segment(lines: &mut Lines, text_segment: &mut TextSegment) -> Opti
         if let Ok((_, (inst, rt, rs, imm))) = i_branch_imm(line) {
             let addr = current_labels.map_or_else(
                 || None,
-                |v| Some(v.into_iter().map(|s| Address::from(s)).collect()),
+                |v| Some(Address::from(v.as_slice())),
             );
             current_labels = None;
             let imm_int = match i_extract_imm(imm) {
@@ -315,7 +315,7 @@ fn parse_text_segment(lines: &mut Lines, text_segment: &mut TextSegment) -> Opti
             let label = String::from_iter(label.into_iter());
             let addr = current_labels.map_or_else(
                 || None,
-                |v| Some(v.into_iter().map(|s| Address::from(s)).collect()),
+                |v| Some(Address::from(v.as_slice())),
             );
             current_labels = None;
             text_segment.instructions.push((
@@ -324,7 +324,7 @@ fn parse_text_segment(lines: &mut Lines, text_segment: &mut TextSegment) -> Opti
                     IInst::from(inst),
                     Reg::from(rs),
                     Reg::from(rt),
-                    Address::new(None, Some(label)),
+                    Address::from(label),
                 )
                 .into(),
             ));
@@ -333,7 +333,7 @@ fn parse_text_segment(lines: &mut Lines, text_segment: &mut TextSegment) -> Opti
         if let Ok((_, (inst, rt, imm, rs))) = i_mem_imm(line) {
             let addr = current_labels.map_or_else(
                 || None,
-                |v| Some(v.into_iter().map(|s| Address::from(s)).collect()),
+                |v| Some(Address::from(v.as_slice())),
             );
             current_labels = None;
             let imm_int = match i_extract_imm(imm) {
@@ -350,7 +350,7 @@ fn parse_text_segment(lines: &mut Lines, text_segment: &mut TextSegment) -> Opti
             let label = String::from_iter(label.into_iter());
             let addr = current_labels.map_or_else(
                 || None,
-                |v| Some(v.into_iter().map(|s| Address::from(s)).collect()),
+                |v| Some(Address::from(v.as_slice())),
             );
             current_labels = None;
             text_segment.instructions.push((
@@ -359,7 +359,7 @@ fn parse_text_segment(lines: &mut Lines, text_segment: &mut TextSegment) -> Opti
                     IInst::from(inst),
                     Reg::from(rs),
                     Reg::from(rt),
-                    Address::new(None, Some(label)),
+                    Address::from(label),
                 )
                 .into(),
             ));
@@ -368,7 +368,7 @@ fn parse_text_segment(lines: &mut Lines, text_segment: &mut TextSegment) -> Opti
         if let Ok((_, (inst, rt, imm))) = i_load_imm(line) {
             let addr = current_labels.map_or_else(
                 || None,
-                |v| Some(v.into_iter().map(|s| Address::from(s)).collect()),
+                |v| Some(Address::from(v.as_slice())),
             );
             current_labels = None;
             let imm_int = match i_extract_imm(imm) {
@@ -385,7 +385,7 @@ fn parse_text_segment(lines: &mut Lines, text_segment: &mut TextSegment) -> Opti
             let label = String::from_iter(label.into_iter());
             let addr = current_labels.map_or_else(
                 || None,
-                |v| Some(v.into_iter().map(|s| Address::from(s)).collect()),
+                |v| Some(Address::from(v.as_slice())),
             );
             current_labels = None;
             text_segment.instructions.push((
@@ -394,7 +394,7 @@ fn parse_text_segment(lines: &mut Lines, text_segment: &mut TextSegment) -> Opti
                     IInst::from(inst),
                     Reg::zero,
                     Reg::from(rt),
-                    Address::new(None, Some(label)),
+                    Address::from(label),
                 )
                 .into(),
             ));
@@ -404,12 +404,12 @@ fn parse_text_segment(lines: &mut Lines, text_segment: &mut TextSegment) -> Opti
             let label = String::from_iter(label.into_iter());
             let addr = current_labels.map_or_else(
                 || None,
-                |v| Some(v.into_iter().map(|s| Address::from(s)).collect()),
+                |v| Some(Address::from(v.as_slice())),
             );
             current_labels = None;
             text_segment.instructions.push((
                 addr,
-                JType::new(JInst::from(inst), Address::new(None, Some(label))).into(),
+                JType::new(JInst::from(inst), Address::from(label)).into(),
             ));
             continue;
         }
