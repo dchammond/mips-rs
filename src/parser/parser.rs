@@ -221,10 +221,7 @@ fn parse_text_segment(lines: &mut Lines, text_segment: &mut TextSegment) -> Opti
             }
         }
         if let Ok((_, (inst, rd, rs, rt))) = r_arithmetic(line) {
-            let addr = current_labels.map_or_else(
-                || None,
-                |v| Some(Address::from(v.as_slice())),
-            );
+            let addr = current_labels.map_or_else(|| None, |v| Some(Address::from(v.as_slice())));
             current_labels = None;
             text_segment.instructions.push((
                 addr,
@@ -240,10 +237,7 @@ fn parse_text_segment(lines: &mut Lines, text_segment: &mut TextSegment) -> Opti
             continue;
         }
         if let Ok((_, (inst, rd, rt, shamt))) = r_shift(line) {
-            let addr = current_labels.map_or_else(
-                || None,
-                |v| Some(Address::from(v.as_slice())),
-            );
+            let addr = current_labels.map_or_else(|| None, |v| Some(Address::from(v.as_slice())));
             current_labels = None;
             if let Some(sign) = shamt.0 {
                 if sign == "-" {
@@ -268,10 +262,7 @@ fn parse_text_segment(lines: &mut Lines, text_segment: &mut TextSegment) -> Opti
             continue;
         }
         if let Ok((_, (inst, rs))) = r_jump(line) {
-            let addr = current_labels.map_or_else(
-                || None,
-                |v| Some(Address::from(v.as_slice())),
-            );
+            let addr = current_labels.map_or_else(|| None, |v| Some(Address::from(v.as_slice())));
             current_labels = None;
             text_segment.instructions.push((
                 addr,
@@ -280,10 +271,7 @@ fn parse_text_segment(lines: &mut Lines, text_segment: &mut TextSegment) -> Opti
             continue;
         }
         if let Ok((_, (inst, rt, rs, imm))) = i_arith(line) {
-            let addr = current_labels.map_or_else(
-                || None,
-                |v| Some(Address::from(v.as_slice())),
-            );
+            let addr = current_labels.map_or_else(|| None, |v| Some(Address::from(v.as_slice())));
             current_labels = None;
             let imm_int = match i_extract_imm(imm) {
                 Some(i) => i as u16,
@@ -296,10 +284,7 @@ fn parse_text_segment(lines: &mut Lines, text_segment: &mut TextSegment) -> Opti
             continue;
         }
         if let Ok((_, (inst, rt, rs, imm))) = i_branch_imm(line) {
-            let addr = current_labels.map_or_else(
-                || None,
-                |v| Some(Address::from(v.as_slice())),
-            );
+            let addr = current_labels.map_or_else(|| None, |v| Some(Address::from(v.as_slice())));
             current_labels = None;
             let imm_int = match i_extract_imm(imm) {
                 Some(i) => i as u16,
@@ -313,10 +298,7 @@ fn parse_text_segment(lines: &mut Lines, text_segment: &mut TextSegment) -> Opti
         }
         if let Ok((_, (inst, rt, rs, label))) = i_branch_label(line) {
             let label = String::from_iter(label.into_iter());
-            let addr = current_labels.map_or_else(
-                || None,
-                |v| Some(Address::from(v.as_slice())),
-            );
+            let addr = current_labels.map_or_else(|| None, |v| Some(Address::from(v.as_slice())));
             current_labels = None;
             text_segment.instructions.push((
                 addr,
@@ -331,10 +313,7 @@ fn parse_text_segment(lines: &mut Lines, text_segment: &mut TextSegment) -> Opti
             continue;
         }
         if let Ok((_, (inst, rt, imm, rs))) = i_mem_imm(line) {
-            let addr = current_labels.map_or_else(
-                || None,
-                |v| Some(Address::from(v.as_slice())),
-            );
+            let addr = current_labels.map_or_else(|| None, |v| Some(Address::from(v.as_slice())));
             current_labels = None;
             let imm_int = match i_extract_imm(imm) {
                 Some(i) => i as u16,
@@ -348,10 +327,7 @@ fn parse_text_segment(lines: &mut Lines, text_segment: &mut TextSegment) -> Opti
         }
         if let Ok((_, (inst, rt, label, rs))) = i_mem_label(line) {
             let label = String::from_iter(label.into_iter());
-            let addr = current_labels.map_or_else(
-                || None,
-                |v| Some(Address::from(v.as_slice())),
-            );
+            let addr = current_labels.map_or_else(|| None, |v| Some(Address::from(v.as_slice())));
             current_labels = None;
             text_segment.instructions.push((
                 addr,
@@ -366,10 +342,7 @@ fn parse_text_segment(lines: &mut Lines, text_segment: &mut TextSegment) -> Opti
             continue;
         }
         if let Ok((_, (inst, rt, imm))) = i_load_imm(line) {
-            let addr = current_labels.map_or_else(
-                || None,
-                |v| Some(Address::from(v.as_slice())),
-            );
+            let addr = current_labels.map_or_else(|| None, |v| Some(Address::from(v.as_slice())));
             current_labels = None;
             let imm_int = match i_extract_imm(imm) {
                 Some(i) => i as u16,
@@ -383,10 +356,7 @@ fn parse_text_segment(lines: &mut Lines, text_segment: &mut TextSegment) -> Opti
         }
         if let Ok((_, (inst, rt, label))) = i_load_label(line) {
             let label = String::from_iter(label.into_iter());
-            let addr = current_labels.map_or_else(
-                || None,
-                |v| Some(Address::from(v.as_slice())),
-            );
+            let addr = current_labels.map_or_else(|| None, |v| Some(Address::from(v.as_slice())));
             current_labels = None;
             text_segment.instructions.push((
                 addr,
@@ -402,10 +372,7 @@ fn parse_text_segment(lines: &mut Lines, text_segment: &mut TextSegment) -> Opti
         }
         if let Ok((_, (inst, label))) = j_label(line) {
             let label = String::from_iter(label.into_iter());
-            let addr = current_labels.map_or_else(
-                || None,
-                |v| Some(Address::from(v.as_slice())),
-            );
+            let addr = current_labels.map_or_else(|| None, |v| Some(Address::from(v.as_slice())));
             current_labels = None;
             text_segment.instructions.push((
                 addr,

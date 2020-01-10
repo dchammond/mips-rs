@@ -22,7 +22,6 @@ impl From<itype::ITypeLabel> for Inst {
     }
 }
 
-
 impl From<rtype::RType> for Inst {
     fn from(r: rtype::RType) -> Self {
         Inst::R(r)

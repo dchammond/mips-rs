@@ -56,29 +56,42 @@ fn expand_pseudo(text_segments: &mut [TextSegment]) {
 }
 */
 
-fn assign_text_segment_addresses(mut text_segment: TextSegment, labels: &mut HashMap<String, NonZeroU32>) -> TextSegment {
-    let mut addr: u32 = text_segment.start_address.clone().unwrap().numeric.unwrap().get();
-    text_segment.instructions = text_segment.instructions.into_iter().map(|inst: (Option<Address>, Inst)| {
-        let non_zero_addr = unsafe { NonZeroU32::new_unchecked(addr) };
-        if let Some(a) = inst.0 {
-            match a.label {
-                Some(v) => {
-                    v.into_iter().for_each(|s| {
-                        if labels.contains_key(&s) {
-                            panic!(format!("Redefinition of label: {}", s));
-                        }
-                        labels.insert(s, non_zero_addr);
-                    });
-                },
-                None => panic!("Expected non empty labels in Address"),
+fn assign_text_segment_addresses(
+    mut text_segment: TextSegment,
+    labels: &mut HashMap<String, NonZeroU32>,
+) -> TextSegment {
+    let mut addr: u32 = text_segment
+        .start_address
+        .clone()
+        .unwrap()
+        .numeric
+        .unwrap()
+        .get();
+    text_segment.instructions = text_segment
+        .instructions
+        .into_iter()
+        .map(|inst: (Option<Address>, Inst)| {
+            let non_zero_addr = unsafe { NonZeroU32::new_unchecked(addr) };
+            if let Some(a) = inst.0 {
+                match a.label {
+                    Some(v) => {
+                        v.into_iter().for_each(|s| {
+                            if labels.contains_key(&s) {
+                                panic!(format!("Redefinition of label: {}", s));
+                            }
+                            labels.insert(s, non_zero_addr);
+                        });
+                    }
+                    None => panic!("Expected non empty labels in Address"),
+                }
             }
-        }
-        addr += 4;
-        if(addr >= TEXT_END) {
-            panic!("Text segment too large");
-        }
-        (Some(Address::from(non_zero_addr)), inst.1)
-    }).collect();
+            addr += 4;
+            if addr >= TEXT_END {
+                panic!("Text segment too large");
+            }
+            (Some(Address::from(non_zero_addr)), inst.1)
+        })
+        .collect();
     text_segment
 }
 

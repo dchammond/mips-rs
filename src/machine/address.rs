@@ -29,4 +29,3 @@ impl From<&[String]> for Address {
         Address::new(None, Some(ls.to_vec()))
     }
 }
-

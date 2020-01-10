@@ -116,7 +116,10 @@ where
 
 impl<T> Eq for CompressedVec<T> where T: Compressable {}
 
-impl<T> Index<usize> for CompressedVec<T> where T: Compressable {
+impl<T> Index<usize> for CompressedVec<T>
+where
+    T: Compressable,
+{
     type Output = T;
 
     fn index(&self, idx: usize) -> &Self::Output {
@@ -127,7 +130,10 @@ impl<T> Index<usize> for CompressedVec<T> where T: Compressable {
     }
 }
 
-impl<T> IntoIterator for CompressedVec<T> where T: Compressable {
+impl<T> IntoIterator for CompressedVec<T>
+where
+    T: Compressable,
+{
     type Item = T;
     type IntoIter = CompressedVecIter<Self::Item>;
 
@@ -136,12 +142,18 @@ impl<T> IntoIterator for CompressedVec<T> where T: Compressable {
     }
 }
 
-pub struct CompressedVecIter<T> where T: Compressable {
+pub struct CompressedVecIter<T>
+where
+    T: Compressable,
+{
     data: CompressedVec<T>,
-    idx: usize
+    idx: usize,
 }
 
-impl<T> Iterator for CompressedVecIter<T> where T: Compressable {
+impl<T> Iterator for CompressedVecIter<T>
+where
+    T: Compressable,
+{
     type Item = T;
 
     fn next(&mut self) -> Option<Self::Item> {
@@ -158,4 +170,3 @@ impl<T> Iterator for CompressedVecIter<T> where T: Compressable {
         (remain, Some(remain))
     }
 }
-

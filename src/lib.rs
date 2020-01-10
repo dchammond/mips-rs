@@ -2,9 +2,9 @@ use std::io::Read;
 use std::{fs, io, path};
 
 pub mod assembler;
-pub mod parser;
 mod instructions;
 mod machine;
+pub mod parser;
 
 pub fn load_file(p: &path::Path) -> String {
     let mut file: fs::File;
