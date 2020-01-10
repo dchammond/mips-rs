@@ -95,6 +95,14 @@ fn assign_text_segment_addresses(
     text_segment
 }
 
+// Just a first-come-first-served-first-fit allocator
+// Two passes 1. handle Segments with a desired address
+// 2. find a place for everything else
+fn layout_text_segment(
+    text_segment_entries: &mut [TextSegment],
+    labels: &mut HashMap<String, NonZeroU32>,
+) {
+
 }
 
 fn assign_addresses(parsed: &mut Parsed, labels: &mut HashMap<String, NonZeroU32>) {
