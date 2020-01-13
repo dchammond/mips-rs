@@ -98,32 +98,58 @@ fn assign_text_segment_addresses(
     text_segment
 }
 
-#[derive(Copy)]
+#[derive(Copy, Clone, PartialEq)]
+enum MemRangeStatus {
+    Free,
+    Allocated,
+}
+
+impl Eq for MemRangeStatus {}
+
+#[derive(Copy, Clone)]
 struct MemRange {
     lower: u32,
     upper: u32, // inclusive
+    free: MemRangeStatus,
 }
 
 impl MemRange {
-    pub fn new(lower: u32, upper: u32) -> MemRange {
+    pub fn new(lower: u32, upper: u32, free: MemRangeStatus) -> MemRange {
         if lower > upper {
             panic!("lower > upper");
         }
-        MemRange { lower, upper }
+        MemRange { lower, upper, free }
     }
     pub fn size_bytes(&self) -> u32 {
-        upper - lower
+        self.upper - self.lower + 1
     }
-    pub fn reduce(self, bytes: NonZeroU32) -> (MemRange, MemRange) {
-        let lower = self;
-        lower.upper -= bytes.get();
-        (lower, MemRange::new(lower.upper + 1, lower.upper + 1 + bytes.get()))
+    pub fn shrink(mut self, bytes: NonZeroU32) -> (MemRange, MemRange) {
+        self.upper -= bytes.get();
+        (self, MemRange::new(self.upper + 1, self.upper + 1 + bytes.get(), MemRangeStatus::Free))
     }
-    pub fn grow(self, bytes: u32) -> (MemRange, MemRange) {
-
+    pub fn grow(mut self, next: Option<&[MemRange]>, bytes: NonZeroU32) -> (MemRange, Option<Vec<MemRange>>) {
+        self.upper += bytes.get();
+        let mut r = None;
+        if let Some(ranges) = next {
+            // panic if blocks are not free
+            let mut tmp = ranges.into_iter().cloned().skip_while(|mem| mem.upper < self.upper).collect::<Vec<MemRange>>();
+            if tmp.len() > 0 {
+                let next = tmp[0];
+                tmp[0] = MemRange::new(self.upper + 1, next.upper, MemRangeStatus::Free);
+            }
+            r = Some(tmp);
+        }
+        (self, r)
     }
-    pub fn merge(self, other: MemRange) -> MemRange {
-        // check if next to each other
+    pub fn merge(mut self, other: MemRange) -> MemRange {
+        if self.upper + 1 != other.lower {
+            panic!("Is there a hole? upper: {} lower: {}", self.upper, other.lower);
+        }
+        if MemRangeStatus::Allocated == other.free {
+            panic!("Cannot merge with allocated memory block");
+        }
+        self.upper = other.upper;
+        self
     }
 }
 
