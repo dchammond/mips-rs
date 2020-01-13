@@ -56,6 +56,19 @@ fn expand_pseudo(text_segments: &mut [TextSegment]) {
 }
 */
 
+fn define_labels(a: Address, addr: NonZeroU32, labels: &mut HashMap<String, NonZeroU32>) {
+    if let Some(v) = a.label {
+        v.into_iter().for_each(|s| {
+            if labels.contains_key(&s) {
+                panic!(format!("Redefinition of label: {}", s));
+            }
+            labels.insert(s, addr);
+        });
+    } else {
+        panic!("Expected non empty labels in Address");
+    }
+}
+
 fn assign_text_segment_addresses(
     mut text_segment: TextSegment,
     labels: &mut HashMap<String, NonZeroU32>,
@@ -73,17 +86,7 @@ fn assign_text_segment_addresses(
         .map(|inst: (Option<Address>, Inst)| {
             let non_zero_addr = unsafe { NonZeroU32::new_unchecked(addr) };
             if let Some(a) = inst.0 {
-                match a.label {
-                    Some(v) => {
-                        v.into_iter().for_each(|s| {
-                            if labels.contains_key(&s) {
-                                panic!(format!("Redefinition of label: {}", s));
-                            }
-                            labels.insert(s, non_zero_addr);
-                        });
-                    }
-                    None => panic!("Expected non empty labels in Address"),
-                }
+                define_labels(a, non_zero_addr, labels);
             }
             addr += 4;
             if addr >= TEXT_END {
