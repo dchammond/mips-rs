@@ -98,9 +98,40 @@ fn assign_text_segment_addresses(
     text_segment
 }
 
+#[derive(Copy)]
+struct MemRange {
+    lower: u32,
+    upper: u32, // inclusive
+}
+
+impl MemRange {
+    pub fn new(lower: u32, upper: u32) -> MemRange {
+        if lower > upper {
+            panic!("lower > upper");
+        }
+        MemRange { lower, upper }
+    }
+    pub fn size_bytes(&self) -> u32 {
+        upper - lower
+    }
+    pub fn reduce(self, bytes: NonZeroU32) -> (MemRange, MemRange) {
+        let lower = self;
+        lower.upper -= bytes.get();
+        (lower, MemRange::new(lower.upper + 1, lower.upper + 1 + bytes.get()))
+    }
+    pub fn grow(self, bytes: u32) -> (MemRange, MemRange) {
+
+    }
+    pub fn merge(self, other: MemRange) -> MemRange {
+        // check if next to each other
+    }
+}
+
 // Just a first-come-first-served-first-fit allocator
 // Two passes 1. handle Segments with a desired address
 // 2. find a place for everything else
+// All TextSegments should have a defined start address
+// before passed too assign_text_segment_addresses
 fn layout_text_segment(
     text_segment_entries: &mut [TextSegment],
     labels: &mut HashMap<String, NonZeroU32>,
