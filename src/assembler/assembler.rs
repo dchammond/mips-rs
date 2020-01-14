@@ -167,6 +167,60 @@ impl MemRange {
         }
         (self, r)
     }
+    /**
+     * "Middle" will always be returned as the second element of the tuple
+     * The first element exists if there is a MemRange lower than middle
+     * The third element exists if there is a MemRange higher than middle
+     */
+    pub fn insert(self, middle: MemRange) -> (Option<MemRange>, MemRange, Option<MemRange>) {
+        if MemRangeStatus::Free != self.status {
+            panic!(
+                "Tried to insert into non-free block: {:?} <-> {:?}",
+                self, middle
+            );
+        }
+        if middle.lower < self.lower || self.upper < middle.upper {
+            panic!("Tried to insert out of bounds: {:?} <- {:?}", self, middle);
+        }
+        // TODO: clenaup and use match like in first_fit
+        if middle.lower == self.lower && middle.upper == self.upper {
+            (None, middle, None)
+        } else if middle.lower == self.lower {
+            (
+                None,
+                middle,
+                Some(MemRange::new(
+                    middle.upper + 1,
+                    self.upper,
+                    MemRangeStatus::Free,
+                )),
+            )
+        } else if middle.upper == self.upper {
+            (
+                Some(MemRange::new(
+                    self.lower,
+                    middle.lower - 1,
+                    MemRangeStatus::Free,
+                )),
+                middle,
+                None,
+            )
+        } else {
+            (
+                Some(MemRange::new(
+                    self.lower,
+                    middle.lower - 1,
+                    MemRangeStatus::Free,
+                )),
+                middle,
+                Some(MemRange::new(
+                    middle.upper + 1,
+                    self.upper,
+                    MemRangeStatus::Free,
+                )),
+            )
+        }
+    }
     pub fn merge(mut self, other: MemRange) -> MemRange {
         if self.upper + 1 != other.lower {
             panic!("Is there a hole? {:?} <-> {:?}", self, other);
