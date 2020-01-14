@@ -247,6 +247,98 @@ impl MemRange {
         self.upper = other.upper;
         self
     }
+    fn first_fit_insert(position: MemPosition, memory: &mut Vec<MemRange>) {
+        let l = position.lower.unwrap();
+        let u = position.upper.unwrap();
+        if let Some((i, m)) = memory
+            .iter()
+            .enumerate()
+            .find(|(_, mem)| mem.lower <= l && u <= mem.upper && MemRangeStatus::Free == mem.status)
+        {
+            let result = m.insert(MemRange::new(l, u, MemRangeStatus::Allocated));
+            memory.remove(i);
+            if let Some(x) = result.2 {
+                memory.insert(i, x);
+            }
+            memory.insert(i, result.1);
+            if let Some(x) = result.0 {
+                memory.insert(i, x);
+            }
+        } else {
+            panic!(
+                "Could not find placement for: {:?} in {:?}",
+                position, memory
+            );
+        }
+    }
+    fn first_fit_insert_arbitray(size: u32, memory: &mut Vec<MemRange>) {
+        if let Some((i, m)) = memory
+            .iter()
+            .enumerate()
+            .find(|(_, mem)| MemRangeStatus::Free == mem.status && size <= mem.size_bytes())
+        {
+            let result = m.insert(MemRange::new(
+                m.lower,
+                m.lower + size - 1,
+                MemRangeStatus::Allocated,
+            ));
+            memory.remove(i);
+            if let Some(x) = result.2 {
+                memory.insert(i, x);
+            }
+            memory.insert(i, result.1);
+            if let Some(x) = result.0 {
+                memory.insert(i, x);
+            }
+        } else {
+            panic!(
+                "Could not find placement for: {} bytes in {:?}",
+                size, memory
+            );
+        }
+    }
+    pub fn first_fit(positions: &[MemPosition], min: u32, max: u32) -> Vec<MemRange> {
+        let mut memory = vec![MemRange::new(min, max, MemRangeStatus::Free)];
+        let mut arbitraries: Vec<MemPosition> = Vec::new();
+        positions.into_iter().for_each(|pos| match pos {
+            MemPosition {
+                lower: Some(l),
+                upper: Some(u),
+                size,
+            } => {
+                MemRange::first_fit_insert(*pos, &mut memory);
+            }
+            MemPosition {
+                lower: Some(l),
+                upper: None,
+                size,
+            } => {
+                let u = l + size - 1;
+                let pos = MemPosition::new(Some(*l), Some(u), *size);
+                MemRange::first_fit_insert(pos, &mut memory);
+            }
+            MemPosition {
+                lower: None,
+                upper: Some(u),
+                size,
+            } => {
+                let l = u + 1 - size;
+                let pos = MemPosition::new(Some(l), Some(*u), *size);
+                MemRange::first_fit_insert(pos, &mut memory);
+            }
+            MemPosition {
+                lower: None,
+                upper: None,
+                size,
+            } => {
+                arbitraries.push(*pos);
+            }
+        });
+        arbitraries.into_iter().for_each(|pos| {
+            MemRange::first_fit_insert_arbitray(pos.size, &mut memory);
+        });
+        memory
+    }
 }
 
 // Just a first-come-first-served-first-fit allocator
