@@ -113,6 +113,22 @@ struct MemRange {
     status: MemRangeStatus,
 }
 
+#[derive(Copy, Clone, Debug)]
+struct MemPosition {
+    pub lower: Option<u32>,
+    pub upper: Option<u32>, // inclusive
+    pub size: u32,
+}
+
+impl MemPosition {
+    pub fn new(lower: Option<u32>, upper: Option<u32>, size: u32) -> MemPosition {
+        MemPosition { lower, upper, size }
+    }
+    pub fn props(&self) -> (Option<u32>, Option<u32>, u32) {
+        (self.lower, self.upper, self.size)
+    }
+}
+
 impl MemRange {
     pub fn new(lower: u32, upper: u32, status: MemRangeStatus) -> MemRange {
         if lower > upper {
