@@ -350,6 +350,16 @@ fn layout_text_segment(
     text_segment_entries: &mut [TextSegment],
     labels: &mut HashMap<String, NonZeroU32>,
 ) {
+    let positions: Vec<MemPosition> = text_segment_entries.iter().map(|segment| {
+        let size_bytes = (segment.instructions.len() * 4) as u32;
+        let mut lower = None;
+        if let Some(start) = &segment.start_address {
+            if let Some(numeric) = start.numeric {
+                lower = Some(numeric.get());
+            }
+        }
+        MemPosition::new(lower, None, size_bytes)
+    }).collect();
 }
 
 fn assign_addresses(parsed: &mut Parsed, labels: &mut HashMap<String, NonZeroU32>) {
