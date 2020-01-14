@@ -124,9 +124,6 @@ impl MemPosition {
     pub fn new(lower: Option<u32>, upper: Option<u32>, size: u32) -> MemPosition {
         MemPosition { lower, upper, size }
     }
-    pub fn props(&self) -> (Option<u32>, Option<u32>, u32) {
-        (self.lower, self.upper, self.size)
-    }
 }
 
 impl MemRange {
