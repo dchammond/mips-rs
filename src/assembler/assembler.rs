@@ -98,7 +98,7 @@ fn assign_text_segment_addresses(
     text_segment
 }
 
-#[derive(Copy, Clone, PartialEq)]
+#[derive(Copy, Clone, PartialEq, Debug)]
 enum MemRangeStatus {
     Free,
     Allocated,
@@ -106,33 +106,59 @@ enum MemRangeStatus {
 
 impl Eq for MemRangeStatus {}
 
-#[derive(Copy, Clone)]
+#[derive(Copy, Clone, Debug)]
 struct MemRange {
     lower: u32,
     upper: u32, // inclusive
-    free: MemRangeStatus,
+    status: MemRangeStatus,
 }
 
 impl MemRange {
-    pub fn new(lower: u32, upper: u32, free: MemRangeStatus) -> MemRange {
+    pub fn new(lower: u32, upper: u32, status: MemRangeStatus) -> MemRange {
         if lower > upper {
             panic!("lower > upper");
         }
-        MemRange { lower, upper, free }
+        MemRange {
+            lower,
+            upper,
+            status,
+        }
+    }
+    pub fn set_status(&mut self, status: MemRangeStatus) {
+        self.status = status;
     }
     pub fn size_bytes(&self) -> u32 {
         self.upper - self.lower + 1
     }
     pub fn shrink(mut self, bytes: NonZeroU32) -> (MemRange, MemRange) {
         self.upper -= bytes.get();
-        (self, MemRange::new(self.upper + 1, self.upper + 1 + bytes.get(), MemRangeStatus::Free))
+        (
+            self,
+            MemRange::new(
+                self.upper + 1,
+                self.upper + 1 + bytes.get(),
+                MemRangeStatus::Free,
+            ),
+        )
     }
-    pub fn grow(mut self, next: Option<&[MemRange]>, bytes: NonZeroU32) -> (MemRange, Option<Vec<MemRange>>) {
+    pub fn grow(
+        mut self,
+        next: Option<&[MemRange]>,
+        bytes: NonZeroU32,
+    ) -> (MemRange, Option<Vec<MemRange>>) {
         self.upper += bytes.get();
         let mut r = None;
         if let Some(ranges) = next {
-            // panic if blocks are not free
-            let mut tmp = ranges.into_iter().cloned().skip_while(|mem| mem.upper < self.upper).collect::<Vec<MemRange>>();
+            let mut tmp = ranges
+                .into_iter()
+                .cloned()
+                .skip_while(|mem| {
+                    if MemRangeStatus::Free != mem.status {
+                        panic!("Tried to grow into non-free block: {:?} -> {:?}", self, mem);
+                    }
+                    mem.upper < self.upper
+                })
+                .collect::<Vec<MemRange>>();
             if tmp.len() > 0 {
                 let next = tmp[0];
                 tmp[0] = MemRange::new(self.upper + 1, next.upper, MemRangeStatus::Free);
@@ -143,10 +169,13 @@ impl MemRange {
     }
     pub fn merge(mut self, other: MemRange) -> MemRange {
         if self.upper + 1 != other.lower {
-            panic!("Is there a hole? upper: {} lower: {}", self.upper, other.lower);
+            panic!("Is there a hole? {:?} <-> {:?}", self, other);
         }
-        if MemRangeStatus::Allocated == other.free {
-            panic!("Cannot merge with allocated memory block");
+        if MemRangeStatus::Free != other.status {
+            panic!(
+                "Cannot merge with non-free memory block: {:?} <-> {:?}",
+                self, other
+            );
         }
         self.upper = other.upper;
         self
@@ -162,7 +191,6 @@ fn layout_text_segment(
     text_segment_entries: &mut [TextSegment],
     labels: &mut HashMap<String, NonZeroU32>,
 ) {
-
 }
 
 fn assign_addresses(parsed: &mut Parsed, labels: &mut HashMap<String, NonZeroU32>) {
