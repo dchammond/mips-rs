@@ -40,64 +40,6 @@ const BOTTOM_RESERVED_SIZE: u32 = 0x0400_0000;
 const BOTTOM_RESERVED_END: u32 = TEXT_START;
 const BOTTOM_RESERVED_START: u32 = BOTTOM_RESERVED_END - BOTTOM_RESERVED_SIZE;
 
-/*
-fn expand_pseudo(text_segments: &mut [TextSegment]) {
-    let insertions: Vec<((usize, usize), (Inst, Inst))> = Vec::new();
-    for (segment_idx, text_segment) in text_segments.iter().enumerate() {
-        for (instr_idx, instruction) in text_segment.instructions.iter().enumerate() {
-            match &instruction.1 {
-                Inst::ILabel(ITypeLabel{opcode: IInst::la, rs, rt, label}) => {
-
-                },
-                _ => (),
-            }
-        }
-    }
-}
-*/
-
-fn define_labels(a: Address, addr: NonZeroU32, labels: &mut HashMap<String, NonZeroU32>) {
-    if let Some(v) = a.label {
-        v.into_iter().for_each(|s| {
-            if labels.contains_key(&s) {
-                panic!(format!("Redefinition of label: {}", s));
-            }
-            labels.insert(s, addr);
-        });
-    } else {
-        panic!("Expected non empty labels in Address");
-    }
-}
-
-fn assign_text_segment_addresses(
-    mut text_segment: TextSegment,
-    labels: &mut HashMap<String, NonZeroU32>,
-) -> TextSegment {
-    let mut addr: u32 = text_segment
-        .start_address
-        .clone()
-        .unwrap()
-        .numeric
-        .unwrap()
-        .get();
-    text_segment.instructions = text_segment
-        .instructions
-        .into_iter()
-        .map(|inst: (Option<Address>, Inst)| {
-            let non_zero_addr = unsafe { NonZeroU32::new_unchecked(addr) };
-            if let Some(a) = inst.0 {
-                define_labels(a, non_zero_addr, labels);
-            }
-            addr += 4;
-            if addr >= TEXT_END {
-                panic!("Text segment too large");
-            }
-            (Some(Address::from(non_zero_addr)), inst.1)
-        })
-        .collect();
-    text_segment
-}
-
 #[derive(Copy, Clone, PartialEq, Debug)]
 enum MemRangeStatus {
     Free,
@@ -351,6 +293,65 @@ impl<'a, T> MemRange<'a, T> where T: Clone + Debug {
         memory
     }
 }
+
+/*
+fn expand_pseudo(text_segments: &mut [TextSegment]) {
+    let insertions: Vec<((usize, usize), (Inst, Inst))> = Vec::new();
+    for (segment_idx, text_segment) in text_segments.iter().enumerate() {
+        for (instr_idx, instruction) in text_segment.instructions.iter().enumerate() {
+            match &instruction.1 {
+                Inst::ILabel(ITypeLabel{opcode: IInst::la, rs, rt, label}) => {
+
+                },
+                _ => (),
+            }
+        }
+    }
+}
+*/
+
+fn define_labels(a: Address, addr: NonZeroU32, labels: &mut HashMap<String, NonZeroU32>) {
+    if let Some(v) = a.label {
+        v.into_iter().for_each(|s| {
+            if labels.contains_key(&s) {
+                panic!(format!("Redefinition of label: {}", s));
+            }
+            labels.insert(s, addr);
+        });
+    } else {
+        panic!("Expected non empty labels in Address");
+    }
+}
+
+fn assign_text_segment_addresses(
+    mut text_segment: TextSegment,
+    labels: &mut HashMap<String, NonZeroU32>,
+) -> TextSegment {
+    let mut addr: u32 = text_segment
+        .start_address
+        .clone()
+        .unwrap()
+        .numeric
+        .unwrap()
+        .get();
+    text_segment.instructions = text_segment
+        .instructions
+        .into_iter()
+        .map(|inst: (Option<Address>, Inst)| {
+            let non_zero_addr = unsafe { NonZeroU32::new_unchecked(addr) };
+            if let Some(a) = inst.0 {
+                define_labels(a, non_zero_addr, labels);
+            }
+            addr += 4;
+            if addr >= TEXT_END {
+                panic!("Text segment too large");
+            }
+            (Some(Address::from(non_zero_addr)), inst.1)
+        })
+        .collect();
+    text_segment
+}
+
 
 // Just a first-come-first-served-first-fit allocator
 // Two passes 1. handle Segments with a desired address
