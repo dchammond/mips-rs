@@ -7,7 +7,7 @@ use crate::{
     },
 };
 
-use std::{collections::HashMap, num::NonZeroU32, fmt::Debug};
+use std::{collections::HashMap, fmt::Debug, num::NonZeroU32};
 
 pub struct Assembled {}
 
@@ -68,13 +68,29 @@ struct MemPosition<'a, T> {
 
 impl<'a, T> Copy for MemPosition<'a, T> where T: Clone {}
 
-impl<'a, T> MemPosition<'a, T> where T: Clone + Debug {
-    pub fn new(lower: Option<u32>, upper: Option<u32>, size: u32, data: Option<&T>) -> MemPosition<T> {
-        MemPosition { lower, upper, size, data }
+impl<'a, T> MemPosition<'a, T>
+where
+    T: Clone + Debug,
+{
+    pub fn new(
+        lower: Option<u32>,
+        upper: Option<u32>,
+        size: u32,
+        data: Option<&T>,
+    ) -> MemPosition<T> {
+        MemPosition {
+            lower,
+            upper,
+            size,
+            data,
+        }
     }
 }
 
-impl<'a, T> MemRange<'a, T> where T: Clone + Debug {
+impl<'a, T> MemRange<'a, T>
+where
+    T: Clone + Debug,
+{
     pub fn new(lower: u32, upper: u32, status: MemRangeStatus, data: Option<&T>) -> MemRange<T> {
         if lower > upper {
             panic!("lower > upper");
@@ -135,7 +151,14 @@ impl<'a, T> MemRange<'a, T> where T: Clone + Debug {
      * The first element exists if there is a MemRange lower than middle
      * The third element exists if there is a MemRange higher than middle
      */
-    pub fn insert<'b, 'c, 'd>(self, middle: MemRange<'c, T>) -> (Option<MemRange<'b, T>>, MemRange<'c, T>, Option<MemRange<'d, T>>) {
+    pub fn insert<'b, 'c, 'd>(
+        self,
+        middle: MemRange<'c, T>,
+    ) -> (
+        Option<MemRange<'b, T>>,
+        MemRange<'c, T>,
+        Option<MemRange<'d, T>>,
+    ) {
         if MemRangeStatus::Free != self.status {
             panic!(
                 "Tried to insert into non-free block: {:?} <-> {:?}",
@@ -209,7 +232,12 @@ impl<'a, T> MemRange<'a, T> where T: Clone + Debug {
             .enumerate()
             .find(|(_, mem)| mem.lower <= l && u <= mem.upper && MemRangeStatus::Free == mem.status)
         {
-            let result = m.insert(MemRange::new(l, u, MemRangeStatus::Allocated, position.data));
+            let result = m.insert(MemRange::new(
+                l,
+                u,
+                MemRangeStatus::Allocated,
+                position.data,
+            ));
             memory.remove(i);
             if let Some(x) = result.2 {
                 memory.insert(i, x);
@@ -225,12 +253,13 @@ impl<'a, T> MemRange<'a, T> where T: Clone + Debug {
             );
         }
     }
-    fn first_fit_insert_arbitray<'b>(position: MemPosition<'b, T>, memory: &mut Vec<MemRange<'b, T>>) {
-        if let Some((i, m)) = memory
-            .iter()
-            .enumerate()
-            .find(|(_, mem)| MemRangeStatus::Free == mem.status && position.size <= mem.size_bytes())
-        {
+    fn first_fit_insert_arbitray<'b>(
+        position: MemPosition<'b, T>,
+        memory: &mut Vec<MemRange<'b, T>>,
+    ) {
+        if let Some((i, m)) = memory.iter().enumerate().find(|(_, mem)| {
+            MemRangeStatus::Free == mem.status && position.size <= mem.size_bytes()
+        }) {
             let result = m.insert(MemRange::new(
                 m.lower,
                 m.lower + position.size - 1,
@@ -252,7 +281,11 @@ impl<'a, T> MemRange<'a, T> where T: Clone + Debug {
             );
         }
     }
-    pub fn first_fit<'b>(positions: &'b [MemPosition<'b, T>], min: u32, max: u32) -> Vec<MemRange<'b, T>> {
+    pub fn first_fit<'b>(
+        positions: &'b [MemPosition<'b, T>],
+        min: u32,
+        max: u32,
+    ) -> Vec<MemRange<'b, T>> {
         let mut memory = vec![MemRange::new(min, max, MemRangeStatus::Free, None)];
         let mut arbitraries: Vec<MemPosition<'b, T>> = Vec::new();
         positions.into_iter().for_each(|pos| match pos {
@@ -352,7 +385,6 @@ fn assign_text_segment_addresses(
     text_segment
 }
 
-
 // Just a first-come-first-served-first-fit allocator
 // Two passes 1. handle Segments with a desired address
 // 2. find a place for everything else
@@ -362,16 +394,19 @@ fn layout_text_segment(
     text_segment_entries: &mut [TextSegment],
     labels: &mut HashMap<String, NonZeroU32>,
 ) {
-    let positions = text_segment_entries.iter().map(|segment| {
-        let size_bytes = (segment.instructions.len() * 4) as u32;
-        let mut lower = None;
-        if let Some(start) = &segment.start_address {
-            if let Some(numeric) = start.numeric {
-                lower = Some(numeric.get());
+    let positions = text_segment_entries
+        .iter()
+        .map(|segment| {
+            let size_bytes = (segment.instructions.len() * 4) as u32;
+            let mut lower = None;
+            if let Some(start) = &segment.start_address {
+                if let Some(numeric) = start.numeric {
+                    lower = Some(numeric.get());
+                }
             }
-        }
-        MemPosition::new(lower, None, size_bytes, Some(segment))
-    }).collect::<Vec<MemPosition<TextSegment>>>();
+            MemPosition::new(lower, None, size_bytes, Some(segment))
+        })
+        .collect::<Vec<MemPosition<TextSegment>>>();
 }
 
 fn assign_addresses(parsed: &mut Parsed, labels: &mut HashMap<String, NonZeroU32>) {
