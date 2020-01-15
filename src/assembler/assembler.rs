@@ -370,7 +370,7 @@ fn layout_text_segment(
                 lower = Some(numeric.get());
             }
         }
-        MemPosition::new(lower, None, size_bytes)
+        MemPosition::new(lower, None, size_bytes, Some(segment))
     }).collect();
 }
 
