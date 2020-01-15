@@ -407,6 +407,28 @@ fn layout_text_segment(
             MemPosition::new(lower, None, size_bytes, Some(segment))
         })
         .collect::<Vec<MemPosition<TextSegment>>>();
+    let ranges = MemRange::first_fit(&positions, TEXT_START, TEXT_END);
+    let mut indexes: Vec<(usize, u32)> = Vec::with_capacity(text_segment_entries.len());
+    ranges.into_iter().for_each(|range| {
+        let data_ref = range.data.unwrap();
+        let found = text_segment_entries
+            .iter()
+            .enumerate()
+            .find(|(_, t)| std::ptr::eq(*t, data_ref))
+            .unwrap();
+        indexes.push((found.0, range.lower));
+    });
+    indexes.into_iter().for_each(|(idx, lower)| {
+        text_segment_entries[idx]
+            .start_address
+            .as_mut()
+            .unwrap()
+            .numeric
+            .replace(NonZeroU32::new(lower).unwrap());
+    });
+    text_segment_entries.iter_mut().for_each(|t| {
+        *t = assign_text_segment_addresses(t.clone(), labels);
+    });
 }
 
 fn assign_addresses(parsed: &mut Parsed, labels: &mut HashMap<String, NonZeroU32>) {
