@@ -362,7 +362,7 @@ fn layout_text_segment(
     text_segment_entries: &mut [TextSegment],
     labels: &mut HashMap<String, NonZeroU32>,
 ) {
-    let positions: Vec<MemPosition<TextSegment>> = text_segment_entries.iter().map(|segment| {
+    let positions = text_segment_entries.iter().map(|segment| {
         let size_bytes = (segment.instructions.len() * 4) as u32;
         let mut lower = None;
         if let Some(start) = &segment.start_address {
@@ -371,7 +371,7 @@ fn layout_text_segment(
             }
         }
         MemPosition::new(lower, None, size_bytes, Some(segment))
-    }).collect();
+    }).collect::<Vec<MemPosition<TextSegment>>>();
 }
 
 fn assign_addresses(parsed: &mut Parsed, labels: &mut HashMap<String, NonZeroU32>) {
