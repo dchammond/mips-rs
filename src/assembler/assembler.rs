@@ -7,7 +7,7 @@ use crate::{
     },
 };
 
-use std::{collections::HashMap, fmt::Debug, num::NonZeroU32};
+use std::{collections::HashMap, convert::TryFrom, fmt::Debug, num::NonZeroU32};
 
 pub struct Assembled {}
 
@@ -428,6 +428,38 @@ fn layout_text_segment(
     });
     text_segment_entries.iter_mut().for_each(|t| {
         *t = assign_text_segment_addresses(t.clone(), labels);
+    });
+    text_segment_entries.iter_mut().for_each(|t| {
+        t.instructions
+            .iter_mut()
+            .for_each(|inst: &mut (Option<Address>, Inst)| {
+                let inst_addr: u32 = inst.0.as_ref().unwrap().numeric.unwrap().get();
+                match &inst.1 {
+                    Inst::ILabel(i_type_label) => {
+                        let label_addr = labels
+                            .get(i_type_label.label.label.as_ref().unwrap().get(0).unwrap())
+                            .unwrap()
+                            .clone();
+                        let label_addr: u32 = label_addr.get();
+                        let offset = if label_addr > inst_addr {
+                            u16::try_from(label_addr - inst_addr)
+                        } else {
+                            u16::try_from(inst_addr - label_addr)
+                        }
+                        .expect(&format!(
+                            "instruction and label too far apart: {} <-> {}",
+                            inst_addr, label_addr
+                        ));
+                        inst.1 = Inst::IImm(ITypeImm::new(
+                            i_type_label.opcode,
+                            i_type_label.rs,
+                            i_type_label.rt,
+                            offset,
+                        ));
+                    }
+                    _ => {}
+                }
+            });
     });
 }
 
