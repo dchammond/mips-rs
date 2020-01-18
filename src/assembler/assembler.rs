@@ -442,14 +442,20 @@ fn layout_text_segment(
                             .clone();
                         let label_addr: u32 = label_addr.get();
                         let offset = if label_addr > inst_addr {
-                            u16::try_from(label_addr - inst_addr)
+                            u16::try_from((label_addr - inst_addr) >> 2).expect(&format!(
+                                "instruction and label too far apart: {:#X} <-> {:#X}",
+                                inst_addr >> 2,
+                                label_addr >> 2
+                            ))
                         } else {
-                            u16::try_from(inst_addr - label_addr)
-                        }
-                        .expect(&format!(
-                            "instruction and label too far apart: {} <-> {}",
-                            inst_addr, label_addr
-                        ));
+                            let pos =
+                                u16::try_from((inst_addr - label_addr) >> 2).expect(&format!(
+                                    "instruction and label too far apart: {:#X} <-> {:#X}",
+                                    inst_addr >> 2,
+                                    label_addr >> 2
+                                ));
+                            !pos + 1
+                        };
                         inst.1 = Inst::IImm(ITypeImm::new(
                             i_type_label.opcode,
                             i_type_label.rs,
