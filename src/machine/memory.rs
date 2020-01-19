@@ -1,4 +1,4 @@
-use std::{fmt::Debug, num::NonZeroU32, marker::PhantomData};
+use std::{fmt::Debug, marker::PhantomData, num::NonZeroU32};
 
 // grows down
 pub const TOP_RESERVED_SIZE: u32 = 0x0000_FFEF;
@@ -269,7 +269,7 @@ where
 }
 
 pub struct FirstFitAllocator<'a, T: 'a> {
-    phantom: PhantomData<&'a T>
+    phantom: PhantomData<&'a T>,
 }
 
 impl<'a, T> FirstFitAllocator<'a, T>
@@ -337,12 +337,11 @@ where
     }
 }
 
-impl<'a, T> Allocator<'a, T> for FirstFitAllocator<'a, T> where T: Clone + Debug {
-    fn layout<'b>(
-        positions: &'b [MemPosition<'b, T>],
-        min: u32,
-        max: u32,
-    ) -> Vec<MemRange<'b, T>> {
+impl<'a, T> Allocator<'a, T> for FirstFitAllocator<'a, T>
+where
+    T: Clone + Debug,
+{
+    fn layout<'b>(positions: &'b [MemPosition<'b, T>], min: u32, max: u32) -> Vec<MemRange<'b, T>> {
         let mut memory = vec![MemRange::new(min, max, MemRangeStatus::Free, None)];
         let mut arbitraries: Vec<MemPosition<'b, T>> = Vec::new();
         positions.into_iter().for_each(|pos| match pos {
