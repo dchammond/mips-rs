@@ -124,8 +124,7 @@ fn layout_text_segment(
                         let label_addr = labels
                             .get(i_type_label.label.label.as_ref().unwrap().get(0).unwrap())
                             .unwrap()
-                            .clone();
-                        let label_addr: u32 = label_addr.get();
+                            .get();
                         let offset = if label_addr > inst_addr {
                             u16::try_from((label_addr - inst_addr) >> 2).expect(&format!(
                                 "instruction and label too far apart: {:#X} <-> {:#X}",
