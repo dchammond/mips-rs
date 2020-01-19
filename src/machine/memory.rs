@@ -69,6 +69,9 @@ where
     pub fn get_data(&self) -> Option<&'a T> {
         self.data
     }
+    pub fn set_range(self, lower: u32, upper: u32) -> MemRange<'a, T> {
+        MemRange::new(lower, upper, self.status, self.data)
+    }
     pub fn set_status(&mut self, status: MemRangeStatus) {
         self.status = status;
     }
