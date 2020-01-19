@@ -197,6 +197,72 @@ where
         self.upper = other.upper;
         self
     }
+}
+
+impl<'a, T> Copy for MemRange<'a, T> where T: Clone {}
+
+#[derive(Clone, Debug)]
+pub struct MemPosition<'a, T> {
+    lower: Option<u32>,
+    upper: Option<u32>, // inclusive
+    size: u32,
+    data: Option<&'a T>,
+}
+
+impl<'a, T> Copy for MemPosition<'a, T> where T: Clone {}
+
+impl<'a, T> MemPosition<'a, T>
+where
+    T: Clone + Debug,
+{
+    pub fn new(
+        lower: Option<u32>,
+        upper: Option<u32>,
+        size: u32,
+        data: Option<&T>,
+    ) -> MemPosition<T> {
+        match (lower, upper) {
+            (Some(l), Some(u)) => {
+                if l > u {
+                    panic!("lower > upper");
+                }
+                if u - l + 1 != size {
+                    panic!("size does not match address range");
+                }
+            },
+            _ => {},
+        }
+        MemPosition {
+            lower,
+            upper,
+            size,
+            data,
+        }
+    }
+    pub fn get_range(&self) -> (Option<u32>, Option<u32>) {
+        (self.lower, self.upper)
+    }
+    pub fn get_data(&self) -> Option<&'a T> {
+        self.data
+    }
+    pub fn set_range(self, lower: Option<u32>, upper: Option<u32>, size: u32) -> MemPosition<'a, T> {
+        MemPosition::new(lower, upper, size, self.data)
+    }
+    pub fn set_data(&mut self, data: Option<&'a T>) {
+        self.data = data;
+    }
+    pub fn size_bytes(&self) -> u32 {
+        self.size
+    }
+}
+
+pub struct Allocator<'a, T> {
+    start: u32,
+    end: u32, // inclusive
+    data: Vec<MemRange<'a, T>>,
+}
+
+impl<'a, T> Allocator<'a, T> where T: Clone + Debug {
     fn first_fit_insert<'b>(position: MemPosition<'b, T>, memory: &mut Vec<MemRange<'b, T>>) {
         let l = position.lower.unwrap();
         let u = position.upper.unwrap();
@@ -267,7 +333,7 @@ where
                 upper: Some(_u),
                 ..
             } => {
-                MemRange::first_fit_insert(*pos, &mut memory);
+                Allocator::first_fit_insert(*pos, &mut memory);
             }
             MemPosition {
                 lower: Some(l),
@@ -277,7 +343,7 @@ where
             } => {
                 let u = l + size - 1;
                 let pos = MemPosition::new(Some(*l), Some(u), *size, *data);
-                MemRange::first_fit_insert(pos, &mut memory);
+                Allocator::first_fit_insert(pos, &mut memory);
             }
             MemPosition {
                 lower: None,
@@ -287,72 +353,15 @@ where
             } => {
                 let l = u + 1 - size;
                 let pos = MemPosition::new(Some(l), Some(*u), *size, *data);
-                MemRange::first_fit_insert(pos, &mut memory);
+                Allocator::first_fit_insert(pos, &mut memory);
             }
             _ => {
                 arbitraries.push(*pos);
             }
         });
         arbitraries.into_iter().for_each(|pos| {
-            MemRange::first_fit_insert_arbitray(pos, &mut memory);
+            Allocator::first_fit_insert_arbitray(pos, &mut memory);
         });
         memory
-    }
-}
-
-impl<'a, T> Copy for MemRange<'a, T> where T: Clone {}
-
-#[derive(Clone, Debug)]
-pub struct MemPosition<'a, T> {
-    lower: Option<u32>,
-    upper: Option<u32>, // inclusive
-    size: u32,
-    data: Option<&'a T>,
-}
-
-impl<'a, T> Copy for MemPosition<'a, T> where T: Clone {}
-
-impl<'a, T> MemPosition<'a, T>
-where
-    T: Clone + Debug,
-{
-    pub fn new(
-        lower: Option<u32>,
-        upper: Option<u32>,
-        size: u32,
-        data: Option<&T>,
-    ) -> MemPosition<T> {
-        match (lower, upper) {
-            (Some(l), Some(u)) => {
-                if l > u {
-                    panic!("lower > upper");
-                }
-                if u - l + 1 != size {
-                    panic!("size does not match address range");
-                }
-            },
-            _ => {},
-        }
-        MemPosition {
-            lower,
-            upper,
-            size,
-            data,
-        }
-    }
-    pub fn get_range(&self) -> (Option<u32>, Option<u32>) {
-        (self.lower, self.upper)
-    }
-    pub fn get_data(&self) -> Option<&'a T> {
-        self.data
-    }
-    pub fn set_range(self, lower: Option<u32>, upper: Option<u32>, size: u32) -> MemPosition<'a, T> {
-        MemPosition::new(lower, upper, size, self.data)
-    }
-    pub fn set_data(&mut self, data: Option<&'a T>) {
-        self.data = data;
-    }
-    pub fn size_bytes(&self) -> u32 {
-        self.size
     }
 }
