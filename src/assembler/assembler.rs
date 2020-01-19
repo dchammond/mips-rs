@@ -27,13 +27,13 @@ fn expand_pseudo(text_segments: &mut [TextSegment]) {
 }
 */
 
-fn define_labels(a: Address, addr: NonZeroU32, labels: &mut HashMap<String, NonZeroU32>) {
-    if let Some(v) = a.label {
-        v.into_iter().for_each(|s| {
-            if labels.contains_key(&s) {
+fn define_labels(a: &Address, addr: NonZeroU32, labels: &mut HashMap<String, NonZeroU32>) {
+    if let Some(v) = &a.label {
+        v.iter().for_each(|s| {
+            if labels.contains_key(s) {
                 panic!(format!("Redefinition of label: {}", s));
             }
-            labels.insert(s, addr);
+            labels.insert(s.clone(), addr);
         });
     } else {
         panic!("Expected non empty labels in Address");
@@ -41,9 +41,9 @@ fn define_labels(a: Address, addr: NonZeroU32, labels: &mut HashMap<String, NonZ
 }
 
 fn assign_text_segment_addresses(
-    mut text_segment: TextSegment,
+    text_segment: &mut TextSegment,
     labels: &mut HashMap<String, NonZeroU32>,
-) -> TextSegment {
+) {
     let mut addr: u32 = text_segment
         .start_address
         .as_ref()
@@ -52,22 +52,20 @@ fn assign_text_segment_addresses(
         .as_ref()
         .unwrap()
         .get();
-    text_segment.instructions = text_segment
+    text_segment
         .instructions
-        .into_iter()
-        .map(|inst: (Option<Address>, Inst)| {
+        .iter_mut()
+        .for_each(|inst: &mut (Option<Address>, Inst)| {
             let non_zero_addr = unsafe { NonZeroU32::new_unchecked(addr) };
-            if let Some(a) = inst.0 {
+            if let Some(a) = &inst.0 {
                 define_labels(a, non_zero_addr, labels);
             }
             addr += 4;
             if addr >= TEXT_END {
                 panic!("Text segment too large");
             }
-            (Some(Address::from(non_zero_addr)), inst.1)
-        })
-        .collect();
-    text_segment
+            inst.0 = Some(Address::from(non_zero_addr));
+        });
 }
 
 // Just a first-come-first-served-first-fit allocator
@@ -112,7 +110,7 @@ fn layout_text_segment(
             .replace(NonZeroU32::new(lower).unwrap());
     });
     text_segment_entries.iter_mut().for_each(|t| {
-        *t = assign_text_segment_addresses(t, labels);
+        assign_text_segment_addresses(t, labels);
     });
     text_segment_entries.iter_mut().for_each(|t| {
         t.instructions
