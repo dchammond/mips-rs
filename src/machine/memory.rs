@@ -322,11 +322,37 @@ where
         size: u32,
         data: Option<&T>,
     ) -> MemPosition<T> {
+        match (lower, upper) {
+            (Some(l), Some(u)) => {
+                if l > u {
+                    panic!("lower > upper");
+                }
+                if u - l + 1 != size {
+                    panic!("size does not match address range");
+                }
+            },
+            _ => {},
+        }
         MemPosition {
             lower,
             upper,
             size,
             data,
         }
+    }
+    pub fn get_range(&self) -> (Option<u32>, Option<u32>) {
+        (self.lower, self.upper)
+    }
+    pub fn get_data(&self) -> Option<&'a T> {
+        self.data
+    }
+    pub fn set_range(self, lower: Option<u32>, upper: Option<u32>, size: u32) -> MemPosition<'a, T> {
+        MemPosition::new(lower, upper, size, self.data)
+    }
+    pub fn set_data(&mut self, data: Option<&'a T>) {
+        self.data = data;
+    }
+    pub fn size_bytes(&self) -> u32 {
+        self.size
     }
 }
