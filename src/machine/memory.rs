@@ -1,4 +1,4 @@
-use std::{fmt::Debug, num::NonZeroU32};
+use std::{fmt::Debug, num::NonZeroU32, marker::PhantomData};
 
 // grows down
 pub const TOP_RESERVED_SIZE: u32 = 0x0000_FFEF;
@@ -261,13 +261,18 @@ where
     }
 }
 
-pub struct Allocator<'a, T> {
-    start: u32,
-    end: u32, // inclusive
-    data: Vec<MemRange<'a, T>>,
+pub trait Allocator<'a, T>
+where
+    T: Clone + Debug,
+{
+    fn layout<'b>(positions: &'b [MemPosition<'b, T>], min: u32, max: u32) -> Vec<MemRange<'b, T>>;
 }
 
-impl<'a, T> Allocator<'a, T>
+pub struct FirstFitAllocator<'a, T: 'a> {
+    phantom: PhantomData<&'a T>
+}
+
+impl<'a, T> FirstFitAllocator<'a, T>
 where
     T: Clone + Debug,
 {
@@ -330,7 +335,10 @@ where
             );
         }
     }
-    pub fn first_fit<'b>(
+}
+
+impl<'a, T> Allocator<'a, T> for FirstFitAllocator<'a, T> where T: Clone + Debug {
+    fn layout<'b>(
         positions: &'b [MemPosition<'b, T>],
         min: u32,
         max: u32,
@@ -343,7 +351,7 @@ where
                 upper: Some(_u),
                 ..
             } => {
-                Allocator::first_fit_insert(*pos, &mut memory);
+                FirstFitAllocator::first_fit_insert(*pos, &mut memory);
             }
             MemPosition {
                 lower: Some(l),
@@ -353,7 +361,7 @@ where
             } => {
                 let u = l + size - 1;
                 let pos = MemPosition::new(Some(*l), Some(u), *size, *data);
-                Allocator::first_fit_insert(pos, &mut memory);
+                FirstFitAllocator::first_fit_insert(pos, &mut memory);
             }
             MemPosition {
                 lower: None,
@@ -363,14 +371,14 @@ where
             } => {
                 let l = u + 1 - size;
                 let pos = MemPosition::new(Some(l), Some(*u), *size, *data);
-                Allocator::first_fit_insert(pos, &mut memory);
+                FirstFitAllocator::first_fit_insert(pos, &mut memory);
             }
             _ => {
                 arbitraries.push(*pos);
             }
         });
         arbitraries.into_iter().for_each(|pos| {
-            Allocator::first_fit_insert_arbitray(pos, &mut memory);
+            FirstFitAllocator::first_fit_insert_arbitray(pos, &mut memory);
         });
         memory
     }

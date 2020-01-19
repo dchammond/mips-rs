@@ -91,7 +91,7 @@ fn layout_text_segment(
             MemPosition::new(lower, None, size_bytes, Some(segment))
         })
         .collect::<Vec<MemPosition<TextSegment>>>();
-    let ranges = Allocator::first_fit(&positions, TEXT_START, TEXT_END);
+    let ranges = FirstFitAllocator::layout(&positions, TEXT_START, TEXT_END);
     let mut indexes: Vec<(usize, u32)> = Vec::with_capacity(text_segment_entries.len());
     ranges.into_iter().for_each(|range| {
         let data_ref = range.get_data().unwrap();
