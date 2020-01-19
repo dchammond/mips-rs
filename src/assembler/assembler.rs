@@ -1,13 +1,13 @@
 use crate::{
-    instructions::{itype::*, jtype::*, rtype::*, Inst},
-    machine::{address::Address, register::Reg, memory::*},
+    instructions::{itype::*, Inst},
+    machine::{address::Address, memory::*},
     parser::parser::{
         DataAlignment, DataBytes, DataCString, DataEntry, DataHalfs, DataSegment, DataSpace,
         DataWords, KDataSegment, KTextSegment, Parsed, TextSegment,
     },
 };
 
-use std::{collections::HashMap, convert::TryFrom, fmt::Debug, num::NonZeroU32};
+use std::{collections::HashMap, convert::TryFrom, num::NonZeroU32};
 
 pub struct Assembled {}
 
