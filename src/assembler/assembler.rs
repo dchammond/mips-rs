@@ -46,9 +46,10 @@ fn assign_text_segment_addresses(
 ) -> TextSegment {
     let mut addr: u32 = text_segment
         .start_address
-        .clone()
+        .as_ref()
         .unwrap()
         .numeric
+        .as_ref()
         .unwrap()
         .get();
     text_segment.instructions = text_segment
