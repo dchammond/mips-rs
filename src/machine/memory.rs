@@ -229,8 +229,8 @@ where
                 if u - l + 1 != size {
                     panic!("size does not match address range");
                 }
-            },
-            _ => {},
+            }
+            _ => {}
         }
         MemPosition {
             lower,
@@ -245,7 +245,12 @@ where
     pub fn get_data(&self) -> Option<&'a T> {
         self.data
     }
-    pub fn set_range(self, lower: Option<u32>, upper: Option<u32>, size: u32) -> MemPosition<'a, T> {
+    pub fn set_range(
+        self,
+        lower: Option<u32>,
+        upper: Option<u32>,
+        size: u32,
+    ) -> MemPosition<'a, T> {
         MemPosition::new(lower, upper, size, self.data)
     }
     pub fn set_data(&mut self, data: Option<&'a T>) {
@@ -262,15 +267,19 @@ pub struct Allocator<'a, T> {
     data: Vec<MemRange<'a, T>>,
 }
 
-impl<'a, T> Allocator<'a, T> where T: Clone + Debug {
+impl<'a, T> Allocator<'a, T>
+where
+    T: Clone + Debug,
+{
     fn first_fit_insert<'b>(position: MemPosition<'b, T>, memory: &mut Vec<MemRange<'b, T>>) {
-        let l = position.lower.unwrap();
-        let u = position.upper.unwrap();
-        if let Some((i, m)) = memory
-            .iter()
-            .enumerate()
-            .find(|(_, mem)| mem.lower <= l && u <= mem.upper && MemRangeStatus::Free == mem.status)
-        {
+        let (l, u) = position.get_range();
+        let l = l.unwrap();
+        let u = u.unwrap();
+        if let Some((i, m)) = memory.iter().enumerate().find(|(_, mem)| {
+            let (lower, upper) = mem.get_range();
+            let status = mem.get_status();
+            lower <= l && u <= upper && MemRangeStatus::Free == status
+        }) {
             let result = m.insert(MemRange::new(
                 l,
                 u,
@@ -297,13 +306,13 @@ impl<'a, T> Allocator<'a, T> where T: Clone + Debug {
         memory: &mut Vec<MemRange<'b, T>>,
     ) {
         if let Some((i, m)) = memory.iter().enumerate().find(|(_, mem)| {
-            MemRangeStatus::Free == mem.status && position.size <= mem.size_bytes()
+            MemRangeStatus::Free == mem.get_status() && position.size_bytes() <= mem.size_bytes()
         }) {
             let result = m.insert(MemRange::new(
-                m.lower,
-                m.lower + position.size - 1,
+                m.get_range().0,
+                m.get_range().0 + position.size_bytes() - 1,
                 MemRangeStatus::Allocated,
-                position.data,
+                position.get_data(),
             ));
             memory.remove(i);
             if let Some(x) = result.2 {
@@ -316,7 +325,8 @@ impl<'a, T> Allocator<'a, T> where T: Clone + Debug {
         } else {
             panic!(
                 "Could not find placement for: {} bytes in {:?}",
-                position.size, memory
+                position.size_bytes(),
+                memory
             );
         }
     }
