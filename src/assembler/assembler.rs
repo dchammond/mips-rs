@@ -112,7 +112,7 @@ fn layout_text_segment(
             .replace(NonZeroU32::new(lower).unwrap());
     });
     text_segment_entries.iter_mut().for_each(|t| {
-        *t = assign_text_segment_addresses(t.clone(), labels);
+        *t = assign_text_segment_addresses(t, labels);
     });
     text_segment_entries.iter_mut().for_each(|t| {
         t.instructions
