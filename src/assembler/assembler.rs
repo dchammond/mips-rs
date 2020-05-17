@@ -93,13 +93,14 @@ fn layout_text_segment(
     let ranges = FirstFitAllocator::layout(&positions, TEXT_START, TEXT_END);
     let mut indexes: Vec<(usize, u32)> = Vec::with_capacity(text_segment_entries.len());
     ranges.into_iter().for_each(|range| {
-        let data_ref = range.get_data().unwrap();
-        let found = text_segment_entries
-            .iter()
-            .enumerate()
-            .find(|(_, t)| std::ptr::eq(*t, data_ref))
-            .unwrap();
-        indexes.push((found.0, range.get_range().0));
+        if let Some(data_ref) = range.get_data() {
+            let found = text_segment_entries
+                .iter()
+                .enumerate()
+                .find(|(_, t)| std::ptr::eq(*t, data_ref))
+                .unwrap();
+            indexes.push((found.0, range.get_range().0));
+        }
     });
     indexes.into_iter().for_each(|(idx, lower)| {
         text_segment_entries[idx]

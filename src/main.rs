@@ -1,6 +1,7 @@
 use std::{env, path};
 
 use mips_rs::parser::parser::*;
+use mips_rs::assembler::assembler::*;
 use mips_rs::*;
 
 pub fn main() {
@@ -10,5 +11,7 @@ pub fn main() {
         return;
     }
     let s = load_file(path::Path::new(&args[1]));
-    println!("{:#?}", parse(&s));
+    let p = parse(&s);
+    println!("{:#?}", p);
+    assemble(p);
 }
