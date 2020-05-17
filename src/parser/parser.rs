@@ -151,53 +151,57 @@ fn parse_label(
     }
 }
 
-fn parse_directive<'a>(current_line: &'a str, lines: &'a mut Lines) -> Option<ParsedDirective<'a>> {
-    let mut first = Some(current_line);
+fn check_directive<'a>(line: &'a str) -> Option<ParsedDirective<'a>> {
+    if let Ok(align) = directive_align(line) {
+        return Some(ParsedDirective::Align(Ok(align)));
+    }
+    if let Ok(ascii) = directive_ascii(line) {
+        return Some(ParsedDirective::Ascii(Ok(ascii)));
+    }
+    if let Ok(asciiz) = directive_asciiz(line) {
+        return Some(ParsedDirective::Asciiz(Ok(asciiz)));
+    }
+    if let Ok(byte) = directive_byte(line) {
+        return Some(ParsedDirective::Byte(Ok(byte)));
+    }
+    if let Ok(data) = directive_data(line) {
+        return Some(ParsedDirective::Data(Ok(data)));
+    }
+    if let Ok(half) = directive_half(line) {
+        return Some(ParsedDirective::Half(Ok(half)));
+    }
+    if let Ok(kdata) = directive_kdata(line) {
+        return Some(ParsedDirective::KData(Ok(kdata)));
+    }
+    if let Ok(ktext) = directive_ktext(line) {
+        return Some(ParsedDirective::KText(Ok(ktext)));
+    }
+    if let Ok(space) = directive_space(line) {
+        return Some(ParsedDirective::Space(Ok(space)));
+    }
+    if let Ok(text) = directive_text(line) {
+        return Some(ParsedDirective::Text(Ok(text)));
+    }
+    if let Ok(word) = directive_word(line) {
+        return Some(ParsedDirective::Word(Ok(word)));
+    }
+    return None;
+}
+
+fn parse_directive<'a>(
+    mut current_line: &'a str,
+    lines: &'a mut Lines,
+) -> Option<ParsedDirective<'a>> {
+    current_line = current_line.trim();
+    if !(current_line.is_empty() || entire_line_is_comment(current_line)) {
+        return check_directive(current_line);
+    }
     for line in lines {
-        let line = match first {
-            Some(f) => {
-                first = None;
-                f.trim()
-            }
-            None => line.trim(),
-        };
+        let line = line.trim();
         if line.is_empty() || entire_line_is_comment(line) {
             continue;
         }
-        if let Ok(align) = directive_align(line) {
-            return Some(ParsedDirective::Align(Ok(align)));
-        }
-        if let Ok(ascii) = directive_ascii(line) {
-            return Some(ParsedDirective::Ascii(Ok(ascii)));
-        }
-        if let Ok(asciiz) = directive_asciiz(line) {
-            return Some(ParsedDirective::Asciiz(Ok(asciiz)));
-        }
-        if let Ok(byte) = directive_byte(line) {
-            return Some(ParsedDirective::Byte(Ok(byte)));
-        }
-        if let Ok(data) = directive_data(line) {
-            return Some(ParsedDirective::Data(Ok(data)));
-        }
-        if let Ok(half) = directive_half(line) {
-            return Some(ParsedDirective::Half(Ok(half)));
-        }
-        if let Ok(kdata) = directive_kdata(line) {
-            return Some(ParsedDirective::KData(Ok(kdata)));
-        }
-        if let Ok(ktext) = directive_ktext(line) {
-            return Some(ParsedDirective::KText(Ok(ktext)));
-        }
-        if let Ok(space) = directive_space(line) {
-            return Some(ParsedDirective::Space(Ok(space)));
-        }
-        if let Ok(text) = directive_text(line) {
-            return Some(ParsedDirective::Text(Ok(text)));
-        }
-        if let Ok(word) = directive_word(line) {
-            return Some(ParsedDirective::Word(Ok(word)));
-        }
-        return None;
+        return check_directive(line);
     }
     None
 }
