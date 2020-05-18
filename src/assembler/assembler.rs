@@ -145,20 +145,20 @@ fn layout_text_segment(
                             .get(i_type_label.label.label.as_ref().unwrap().get(0).unwrap())
                             .unwrap()
                             .get();
-                        let offset: u16 = calculate_offset(label_addr, inst_addr);
+                        let offset = calculate_offset::<u16>(label_addr, inst_addr);
                         inst.1 = Inst::IImm(ITypeImm::new(
                             i_type_label.opcode,
                             i_type_label.rs,
                             i_type_label.rt,
                             offset,
                         ));
-                    },
+                    }
                     Inst::JLabel(j_type) => {
                         let label_addr = labels
                             .get(j_type.label.label.as_ref().unwrap().get(0).unwrap())
                             .unwrap()
                             .get();
-                        let offset: u32 = calculate_offset(label_addr, inst_addr);
+                        let offset = calculate_offset::<u32>(label_addr, inst_addr);
                         inst.1 = Inst::JImm(JTypeImm::new(j_type.opcode, offset));
                     }
                     _ => {}
