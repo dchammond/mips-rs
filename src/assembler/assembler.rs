@@ -103,12 +103,12 @@ fn layout_text_segment(
         }
     });
     indexes.into_iter().for_each(|(idx, lower)| {
-        text_segment_entries[idx]
-            .start_address
-            .as_mut()
-            .unwrap()
-            .numeric
-            .replace(NonZeroU32::new(lower).unwrap());
+        let lower = NonZeroU32::new(lower);
+        if let Some(addr) = text_segment_entries[idx].start_address.as_mut() {
+            addr.numeric = lower;
+        } else {
+            text_segment_entries[idx].start_address = Some(Address::new(lower, None));
+        }
     });
     text_segment_entries.iter_mut().for_each(|t| {
         assign_text_segment_addresses(t, labels);
