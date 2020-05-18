@@ -28,21 +28,6 @@ impl TextSegment {
     }
 }
 
-#[derive(Clone, Debug)]
-pub struct KTextSegment {
-    pub instructions: Vec<(Option<Address>, Inst)>,
-    pub start_address: Option<Address>,
-}
-
-impl From<TextSegment> for KTextSegment {
-    fn from(t: TextSegment) -> Self {
-        KTextSegment {
-            instructions: t.instructions,
-            start_address: t.start_address,
-        }
-    }
-}
-
 #[derive(Copy, Clone, Debug)]
 pub struct DataAlignment {
     pub alignment: u32,
@@ -99,27 +84,12 @@ impl DataSegment {
     }
 }
 
-#[derive(Clone, Debug)]
-pub struct KDataSegment {
-    pub data_entries: Vec<DataEntry>,
-    pub start_address: Option<Address>,
-}
-
-impl From<DataSegment> for KDataSegment {
-    fn from(d: DataSegment) -> Self {
-        KDataSegment {
-            data_entries: d.data_entries,
-            start_address: d.start_address,
-        }
-    }
-}
-
 #[derive(Clone, Debug, Default)]
 pub struct Parsed {
     pub text_segment: Vec<TextSegment>,
-    pub ktext_segment: Vec<KTextSegment>,
+    pub ktext_segment: Vec<TextSegment>,
     pub data_segment: Vec<DataSegment>,
-    pub kdata_segment: Vec<KDataSegment>,
+    pub kdata_segment: Vec<DataSegment>,
 }
 
 fn i_extract_imm<T>(imm: (Option<&str>, Result<T, ParseIntError>)) -> Option<T>
@@ -587,7 +557,7 @@ pub fn parse(program: &str) -> Parsed {
                 let more_lines = parse_text_segment(&mut lines, &mut text_segment);
 
                 if text_segment.instructions.len() > 0 {
-                    parsed.ktext_segment.push(KTextSegment::from(text_segment));
+                    parsed.ktext_segment.push(text_segment);
                 }
 
                 match more_lines {
@@ -635,7 +605,7 @@ pub fn parse(program: &str) -> Parsed {
                 let more_lines = parse_data_segment(&mut lines, &mut data_segment);
 
                 if data_segment.data_entries.len() > 0 {
-                    parsed.kdata_segment.push(KDataSegment::from(data_segment));
+                    parsed.kdata_segment.push(data_segment);
                 }
 
                 match more_lines {

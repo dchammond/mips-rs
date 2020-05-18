@@ -94,8 +94,8 @@ pub enum JInst {
 }
 
 impl From<JInst> for String {
-    fn from(j: JInst) -> String {
-        match j {
+    fn from(j_: JInst) -> String {
+        match j_ {
             JInst::j => "j",
             JInst::jal => "jal",
         }

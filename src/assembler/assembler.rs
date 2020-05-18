@@ -3,7 +3,7 @@ use crate::{
     machine::{address::Address, memory::*},
     parser::parser::{
         DataAlignment, DataBytes, DataCString, DataEntry, DataHalfs, DataSegment, DataSpace,
-        DataWords, KDataSegment, KTextSegment, Parsed, TextSegment,
+        DataWords, Parsed, TextSegment,
     },
 };
 
