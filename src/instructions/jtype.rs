@@ -4,14 +4,20 @@ use std::{convert::TryFrom, num::NonZeroU32};
 use crate::machine::address::Address;
 
 #[derive(Clone, Debug)]
-pub struct JType {
+pub struct JTypeImm {
     pub opcode: JInst,
-    pub address: Address,
+    pub imm: u32,
 }
 
-impl JType {
-    pub fn new(opcode: JInst, address: Address) -> JType {
-        JType { opcode, address }
+#[derive(Clone, Debug)]
+pub struct JTypeLabel {
+    pub opcode: JInst,
+    pub label: Address,
+}
+
+impl JTypeImm {
+    pub fn new(opcode: JInst, imm: u32) -> JTypeImm {
+        JTypeImm { opcode, imm }
     }
     /*
     pub fn perform(&self, state: &mut State) {
@@ -54,37 +60,29 @@ impl JType {
     */
 }
 
-impl From<u32> for JType {
-    fn from(n: u32) -> JType {
+impl JTypeLabel {
+    pub fn new(opcode: JInst, label: Address) -> JTypeLabel {
+        JTypeLabel { opcode, label }
+    }
+}
+
+impl From<u32> for JTypeImm {
+    fn from(n: u32) -> JTypeImm {
         let opcode = JInst::from(n >> 26);
         let addr_raw = n & 0x3FF_FFFF;
         if addr_raw == 0 {
             panic!("Cannot convert 0x{:08X} into JType because address is 0", n);
         }
-        let addr;
-        unsafe {
-            addr = Address::new(Some(NonZeroU32::new_unchecked(addr_raw)), None);
-        }
-        JType::new(opcode, addr)
+        JTypeImm::new(opcode, addr_raw)
     }
 }
 
-impl TryFrom<JType> for u32 {
-    type Error = String;
-
-    fn try_from(j: JType) -> Result<Self, Self::Error> {
-        match j.address.numeric {
-            Some(nz) => {
-                let mut x = 0u32;
-                x |= u32::from(j.opcode) << 26;
-                x |= nz.get() & 0x3FF_FFFF;
-                Ok(x)
-            }
-            None => Err(format!(
-                "Cannot convert JType to u32, address is {:#?}",
-                j.address
-            )),
-        }
+impl From<JTypeImm> for u32 {
+    fn from(j: JTypeImm) -> Self {
+        let mut x = 0u32;
+        x |= u32::from(j.opcode) << 26;
+        x |= u32::from(j.imm);
+        x
     }
 }
 

@@ -1,5 +1,5 @@
 use crate::{
-    instructions::{itype::*, Inst},
+    instructions::{itype::*, jtype::*, Inst},
     machine::{address::Address, memory::*},
     parser::parser::{
         DataAlignment, DataBytes, DataCString, DataEntry, DataHalfs, DataSegment, DataSpace,
@@ -68,6 +68,27 @@ fn assign_text_segment_addresses(
         });
 }
 
+fn calculate_offset<T>(label_addr: u32, inst_addr: u32) -> T
+where T: TryFrom<u32> + std::ops::Not<Output = T> + std::ops::Add<Output = T>,
+     <T as TryFrom<u32>>::Error: std::fmt::Debug
+{
+    if label_addr > inst_addr {
+        T::try_from((label_addr - inst_addr) >> 2).expect(&format!(
+                "instruction and label too far apart: {:#X} <-> {:#X}",
+                inst_addr >> 2,
+                label_addr >> 2
+        ))
+    } else {
+        let pos =
+            T::try_from((inst_addr - label_addr) >> 2).expect(&format!(
+                    "instruction and label too far apart: {:#X} <-> {:#X}",
+                    inst_addr >> 2,
+                    label_addr >> 2
+            ));
+        !pos + T::try_from(1u32).unwrap()
+    }
+}
+
 // Just a first-come-first-served-first-fit allocator
 // Two passes 1. handle Segments with a desired address
 // 2. find a place for everything else
@@ -124,27 +145,21 @@ fn layout_text_segment(
                             .get(i_type_label.label.label.as_ref().unwrap().get(0).unwrap())
                             .unwrap()
                             .get();
-                        let offset = if label_addr > inst_addr {
-                            u16::try_from((label_addr - inst_addr) >> 2).expect(&format!(
-                                "instruction and label too far apart: {:#X} <-> {:#X}",
-                                inst_addr >> 2,
-                                label_addr >> 2
-                            ))
-                        } else {
-                            let pos =
-                                u16::try_from((inst_addr - label_addr) >> 2).expect(&format!(
-                                    "instruction and label too far apart: {:#X} <-> {:#X}",
-                                    inst_addr >> 2,
-                                    label_addr >> 2
-                                ));
-                            !pos + 1
-                        };
+                        let offset: u16 = calculate_offset(label_addr, inst_addr);
                         inst.1 = Inst::IImm(ITypeImm::new(
                             i_type_label.opcode,
                             i_type_label.rs,
                             i_type_label.rt,
                             offset,
                         ));
+                    },
+                    Inst::JLabel(j_type) => {
+                        let label_addr = labels
+                            .get(j_type.label.label.as_ref().unwrap().get(0).unwrap())
+                            .unwrap()
+                            .get();
+                        let offset: u32 = calculate_offset(label_addr, inst_addr);
+                        inst.1 = Inst::JImm(JTypeImm::new(j_type.opcode, offset));
                     }
                     _ => {}
                 }
@@ -159,5 +174,7 @@ fn assign_addresses(parsed: &mut Parsed, labels: &mut HashMap<String, NonZeroU32
 pub fn assemble(mut parsed: Parsed) {
     let mut labels: HashMap<String, NonZeroU32> = HashMap::new();
     assign_addresses(&mut parsed, &mut labels);
+    println!("{:#?}", labels);
+    println!("{:#?}", parsed);
     //expand_pseudo(&mut parsed.text_segment);
 }

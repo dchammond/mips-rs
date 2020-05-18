@@ -7,7 +7,8 @@ pub enum Inst {
     IImm(itype::ITypeImm),
     ILabel(itype::ITypeLabel),
     R(rtype::RType),
-    J(jtype::JType),
+    JImm(jtype::JTypeImm),
+    JLabel(jtype::JTypeLabel),
 }
 
 impl From<itype::ITypeImm> for Inst {
@@ -28,8 +29,14 @@ impl From<rtype::RType> for Inst {
     }
 }
 
-impl From<jtype::JType> for Inst {
-    fn from(j: jtype::JType) -> Self {
-        Inst::J(j)
+impl From<jtype::JTypeImm> for Inst {
+    fn from(j: jtype::JTypeImm) -> Self {
+        Inst::JImm(j)
+    }
+}
+
+impl From<jtype::JTypeLabel> for Inst {
+    fn from(j: jtype::JTypeLabel) -> Self {
+        Inst::JLabel(j)
     }
 }

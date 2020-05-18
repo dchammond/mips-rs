@@ -380,7 +380,7 @@ fn parse_text_segment(lines: &mut Lines, text_segment: &mut TextSegment) -> Opti
             current_labels = None;
             text_segment.instructions.push((
                 addr,
-                JType::new(JInst::from(inst), Address::from(label)).into(),
+                JTypeLabel::new(JInst::from(inst), Address::from(label)).into(),
             ));
             continue;
         }
