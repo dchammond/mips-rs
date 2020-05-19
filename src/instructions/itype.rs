@@ -23,10 +23,12 @@ pub struct ITypeLabel {
 impl ITypeImm {
     pub fn new(opcode: IInst, rs: Reg, rt: Reg, imm: u32) -> ITypeImm {
         match opcode {
-            IInst::li | IInst::la => {},
-            _ => if imm > u32::from(u16::MAX) {
-                panic!("imm {} for opcode {:#?} was too large", imm, opcode);
-            },
+            IInst::li | IInst::la => {}
+            _ => {
+                if imm > u32::from(u16::MAX) {
+                    panic!("imm {} for opcode {:#?} was too large", imm, opcode);
+                }
+            }
         };
         ITypeImm {
             opcode,
@@ -267,7 +269,7 @@ impl IInst {
     pub fn needs_offset(&self) -> bool {
         match self {
             IInst::beq | IInst::bne => true,
-            _ => false
+            _ => false,
         }
     }
 }
@@ -339,8 +341,8 @@ macro_rules! iinst_map {
                     0x24 => IInst::lbu,
                     0x25 => IInst::lhu,
                     0x30 => IInst::ll,
-                  //     => IInst::li,
-                  //     => IInst::la,
+                    //     => IInst::li,
+                    //     => IInst::la,
                     0x0F => IInst::lui,
                     0x23 => IInst::lw,
                     0x0D => IInst::ori,
@@ -370,8 +372,8 @@ macro_rules! iinst_inv_map {
                     IInst::lbu => 0x24,
                     IInst::lhu => 0x25,
                     IInst::ll => 0x30,
-                  //IInst::li => ,
-                  //IInst::la => ,
+                    //IInst::li => ,
+                    //IInst::la => ,
                     IInst::lui => 0x0F,
                     IInst::lw => 0x23,
                     IInst::ori => 0x0D,

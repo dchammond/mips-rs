@@ -79,11 +79,7 @@ impl DataHalfs {
     pub fn size(&self) -> usize {
         let len = self.halfs.1.len();
         let alignment = self.alignment.get() as usize;
-        let padding = if alignment > 2 {
-            alignment - 2
-        } else {
-            0
-        };
+        let padding = if alignment > 2 { alignment - 2 } else { 0 };
         let unit_size = padding + 2;
         len * unit_size
     }
@@ -99,11 +95,7 @@ impl DataWords {
     pub fn size(&self) -> usize {
         let len = self.words.1.len();
         let alignment = self.alignment.get() as usize;
-        let padding = if alignment > 4 {
-            alignment - 4
-        } else {
-            0
-        };
+        let padding = if alignment > 4 { alignment - 4 } else { 0 };
         let unit_size = padding + 4;
         len * unit_size
     }
@@ -156,9 +148,7 @@ impl DataSegment {
     }
 
     pub fn size(&self) -> usize {
-        self.data_entries
-            .iter()
-            .fold(0, |acc, d| acc + d.size())
+        self.data_entries.iter().fold(0, |acc, d| acc + d.size())
     }
 }
 
@@ -435,10 +425,9 @@ fn parse_text_segment(lines: &mut Lines, text_segment: &mut TextSegment) -> Opti
         if let Ok((_, inst)) = j_other(line) {
             let addr = current_labels.map_or_else(|| None, |v| Some(Address::from(v.as_slice())));
             current_labels = None;
-            text_segment.instructions.push((
-                addr,
-                JTypeImm::new(JInst::from(inst), 0).into(),
-            ));
+            text_segment
+                .instructions
+                .push((addr, JTypeImm::new(JInst::from(inst), 0).into()));
             continue;
         }
         // it may be a new directive
@@ -499,9 +488,8 @@ fn parse_data_segment(lines: &mut Lines, data_segment: &mut DataSegment) -> Opti
             if imm_int > 31 {
                 panic!("Cannot have alignment >= 2^32: 2^{}", imm_int);
             }
-            current_alignment = Alignment::Defined(unsafe {
-                NonZeroU32::new_unchecked(1u32 << imm_int)
-            });
+            current_alignment =
+                Alignment::Defined(unsafe { NonZeroU32::new_unchecked(1u32 << imm_int) });
             if data_segment.data_entries.len() == 0 {
                 auto_align_data_segment(data_segment, 1u32 << imm_int);
             }

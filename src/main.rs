@@ -1,7 +1,7 @@
 use std::{env, path};
 
-use mips_rs::parser::parser::*;
 use mips_rs::assembler::assembler::*;
+use mips_rs::parser::parser::*;
 use mips_rs::*;
 
 pub fn main() {

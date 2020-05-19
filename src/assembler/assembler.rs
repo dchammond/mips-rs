@@ -1,11 +1,11 @@
 use crate::{
+    assembler::resolver,
     instructions::{itype::*, jtype::*, Inst},
     machine::{address::Address, memory::*, register::*},
     parser::parser::{
-        DataBytes, DataCString, DataEntry, DataHalfs, DataSegment, DataSpace,
-        DataWords, Parsed, TextSegment,
+        DataBytes, DataCString, DataEntry, DataHalfs, DataSegment, DataSpace, DataWords, Parsed,
+        TextSegment,
     },
-    assembler::resolver,
 };
 
 use std::{collections::HashMap, convert::TryFrom, num::NonZeroU32};
@@ -30,52 +30,49 @@ fn expand_li_la_imm(rs: Reg, rt: Reg, imm: u32) -> (ITypeImm, ITypeImm) {
 
 fn expand_pseudo(text_segments: Vec<TextSegment>) -> Vec<TextSegment> {
     let mut new_text_segments = Vec::with_capacity(text_segments.len());
-    text_segments
-        .into_iter()
-        .for_each(|segment| {
-            let mut new_segment = TextSegment::new();
-            new_segment.start_address = segment.start_address;
-            segment.instructions
-                .into_iter()
-                .for_each(|(addr, inst)| {
-                    match inst {
-                        Inst::ILabel(ITypeLabel {
-                            opcode: IInst::la,
-                            rs,
-                            rt,
-                            label
-                        }) |
-                        Inst::ILabel(ITypeLabel {
-                            opcode: IInst::li,
-                            rs,
-                            rt,
-                            label
-                        }) => {
-                            let (lui, ori) = expand_li_la_label(rs, rt, label);
-                            new_segment.instructions.push((addr, lui.into()));
-                            new_segment.instructions.push((None, ori.into()));
-                        },
-                        Inst::IImm(ITypeImm {
-                            opcode: IInst::la,
-                            rs,
-                            rt,
-                            imm
-                        }) |
-                        Inst::IImm(ITypeImm {
-                            opcode: IInst::li,
-                            rs,
-                            rt,
-                            imm
-                        }) => {
-                            let (lui, ori) = expand_li_la_imm(rs, rt, imm);
-                            new_segment.instructions.push((addr, lui.into()));
-                            new_segment.instructions.push((None, ori.into()));
-                        },
-                        _ => new_segment.instructions.push((addr, inst)),
-                    }
-                });
-            new_text_segments.push(new_segment);
-        });
+    text_segments.into_iter().for_each(|segment| {
+        let mut new_segment = TextSegment::new();
+        new_segment.start_address = segment.start_address;
+        segment
+            .instructions
+            .into_iter()
+            .for_each(|(addr, inst)| match inst {
+                Inst::ILabel(ITypeLabel {
+                    opcode: IInst::la,
+                    rs,
+                    rt,
+                    label,
+                })
+                | Inst::ILabel(ITypeLabel {
+                    opcode: IInst::li,
+                    rs,
+                    rt,
+                    label,
+                }) => {
+                    let (lui, ori) = expand_li_la_label(rs, rt, label);
+                    new_segment.instructions.push((addr, lui.into()));
+                    new_segment.instructions.push((None, ori.into()));
+                }
+                Inst::IImm(ITypeImm {
+                    opcode: IInst::la,
+                    rs,
+                    rt,
+                    imm,
+                })
+                | Inst::IImm(ITypeImm {
+                    opcode: IInst::li,
+                    rs,
+                    rt,
+                    imm,
+                }) => {
+                    let (lui, ori) = expand_li_la_imm(rs, rt, imm);
+                    new_segment.instructions.push((addr, lui.into()));
+                    new_segment.instructions.push((None, ori.into()));
+                }
+                _ => new_segment.instructions.push((addr, inst)),
+            });
+        new_text_segments.push(new_segment);
+    });
     new_text_segments
 }
 

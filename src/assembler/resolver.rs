@@ -1,14 +1,11 @@
 use crate::{
+    assembler::assembler::SymbolTable,
     instructions::{itype::*, jtype::*, Inst},
     machine::{address::Address, memory::*},
-    parser::parser::{
-        DataEntry,DataSegment, Parsed, TextSegment,
-    },
-    assembler::assembler::SymbolTable,
+    parser::parser::{DataEntry, DataSegment, Parsed, TextSegment},
 };
 
 use std::{convert::TryFrom, num::NonZeroU32};
-
 
 fn define_labels(a: &Address, addr: u32, labels: &mut SymbolTable) {
     if let Some(v) = &a.label {
@@ -32,7 +29,7 @@ fn define_labels(a: &Address, addr: u32, labels: &mut SymbolTable) {
 fn assign_text_segment_addresses(
     text_segment: &mut TextSegment,
     labels: &mut SymbolTable,
-    max_addr: u32
+    max_addr: u32,
 ) {
     let mut addr: u32 = text_segment
         .start_address
@@ -61,25 +58,21 @@ fn assign_text_segment_addresses(
 
 fn generate_hi_lo_labels(address: &mut Address) {
     let mut splits: Vec<String> = Vec::new();
-    address.label
-        .as_ref()
-        .unwrap()
-        .iter()
-        .for_each(|label| {
-            let mut high = label.clone();
-            high.push_str("@hi");
-            let mut low  = label.clone();
-            low.push_str("@lo");
-            splits.push(high);
-            splits.push(low);
-        });
+    address.label.as_ref().unwrap().iter().for_each(|label| {
+        let mut high = label.clone();
+        high.push_str("@hi");
+        let mut low = label.clone();
+        low.push_str("@lo");
+        splits.push(high);
+        splits.push(low);
+    });
     address.label.as_mut().unwrap().append(&mut splits);
 }
 
 fn assign_data_segment_addresses(
     data_segment: &mut DataSegment,
     labels: &mut SymbolTable,
-    max_addr: u32
+    max_addr: u32,
 ) {
     let mut addr: u32 = data_segment
         .start_address
@@ -89,8 +82,8 @@ fn assign_data_segment_addresses(
         .as_ref()
         .unwrap()
         .get();
-    data_segment.
-        data_entries
+    data_segment
+        .data_entries
         .iter_mut()
         .for_each(|entry: &mut DataEntry| {
             let non_zero_addr = unsafe { NonZeroU32::new_unchecked(addr) };
@@ -105,7 +98,7 @@ fn assign_data_segment_addresses(
                         panic!("Data segment too large");
                     }
                     c.chars.0 = Some(Address::from(non_zero_addr));
-                },
+                }
                 DataEntry::Bytes(ref mut b) => {
                     if let Some(ref mut a) = &mut b.bytes.0 {
                         generate_hi_lo_labels(a);
@@ -116,7 +109,7 @@ fn assign_data_segment_addresses(
                         panic!("Data segment too large");
                     }
                     b.bytes.0 = Some(Address::from(non_zero_addr));
-                },
+                }
                 DataEntry::Halfs(ref mut h) => {
                     if let Some(ref mut a) = &mut h.halfs.0 {
                         generate_hi_lo_labels(a);
@@ -127,7 +120,7 @@ fn assign_data_segment_addresses(
                         panic!("Data segment too large");
                     }
                     h.halfs.0 = Some(Address::from(non_zero_addr));
-                },
+                }
                 DataEntry::Words(ref mut w) => {
                     if let Some(ref mut a) = &mut w.words.0 {
                         generate_hi_lo_labels(a);
@@ -138,7 +131,7 @@ fn assign_data_segment_addresses(
                         panic!("Data segment too large");
                     }
                     w.words.0 = Some(Address::from(non_zero_addr));
-                },
+                }
                 DataEntry::Space(ref mut s) => {
                     if let Some(ref mut a) = &mut s.spaces.0 {
                         generate_hi_lo_labels(a);
@@ -149,28 +142,28 @@ fn assign_data_segment_addresses(
                         panic!("Data segment too large");
                     }
                     s.spaces.0 = Some(Address::from(non_zero_addr));
-                },
+                }
             }
         });
 }
 
 fn calculate_offset<T>(label_addr: u32, inst_addr: u32) -> T
-where T: TryFrom<u32> + std::ops::Not<Output = T> + std::ops::Add<Output = T>,
-     <T as TryFrom<u32>>::Error: std::fmt::Debug
+where
+    T: TryFrom<u32> + std::ops::Not<Output = T> + std::ops::Add<Output = T>,
+    <T as TryFrom<u32>>::Error: std::fmt::Debug,
 {
     if label_addr > inst_addr {
         T::try_from((label_addr - inst_addr) >> 2).expect(&format!(
-                "instruction and label too far apart: {:#X} <-> {:#X}",
-                inst_addr >> 2,
-                label_addr >> 2
+            "instruction and label too far apart: {:#X} <-> {:#X}",
+            inst_addr >> 2,
+            label_addr >> 2
         ))
     } else {
-        let pos =
-            T::try_from((inst_addr - label_addr) >> 2).expect(&format!(
-                    "instruction and label too far apart: {:#X} <-> {:#X}",
-                    inst_addr >> 2,
-                    label_addr >> 2
-            ));
+        let pos = T::try_from((inst_addr - label_addr) >> 2).expect(&format!(
+            "instruction and label too far apart: {:#X} <-> {:#X}",
+            inst_addr >> 2,
+            label_addr >> 2
+        ));
         !pos + T::try_from(1u32).unwrap()
     }
 }
@@ -184,7 +177,7 @@ fn layout_text_segment(
     text_segment_entries: &mut [TextSegment],
     labels: &mut SymbolTable,
     min_addr: u32,
-    max_addr: u32
+    max_addr: u32,
 ) {
     let positions = text_segment_entries
         .iter()
@@ -261,7 +254,7 @@ fn layout_data_segment(
     data_segment_entries: &mut [DataSegment],
     labels: &mut SymbolTable,
     min_addr: u32,
-    max_addr: u32
+    max_addr: u32,
 ) {
     let positions = data_segment_entries
         .iter()
@@ -304,8 +297,23 @@ fn layout_data_segment(
 pub fn assign_addresses(parsed: &mut Parsed, labels: &mut SymbolTable) {
     // STATIC_DATA has no defined size, but we allocate greedily so
     // we should have no issues with using up all of the dynamic space
-    layout_data_segment(&mut parsed.data_segment, labels, STATIC_DATA_START, STACK_START);
-    layout_data_segment(&mut parsed.kdata_segment, labels, KERNEL_DATA_END, KERNEL_DATA_START);
+    layout_data_segment(
+        &mut parsed.data_segment,
+        labels,
+        STATIC_DATA_START,
+        STACK_START,
+    );
+    layout_data_segment(
+        &mut parsed.kdata_segment,
+        labels,
+        KERNEL_DATA_END,
+        KERNEL_DATA_START,
+    );
     layout_text_segment(&mut parsed.text_segment, labels, TEXT_START, TEXT_END);
-    layout_text_segment(&mut parsed.ktext_segment, labels, KERNEL_TEXT_END, KERNEL_TEXT_START);
+    layout_text_segment(
+        &mut parsed.ktext_segment,
+        labels,
+        KERNEL_TEXT_END,
+        KERNEL_TEXT_START,
+    );
 }
