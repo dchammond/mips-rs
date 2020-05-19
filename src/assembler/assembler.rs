@@ -85,6 +85,4 @@ pub fn assemble(mut parsed: Parsed) {
     let mut labels: SymbolTable = HashMap::new();
     parsed.text_segment = expand_pseudo(parsed.text_segment);
     resolver::assign_addresses(&mut parsed, &mut labels);
-    println!("{:#?}", labels);
-    println!("{:#?}", parsed);
 }
