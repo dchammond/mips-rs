@@ -22,6 +22,12 @@ fn expand_li_la_label(rs: Reg, rt: Reg, label: Address) -> (ITypeLabel, ITypeLab
     (lui, ori)
 }
 
+fn expand_li_la_imm(rs: Reg, rt: Reg, imm: u32) -> (ITypeImm, ITypeImm) {
+    let lui = ITypeImm::new(IInst::lui, rs, rt, imm >> 16);
+    let ori = ITypeImm::new(IInst::ori, rs, rt, imm & 0xFFFF);
+    (lui, ori)
+}
+
 fn expand_pseudo(text_segments: Vec<TextSegment>) -> Vec<TextSegment> {
     let new_text_segments = Vec::with_capacity(text_segments.len());
     text_segments
@@ -46,6 +52,22 @@ fn expand_pseudo(text_segments: Vec<TextSegment>) -> Vec<TextSegment> {
                             label
                         }) => {
                             let (lui, ori) = expand_li_la_label(rs, rt, label);
+                            new_segment.instructions.push((addr, lui.into()));
+                            new_segment.instructions.push((None, ori.into()));
+                        },
+                        Inst::IImm(ITypeImm {
+                            opcode: IInst::la,
+                            rs,
+                            rt,
+                            imm
+                        }) |
+                        Inst::IImm(ITypeImm {
+                            opcode: IInst::li,
+                            rs,
+                            rt,
+                            imm
+                        }) => {
+                            let (lui, ori) = expand_li_la_imm(rs, rt, imm);
                             new_segment.instructions.push((addr, lui.into()));
                             new_segment.instructions.push((None, ori.into()));
                         },
