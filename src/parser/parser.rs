@@ -453,6 +453,22 @@ enum Alignment {
     Automatic,
 }
 
+fn auto_align_data_segment(data_segment: &mut DataSegment, alignment: u32) {
+    if let Some(start) = &data_segment.start_address {
+        if let Some(numeric) = start.numeric {
+            let r = numeric.get() % alignment;
+            if r != 0 {
+                let data_space = DataSpace {
+                    spaces: (Some(vec![start.clone()]), vec![0u8; r as usize]),
+                };
+                data_segment.data_entries.push(DataEntry::Space(data_space));
+            }
+        } else {
+            std::unreachable!("Data segment start address was not a numeric");
+        }
+    }
+}
+
 fn parse_data_segment(lines: &mut Lines, data_segment: &mut DataSegment) -> Option<String> {
     let mut current_labels: Option<Vec<String>> = None;
     let mut current_alignment = Alignment::Automatic;
@@ -486,7 +502,16 @@ fn parse_data_segment(lines: &mut Lines, data_segment: &mut DataSegment) -> Opti
             current_alignment = Alignment::Defined(unsafe {
                 NonZeroU32::new_unchecked(1u32 << imm_int)
             });
+            if data_segment.data_entries.len() == 0 {
+                auto_align_data_segment(data_segment, 1u32 << imm_int);
+            }
             continue;
+        }
+        // if the first directive after .data is not .align
+        // then we ensure that we are aligned on an 8 byte boundary
+        // Otherwise .half, .word, ..., could be misaligned
+        if data_segment.data_entries.len() == 0 {
+            auto_align_data_segment(data_segment, 8);
         }
         // Everything below relies on this
         let align = current_alignment;
@@ -648,6 +673,9 @@ pub fn parse(program: &str) -> Parsed {
                 if let Some(imm) = imm {
                     match i_extract_imm(imm) {
                         Some(i) => {
+                            if i % 4 != 0 {
+                                panic!("Text segment must be word-aligned");
+                            }
                             text_segment.start_address =
                                 Some(Address::new(NonZeroU32::new(i as u32), None))
                         }
@@ -672,6 +700,9 @@ pub fn parse(program: &str) -> Parsed {
                 if let Some(imm) = imm {
                     match i_extract_imm(imm) {
                         Some(i) => {
+                            if i % 4 != 0 {
+                                panic!("Text segment must be word-aligned");
+                            }
                             text_segment.start_address =
                                 Some(Address::new(NonZeroU32::new(i as u32), None))
                         }
