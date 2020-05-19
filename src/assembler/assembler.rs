@@ -2,7 +2,7 @@ use crate::{
     instructions::{itype::*, jtype::*, Inst},
     machine::{address::Address, memory::*},
     parser::parser::{
-        DataAlignment, DataBytes, DataCString, DataEntry, DataHalfs, DataSegment, DataSpace,
+        DataBytes, DataCString, DataEntry, DataHalfs, DataSegment, DataSpace,
         DataWords, Parsed, TextSegment,
     },
 };
@@ -69,6 +69,79 @@ fn assign_text_segment_addresses(
         });
 }
 
+fn assign_data_segment_addresses(
+    data_segment: &mut DataSegment,
+    labels: &mut HashMap<String, NonZeroU32>,
+    max_addr: u32
+) {
+    let mut addr: u32 = data_segment
+        .start_address
+        .as_ref()
+        .unwrap()
+        .numeric
+        .as_ref()
+        .unwrap()
+        .get();
+    data_segment.
+        data_entries
+        .iter_mut()
+        .for_each(|entry: &mut DataEntry| {
+            let non_zero_addr = unsafe { NonZeroU32::new_unchecked(addr) };
+            match entry {
+                DataEntry::CString(ref mut c) => {
+                    if let Some(a) = &c.chars.0 {
+                        define_labels(a, non_zero_addr, labels);
+                    }
+                    addr += c.size() as u32;
+                    if addr >= max_addr {
+                        panic!("Data segment too large");
+                    }
+                    c.chars.0 = Some(Address::from(non_zero_addr));
+                },
+                DataEntry::Bytes(ref mut b) => {
+                    if let Some(a) = &b.bytes.0 {
+                        define_labels(a, non_zero_addr, labels);
+                    }
+                    addr += b.size() as u32;
+                    if addr >= max_addr {
+                        panic!("Data segment too large");
+                    }
+                    b.bytes.0 = Some(Address::from(non_zero_addr));
+                },
+                DataEntry::Halfs(ref mut h) => {
+                    if let Some(a) = &h.halfs.0 {
+                        define_labels(a, non_zero_addr, labels);
+                    }
+                    addr += h.size() as u32;
+                    if addr >= max_addr {
+                        panic!("Data segment too large");
+                    }
+                    h.halfs.0 = Some(Address::from(non_zero_addr));
+                },
+                DataEntry::Words(ref mut w) => {
+                    if let Some(a) = &w.words.0 {
+                        define_labels(a, non_zero_addr, labels);
+                    }
+                    addr += w.size() as u32;
+                    if addr >= max_addr {
+                        panic!("Data segment too large");
+                    }
+                    w.words.0 = Some(Address::from(non_zero_addr));
+                },
+                DataEntry::Space(ref mut s) => {
+                    if let Some(a) = &s.spaces.0 {
+                        define_labels(a, non_zero_addr, labels);
+                    }
+                    addr += s.size() as u32;
+                    if addr >= max_addr {
+                        panic!("Data segment too large");
+                    }
+                    s.spaces.0 = Some(Address::from(non_zero_addr));
+                },
+            }
+        });
+}
+
 fn calculate_offset<T>(label_addr: u32, inst_addr: u32) -> T
 where T: TryFrom<u32> + std::ops::Not<Output = T> + std::ops::Add<Output = T>,
      <T as TryFrom<u32>>::Error: std::fmt::Debug
@@ -104,7 +177,7 @@ fn layout_text_segment(
     let positions = text_segment_entries
         .iter()
         .map(|segment| {
-            let size_bytes = (segment.instructions.len() * 4) as u32;
+            let size_bytes = segment.size() as u32;
             let mut lower = None;
             if let Some(start) = &segment.start_address {
                 if let Some(numeric) = start.numeric {
@@ -170,7 +243,55 @@ fn layout_text_segment(
     });
 }
 
+fn layout_data_segment(
+    data_segment_entries: &mut [DataSegment],
+    labels: &mut HashMap<String, NonZeroU32>,
+    min_addr: u32,
+    max_addr: u32
+) {
+    let positions = data_segment_entries
+        .iter()
+        .map(|segment| {
+            let size_bytes = segment.size() as u32;
+            let mut lower = None;
+            if let Some(start) = &segment.start_address {
+                if let Some(numeric) = start.numeric {
+                    lower = Some(numeric.get());
+                }
+            }
+            MemPosition::new(lower, None, size_bytes, Some(segment))
+        })
+        .collect::<Vec<MemPosition<DataSegment>>>();
+    let ranges = FirstFitAllocator::layout(&positions, min_addr, max_addr);
+    let mut indexes: Vec<(usize, u32)> = Vec::with_capacity(data_segment_entries.len());
+    ranges.into_iter().for_each(|range| {
+        if let Some(data_ref) = range.get_data() {
+            let found = data_segment_entries
+                .iter()
+                .enumerate()
+                .find(|(_, t)| std::ptr::eq(*t, data_ref))
+                .unwrap();
+            indexes.push((found.0, range.get_range().0));
+        }
+    });
+    indexes.into_iter().for_each(|(idx, lower)| {
+        let lower = NonZeroU32::new(lower);
+        if let Some(addr) = data_segment_entries[idx].start_address.as_mut() {
+            addr.numeric = lower;
+        } else {
+            data_segment_entries[idx].start_address = Some(Address::new(lower, None));
+        }
+    });
+    data_segment_entries.iter_mut().for_each(|t| {
+        assign_data_segment_addresses(t, labels, max_addr);
+    });
+}
+
 fn assign_addresses(parsed: &mut Parsed, labels: &mut HashMap<String, NonZeroU32>) {
+    // STATIC_DATA has no defined size, but we allocate greedily so
+    // we should have no issues with using up all of the dynamic space
+    layout_data_segment(&mut parsed.data_segment, labels, STATIC_DATA_START, STACK_START);
+    layout_data_segment(&mut parsed.kdata_segment, labels, KERNEL_DATA_END, KERNEL_DATA_START);
     layout_text_segment(&mut parsed.text_segment, labels, TEXT_START, TEXT_END);
     layout_text_segment(&mut parsed.ktext_segment, labels, KERNEL_TEXT_END, KERNEL_TEXT_START);
 }
