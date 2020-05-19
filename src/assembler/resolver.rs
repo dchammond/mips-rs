@@ -7,7 +7,7 @@ use crate::{
     assembler::assembler::SymbolTable,
 };
 
-use std::{collections::HashMap, convert::TryFrom, num::NonZeroU32};
+use std::{convert::TryFrom, num::NonZeroU32};
 
 
 fn define_labels(a: &Address, addr: u32, labels: &mut SymbolTable) {
