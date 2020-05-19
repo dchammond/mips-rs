@@ -250,8 +250,8 @@ pub enum IInst {
     lbu,
     lhu,
     ll,
-    li,
-    la,
+    li, // pseudo
+    la, // pseudo
     lui,
     lw,
     ori,
