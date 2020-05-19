@@ -323,8 +323,8 @@ macro_rules! iinst_map {
                     0x24 => IInst::lbu,
                     0x25 => IInst::lhu,
                     0x30 => IInst::ll,
-                    0x3F => IInst::li,
-                    0x01 => IInst::la,
+                  //     => IInst::li,
+                  //     => IInst::la,
                     0x0F => IInst::lui,
                     0x23 => IInst::lw,
                     0x0D => IInst::ori,
@@ -354,8 +354,8 @@ macro_rules! iinst_inv_map {
                     IInst::lbu => 0x24,
                     IInst::lhu => 0x25,
                     IInst::ll => 0x30,
-                    IInst::li => 0x3F,
-                    IInst::la => 0x01,
+                  //IInst::li => ,
+                  //IInst::la => ,
                     IInst::lui => 0x0F,
                     IInst::lw => 0x23,
                     IInst::ori => 0x0D,
@@ -365,6 +365,7 @@ macro_rules! iinst_inv_map {
                     IInst::sc => 0x38,
                     IInst::sh => 0x29,
                     IInst::sw => 0x2B,
+                    _ => panic!("No op-code for IInst: {:?}", IInst::la),
                 }
             }
         }
