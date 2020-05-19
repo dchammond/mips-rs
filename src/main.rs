@@ -12,6 +12,5 @@ pub fn main() {
     }
     let s = load_file(path::Path::new(&args[1]));
     let p = parse(&s);
-    println!("{:#?}", p);
     assemble(p);
 }
