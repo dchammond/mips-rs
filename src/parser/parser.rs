@@ -489,14 +489,12 @@ fn parse_data_segment(lines: &mut Lines, data_segment: &mut DataSegment) -> Opti
             continue;
         }
         // Everything below relies on this
-        let align = if let Alignment::Defined(a) = current_alignment {
+        let align = current_alignment;
+        if let Alignment::Defined(a) = current_alignment {
             if a.get() != 1 {
                 // 2^0 applies until next .data
                 current_alignment = Alignment::Automatic;
             }
-            a
-        } else {
-            unsafe { NonZeroU32::new_unchecked(4) }
         };
         if let Ok((_, s)) = directive_ascii(line) {
             let addr = current_labels.map_or_else(
@@ -504,6 +502,10 @@ fn parse_data_segment(lines: &mut Lines, data_segment: &mut DataSegment) -> Opti
                 |v| Some(v.into_iter().map(|s| Address::from(s)).collect()),
             );
             current_labels = None;
+            let align = match align {
+                Alignment::Defined(a) => a,
+                Alignment::Automatic => unsafe { NonZeroU32::new_unchecked(1) },
+            };
             let cstring = DataCString {
                 chars: (addr, s.as_bytes().to_vec()), // Rust strings aren't null terminated,
                 alignment: align,
@@ -518,6 +520,10 @@ fn parse_data_segment(lines: &mut Lines, data_segment: &mut DataSegment) -> Opti
                 |v| Some(v.into_iter().map(|s| Address::from(s)).collect()),
             );
             current_labels = None;
+            let align = match align {
+                Alignment::Defined(a) => a,
+                Alignment::Automatic => unsafe { NonZeroU32::new_unchecked(1) },
+            };
             let mut cstring = DataCString {
                 chars: (addr, s.as_bytes().to_vec()), // Rust strings aren't null terminated,
                 alignment: align,
@@ -533,6 +539,10 @@ fn parse_data_segment(lines: &mut Lines, data_segment: &mut DataSegment) -> Opti
                 |v| Some(v.into_iter().map(|s| Address::from(s)).collect()),
             );
             current_labels = None;
+            let align = match align {
+                Alignment::Defined(a) => a,
+                Alignment::Automatic => unsafe { NonZeroU32::new_unchecked(1) },
+            };
             let mut byte_vec = Vec::new();
             for entry in bytes {
                 let imm = match i_extract_imm(entry) {
@@ -554,6 +564,10 @@ fn parse_data_segment(lines: &mut Lines, data_segment: &mut DataSegment) -> Opti
                 |v| Some(v.into_iter().map(|s| Address::from(s)).collect()),
             );
             current_labels = None;
+            let align = match align {
+                Alignment::Defined(a) => a,
+                Alignment::Automatic => unsafe { NonZeroU32::new_unchecked(2) },
+            };
             let mut half_vec = Vec::new();
             for entry in halfs {
                 let imm = match i_extract_imm(entry) {
@@ -575,6 +589,10 @@ fn parse_data_segment(lines: &mut Lines, data_segment: &mut DataSegment) -> Opti
                 |v| Some(v.into_iter().map(|s| Address::from(s)).collect()),
             );
             current_labels = None;
+            let align = match align {
+                Alignment::Defined(a) => a,
+                Alignment::Automatic => unsafe { NonZeroU32::new_unchecked(4) },
+            };
             let mut word_vec = Vec::new();
             for entry in words {
                 let imm = match i_extract_imm(entry) {
