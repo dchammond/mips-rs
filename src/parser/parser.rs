@@ -34,7 +34,7 @@ impl TextSegment {
 
 #[derive(Clone, Debug)]
 pub struct DataCString {
-    pub chars: (Option<Vec<Address>>, Vec<u8>),
+    pub chars: (Option<Address>, Vec<u8>),
     pub alignment: NonZeroU32,
     pub null_terminated: bool,
 }
@@ -55,7 +55,7 @@ impl DataCString {
 
 #[derive(Clone, Debug)]
 pub struct DataBytes {
-    pub bytes: (Option<Vec<Address>>, Vec<u8>),
+    pub bytes: (Option<Address>, Vec<u8>),
     pub alignment: NonZeroU32,
 }
 
@@ -71,7 +71,7 @@ impl DataBytes {
 
 #[derive(Clone, Debug)]
 pub struct DataHalfs {
-    pub halfs: (Option<Vec<Address>>, Vec<u16>),
+    pub halfs: (Option<Address>, Vec<u16>),
     pub alignment: NonZeroU32,
 }
 
@@ -91,7 +91,7 @@ impl DataHalfs {
 
 #[derive(Clone, Debug)]
 pub struct DataWords {
-    pub words: (Option<Vec<Address>>, Vec<u32>),
+    pub words: (Option<Address>, Vec<u32>),
     pub alignment: NonZeroU32,
 }
 
@@ -111,7 +111,7 @@ impl DataWords {
 
 #[derive(Clone, Debug)]
 pub struct DataSpace {
-    pub spaces: (Option<Vec<Address>>, Vec<u8>),
+    pub spaces: (Option<Address>, Vec<u8>),
 }
 
 impl DataSpace {
@@ -459,7 +459,7 @@ fn auto_align_data_segment(data_segment: &mut DataSegment, alignment: u32) {
             let r = numeric.get() % alignment;
             if r != 0 {
                 let data_space = DataSpace {
-                    spaces: (Some(vec![start.clone()]), vec![0u8; r as usize]),
+                    spaces: (Some(start.clone()), vec![0u8; r as usize]),
                 };
                 data_segment.data_entries.push(DataEntry::Space(data_space));
             }
@@ -522,10 +522,7 @@ fn parse_data_segment(lines: &mut Lines, data_segment: &mut DataSegment) -> Opti
             }
         };
         if let Ok((_, s)) = directive_ascii(line) {
-            let addr = current_labels.map_or_else(
-                || None,
-                |v| Some(v.into_iter().map(|s| Address::from(s)).collect()),
-            );
+            let addr = current_labels.map_or_else(|| None, |v| Some(Address::from(v.as_slice())));
             current_labels = None;
             let align = match align {
                 Alignment::Defined(a) => a,
@@ -540,10 +537,7 @@ fn parse_data_segment(lines: &mut Lines, data_segment: &mut DataSegment) -> Opti
             continue;
         }
         if let Ok((_, s)) = directive_asciiz(line) {
-            let addr = current_labels.map_or_else(
-                || None,
-                |v| Some(v.into_iter().map(|s| Address::from(s)).collect()),
-            );
+            let addr = current_labels.map_or_else(|| None, |v| Some(Address::from(v.as_slice())));
             current_labels = None;
             let align = match align {
                 Alignment::Defined(a) => a,
@@ -559,10 +553,7 @@ fn parse_data_segment(lines: &mut Lines, data_segment: &mut DataSegment) -> Opti
             continue;
         }
         if let Ok((_, bytes)) = directive_byte(line) {
-            let addr = current_labels.map_or_else(
-                || None,
-                |v| Some(v.into_iter().map(|s| Address::from(s)).collect()),
-            );
+            let addr = current_labels.map_or_else(|| None, |v| Some(Address::from(v.as_slice())));
             current_labels = None;
             let align = match align {
                 Alignment::Defined(a) => a,
@@ -584,10 +575,7 @@ fn parse_data_segment(lines: &mut Lines, data_segment: &mut DataSegment) -> Opti
             continue;
         }
         if let Ok((_, halfs)) = directive_half(line) {
-            let addr = current_labels.map_or_else(
-                || None,
-                |v| Some(v.into_iter().map(|s| Address::from(s)).collect()),
-            );
+            let addr = current_labels.map_or_else(|| None, |v| Some(Address::from(v.as_slice())));
             current_labels = None;
             let align = match align {
                 Alignment::Defined(a) => a,
@@ -609,10 +597,7 @@ fn parse_data_segment(lines: &mut Lines, data_segment: &mut DataSegment) -> Opti
             continue;
         }
         if let Ok((_, words)) = directive_word(line) {
-            let addr = current_labels.map_or_else(
-                || None,
-                |v| Some(v.into_iter().map(|s| Address::from(s)).collect()),
-            );
+            let addr = current_labels.map_or_else(|| None, |v| Some(Address::from(v.as_slice())));
             current_labels = None;
             let align = match align {
                 Alignment::Defined(a) => a,
@@ -634,10 +619,7 @@ fn parse_data_segment(lines: &mut Lines, data_segment: &mut DataSegment) -> Opti
             continue;
         }
         if let Ok((_, imm)) = directive_space(line) {
-            let addr = current_labels.map_or_else(
-                || None,
-                |v| Some(v.into_iter().map(|s| Address::from(s)).collect()),
-            );
+            let addr = current_labels.map_or_else(|| None, |v| Some(Address::from(v.as_slice())));
             current_labels = None;
             let imm = match i_extract_imm(imm) {
                 Some(i) => i as u32,
