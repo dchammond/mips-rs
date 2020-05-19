@@ -47,7 +47,8 @@ fn assign_text_segment_addresses(
         .iter_mut()
         .for_each(|inst: &mut (Option<Address>, Inst)| {
             let non_zero_addr = unsafe { NonZeroU32::new_unchecked(addr) };
-            if let Some(a) = &inst.0 {
+            if let Some(ref mut a) = &mut inst.0 {
+                generate_hi_lo_labels(a);
                 define_labels(a, non_zero_addr.get(), labels);
             }
             addr += 4;
