@@ -28,6 +28,8 @@ main:
     bne $t1, $0, end
     beq $t3, $t0, target
 
+    li  $v0, array2
+    la  $v0, array
     lbu $a0, 12($v0)    # $a0 = be      test load byte unsigned
     lbu $a1, 13($v0)    # $a1 = ba
     lbu $a2, 14($v0)    # $a2 = fe
