@@ -50,6 +50,23 @@ fn assign_text_segment_addresses(
         });
 }
 
+fn generate_hi_lo_labels(address: &mut Address) {
+    let mut splits: Vec<String> = Vec::new();
+    address.label
+        .as_ref()
+        .unwrap()
+        .iter()
+        .for_each(|label| {
+            let mut high = label.clone();
+            high.push_str("@hi");
+            let mut low  = label.clone();
+            low.push_str("@lo");
+            splits.push(high);
+            splits.push(low);
+        });
+    address.label.as_mut().unwrap().append(&mut splits);
+}
+
 fn assign_data_segment_addresses(
     data_segment: &mut DataSegment,
     labels: &mut HashMap<String, NonZeroU32>,
@@ -70,7 +87,8 @@ fn assign_data_segment_addresses(
             let non_zero_addr = unsafe { NonZeroU32::new_unchecked(addr) };
             match entry {
                 DataEntry::CString(ref mut c) => {
-                    if let Some(a) = &c.chars.0 {
+                    if let Some(ref mut a) = &mut c.chars.0 {
+                        generate_hi_lo_labels(a);
                         define_labels(a, non_zero_addr, labels);
                     }
                     addr += c.size() as u32;
@@ -80,7 +98,8 @@ fn assign_data_segment_addresses(
                     c.chars.0 = Some(Address::from(non_zero_addr));
                 },
                 DataEntry::Bytes(ref mut b) => {
-                    if let Some(a) = &b.bytes.0 {
+                    if let Some(ref mut a) = &mut b.bytes.0 {
+                        generate_hi_lo_labels(a);
                         define_labels(a, non_zero_addr, labels);
                     }
                     addr += b.size() as u32;
@@ -90,7 +109,8 @@ fn assign_data_segment_addresses(
                     b.bytes.0 = Some(Address::from(non_zero_addr));
                 },
                 DataEntry::Halfs(ref mut h) => {
-                    if let Some(a) = &h.halfs.0 {
+                    if let Some(ref mut a) = &mut h.halfs.0 {
+                        generate_hi_lo_labels(a);
                         define_labels(a, non_zero_addr, labels);
                     }
                     addr += h.size() as u32;
@@ -100,7 +120,8 @@ fn assign_data_segment_addresses(
                     h.halfs.0 = Some(Address::from(non_zero_addr));
                 },
                 DataEntry::Words(ref mut w) => {
-                    if let Some(a) = &w.words.0 {
+                    if let Some(ref mut a) = &mut w.words.0 {
+                        generate_hi_lo_labels(a);
                         define_labels(a, non_zero_addr, labels);
                     }
                     addr += w.size() as u32;
@@ -110,7 +131,8 @@ fn assign_data_segment_addresses(
                     w.words.0 = Some(Address::from(non_zero_addr));
                 },
                 DataEntry::Space(ref mut s) => {
-                    if let Some(a) = &s.spaces.0 {
+                    if let Some(ref mut a) = &mut s.spaces.0 {
+                        generate_hi_lo_labels(a);
                         define_labels(a, non_zero_addr, labels);
                     }
                     addr += s.size() as u32;
