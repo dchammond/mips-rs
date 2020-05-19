@@ -263,6 +263,15 @@ pub enum IInst {
     sw,
 }
 
+impl IInst {
+    pub fn needs_offset(&self) -> bool {
+        match self {
+            IInst::beq | IInst::bne => true,
+            _ => false
+        }
+    }
+}
+
 impl From<IInst> for String {
     fn from(i: IInst) -> String {
         match i {

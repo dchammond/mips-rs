@@ -229,22 +229,26 @@ fn layout_text_segment(
                 let inst_addr: u32 = inst.0.as_ref().unwrap().numeric.unwrap().get();
                 match &inst.1 {
                     Inst::ILabel(i_type_label) => {
-                        let label_addr = labels
+                        let label_addr = *labels
                             .get(i_type_label.label.label.as_ref().unwrap().get(0).unwrap())
                             .unwrap();
-                        let offset = calculate_offset::<u16>(*label_addr, inst_addr);
+                        let imm = if i_type_label.opcode.needs_offset() {
+                            calculate_offset::<u16>(label_addr, inst_addr) as u32
+                        } else {
+                            label_addr
+                        };
                         inst.1 = Inst::IImm(ITypeImm::new(
                             i_type_label.opcode,
                             i_type_label.rs,
                             i_type_label.rt,
-                            offset as u32,
+                            imm,
                         ));
                     }
                     Inst::JLabel(j_type) => {
-                        let label_addr = labels
+                        let label_addr = *labels
                             .get(j_type.label.label.as_ref().unwrap().get(0).unwrap())
                             .unwrap();
-                        let offset = calculate_offset::<u32>(*label_addr, inst_addr);
+                        let offset = calculate_offset::<u32>(label_addr, inst_addr);
                         inst.1 = Inst::JImm(JTypeImm::new(j_type.opcode, offset));
                     }
                     _ => {}

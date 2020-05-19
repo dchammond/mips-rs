@@ -29,7 +29,7 @@ fn expand_li_la_imm(rs: Reg, rt: Reg, imm: u32) -> (ITypeImm, ITypeImm) {
 }
 
 fn expand_pseudo(text_segments: Vec<TextSegment>) -> Vec<TextSegment> {
-    let new_text_segments = Vec::with_capacity(text_segments.len());
+    let mut new_text_segments = Vec::with_capacity(text_segments.len());
     text_segments
         .into_iter()
         .for_each(|segment| {
@@ -75,6 +75,7 @@ fn expand_pseudo(text_segments: Vec<TextSegment>) -> Vec<TextSegment> {
                         _ => new_segment.instructions.push((addr, inst)),
                     }
                 });
+            new_text_segments.push(new_segment);
         });
     new_text_segments
 }
@@ -86,4 +87,5 @@ pub fn assemble(mut parsed: Parsed) {
     parsed.text_segment = expand_pseudo(parsed.text_segment);
     resolver::assign_addresses(&mut parsed, &mut labels);
     println!("{:#?}", labels);
+    println!("{:#?}", parsed);
 }
