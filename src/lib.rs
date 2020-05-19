@@ -6,6 +6,7 @@ use std::{fs, io, path};
 pub mod assembler;
 mod instructions;
 mod machine;
+mod elf;
 pub mod parser;
 
 pub fn load_file(p: &path::Path) -> String {
