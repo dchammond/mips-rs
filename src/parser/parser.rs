@@ -26,32 +26,87 @@ impl TextSegment {
             start_address: None,
         }
     }
-}
 
-#[derive(Copy, Clone, Debug)]
-pub struct DataAlignment {
-    pub alignment: u32,
+    pub fn size(&self) -> usize {
+        self.instructions.len() * 4
+    }
 }
 
 #[derive(Clone, Debug)]
 pub struct DataCString {
     pub chars: (Option<Vec<Address>>, Vec<u8>),
+    pub alignment: NonZeroU32,
     pub null_terminated: bool,
+}
+
+impl DataCString {
+    pub fn size(&self) -> usize {
+        // a string is a unit so the whole thing is aligned
+        let len = self.chars.1.len();
+        let alignment = self.alignment.get() as usize;
+        let padding = if alignment > len {
+            alignment - len
+        } else {
+            len % alignment
+        };
+        len + padding
+    }
 }
 
 #[derive(Clone, Debug)]
 pub struct DataBytes {
     pub bytes: (Option<Vec<Address>>, Vec<u8>),
+    pub alignment: NonZeroU32,
+}
+
+impl DataBytes {
+    pub fn size(&self) -> usize {
+        // each byte is aligned
+        let len = self.bytes.1.len();
+        let padding = self.alignment.get() as usize - 1;
+        let unit_size = padding + 1;
+        len * unit_size
+    }
 }
 
 #[derive(Clone, Debug)]
 pub struct DataHalfs {
     pub halfs: (Option<Vec<Address>>, Vec<u16>),
+    pub alignment: NonZeroU32,
+}
+
+impl DataHalfs {
+    pub fn size(&self) -> usize {
+        let len = self.halfs.1.len();
+        let alignment = self.alignment.get() as usize;
+        let padding = if alignment > 2 {
+            alignment - 2
+        } else {
+            0
+        };
+        let unit_size = padding + 2;
+        len * unit_size
+    }
 }
 
 #[derive(Clone, Debug)]
 pub struct DataWords {
     pub words: (Option<Vec<Address>>, Vec<u32>),
+    pub alignment: NonZeroU32,
+}
+
+impl DataWords {
+    pub fn size(&self) -> usize {
+        let len = self.words.1.len();
+        let alignment = self.alignment.get() as usize;
+        let padding = if alignment > 4 {
+            alignment - 4
+        } else {
+            0
+        };
+        let unit_size = padding + 4;
+        len * unit_size
+    }
 }
 
 #[derive(Clone, Debug)]
@@ -59,14 +114,31 @@ pub struct DataSpace {
     pub spaces: (Option<Vec<Address>>, Vec<u8>),
 }
 
+impl DataSpace {
+    pub fn size(&self) -> usize {
+        self.spaces.1.len()
+    }
+}
+
 #[derive(Clone, Debug)]
 pub enum DataEntry {
-    Alignment(DataAlignment),
     CString(DataCString),
     Bytes(DataBytes),
     Halfs(DataHalfs),
     Words(DataWords),
     Space(DataSpace),
+}
+
+impl DataEntry {
+    pub fn size(&self) -> usize {
+        match self {
+            Self::CString(c) => c.size(),
+            Self::Bytes(b) => b.size(),
+            Self::Halfs(h) => h.size(),
+            Self::Words(w) => w.size(),
+            Self::Space(s) => s.size(),
+        }
+    }
 }
 
 #[derive(Clone, Debug)]
@@ -81,6 +153,12 @@ impl DataSegment {
             data_entries: Vec::new(),
             start_address: None,
         }
+    }
+
+    pub fn size(&self) -> usize {
+        self.data_entries
+            .iter()
+            .fold(0, |acc, d| acc + d.size())
     }
 }
 
@@ -369,8 +447,15 @@ fn parse_text_segment(lines: &mut Lines, text_segment: &mut TextSegment) -> Opti
     None
 }
 
+#[derive(Copy, Clone, Debug)]
+enum Alignment {
+    Defined(NonZeroU32),
+    Automatic,
+}
+
 fn parse_data_segment(lines: &mut Lines, data_segment: &mut DataSegment) -> Option<String> {
     let mut current_labels: Option<Vec<String>> = None;
+    let mut current_alignment = Alignment::Automatic;
     for line in lines {
         let mut line = line.trim();
         if line.is_empty() || entire_line_is_comment(line) {
@@ -395,16 +480,24 @@ fn parse_data_segment(lines: &mut Lines, data_segment: &mut DataSegment) -> Opti
             if imm_int < 0 {
                 panic!("Cannot have negative aligment: {}", line);
             }
-            let imm_int = imm_int as u32;
-            if imm_int & (imm_int - 1) != 0 {
-                panic!("Alignment must be power of 2: {}", line);
+            if imm_int > 31 {
+                panic!("Cannot have alignment >= 2^32: 2^{}", imm_int);
             }
-            let alignment = DataAlignment { alignment: imm_int };
-            data_segment
-                .data_entries
-                .push(DataEntry::Alignment(alignment));
+            current_alignment = Alignment::Defined(unsafe {
+                NonZeroU32::new_unchecked(1u32 << imm_int)
+            });
             continue;
         }
+        // Everything below relies on this
+        let align = if let Alignment::Defined(a) = current_alignment {
+            if a.get() != 1 {
+                // 2^0 applies until next .data
+                current_alignment = Alignment::Automatic;
+            }
+            a
+        } else {
+            unsafe { NonZeroU32::new_unchecked(4) }
+        };
         if let Ok((_, s)) = directive_ascii(line) {
             let addr = current_labels.map_or_else(
                 || None,
@@ -412,7 +505,8 @@ fn parse_data_segment(lines: &mut Lines, data_segment: &mut DataSegment) -> Opti
             );
             current_labels = None;
             let cstring = DataCString {
-                chars: (addr, s.as_bytes().to_vec()), // Rust strings aren't null terminated
+                chars: (addr, s.as_bytes().to_vec()), // Rust strings aren't null terminated,
+                alignment: align,
                 null_terminated: false,
             };
             data_segment.data_entries.push(DataEntry::CString(cstring));
@@ -425,7 +519,8 @@ fn parse_data_segment(lines: &mut Lines, data_segment: &mut DataSegment) -> Opti
             );
             current_labels = None;
             let mut cstring = DataCString {
-                chars: (addr, s.as_bytes().to_vec()), // Rust strings aren't null terminated
+                chars: (addr, s.as_bytes().to_vec()), // Rust strings aren't null terminated,
+                alignment: align,
                 null_terminated: true,
             };
             cstring.chars.1.push(0);
@@ -448,6 +543,7 @@ fn parse_data_segment(lines: &mut Lines, data_segment: &mut DataSegment) -> Opti
             }
             let data_bytes = DataBytes {
                 bytes: (addr, byte_vec),
+                alignment: align,
             };
             data_segment.data_entries.push(DataEntry::Bytes(data_bytes));
             continue;
@@ -468,6 +564,7 @@ fn parse_data_segment(lines: &mut Lines, data_segment: &mut DataSegment) -> Opti
             }
             let data_halfs = DataHalfs {
                 halfs: (addr, half_vec),
+                alignment: align,
             };
             data_segment.data_entries.push(DataEntry::Halfs(data_halfs));
             continue;
@@ -488,6 +585,7 @@ fn parse_data_segment(lines: &mut Lines, data_segment: &mut DataSegment) -> Opti
             }
             let data_words = DataWords {
                 words: (addr, word_vec),
+                alignment: align,
             };
             data_segment.data_entries.push(DataEntry::Words(data_words));
             continue;
@@ -503,7 +601,7 @@ fn parse_data_segment(lines: &mut Lines, data_segment: &mut DataSegment) -> Opti
                 None => panic!("Expected amount of space after space directive: {}", line),
             };
             let data_space = DataSpace {
-                spaces: (addr, vec![0; imm as usize]),
+                spaces: (addr, vec![0u8; imm as usize]),
             };
             data_segment.data_entries.push(DataEntry::Space(data_space));
             continue;
