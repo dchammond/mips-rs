@@ -149,23 +149,17 @@ fn assign_data_segment_addresses(
 
 fn calculate_offset<T>(label_addr: u32, inst_addr: u32) -> T
 where
-    T: TryFrom<u32> + std::ops::Not<Output = T> + std::ops::Add<Output = T>,
-    <T as TryFrom<u32>>::Error: std::fmt::Debug,
+    T: TryFrom<i32>,
+    <T as TryFrom<i32>>::Error: std::fmt::Debug,
 {
-    if label_addr > inst_addr {
-        T::try_from((label_addr - inst_addr) >> 2).expect(&format!(
-            "instruction and label too far apart: {:#X} <-> {:#X}",
-            inst_addr >> 2,
-            label_addr >> 2
-        ))
-    } else {
-        let pos = T::try_from((inst_addr - label_addr) >> 2).expect(&format!(
-            "instruction and label too far apart: {:#X} <-> {:#X}",
-            inst_addr >> 2,
-            label_addr >> 2
-        ));
-        !pos + T::try_from(1u32).unwrap()
-    }
+    let diff = i32::try_from(label_addr as i64 - inst_addr as i64).expect(&format!(
+        "instruction and label distance outside i32: {:#X} - {:#X}",
+        label_addr,
+        inst_addr
+    ));
+    T::try_from(diff >> 2).expect(&format!(
+            "address diff >> 2 was too large: {:#?}", diff >> 2
+    ))
 }
 
 // Just a first-come-first-served-first-fit allocator
@@ -226,7 +220,7 @@ fn layout_text_segment(
                             .get(i_type_label.label.label.as_ref().unwrap().get(0).unwrap())
                             .unwrap();
                         let imm = if i_type_label.opcode.needs_offset() {
-                            calculate_offset::<u16>(label_addr, inst_addr) as u32
+                            calculate_offset::<i16>(label_addr, inst_addr) as u32 & 0xFFFF
                         } else {
                             label_addr
                         };
@@ -241,7 +235,7 @@ fn layout_text_segment(
                         let label_addr = *labels
                             .get(j_type.label.label.as_ref().unwrap().get(0).unwrap())
                             .unwrap();
-                        let offset = calculate_offset::<u32>(label_addr, inst_addr);
+                        let offset = calculate_offset::<i32>(label_addr, inst_addr) as u32;
                         inst.1 = Inst::JImm(JTypeImm::new(j_type.opcode, offset));
                     }
                     _ => {}
