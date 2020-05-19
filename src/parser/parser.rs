@@ -326,7 +326,7 @@ fn parse_text_segment(lines: &mut Lines, text_segment: &mut TextSegment) -> Opti
             let addr = current_labels.map_or_else(|| None, |v| Some(Address::from(v.as_slice())));
             current_labels = None;
             let imm_int = match i_extract_imm(imm) {
-                Some(i) => i as u16,
+                Some(i) => i as u32,
                 None => panic!("Unable to parse immediate: {}", line),
             };
             text_segment.instructions.push((
@@ -339,7 +339,7 @@ fn parse_text_segment(lines: &mut Lines, text_segment: &mut TextSegment) -> Opti
             let addr = current_labels.map_or_else(|| None, |v| Some(Address::from(v.as_slice())));
             current_labels = None;
             let imm_int = match i_extract_imm(imm) {
-                Some(i) => i as u16,
+                Some(i) => i as u32,
                 None => panic!("Unable to parse immediate: {}", line),
             };
             text_segment.instructions.push((
@@ -368,7 +368,7 @@ fn parse_text_segment(lines: &mut Lines, text_segment: &mut TextSegment) -> Opti
             let addr = current_labels.map_or_else(|| None, |v| Some(Address::from(v.as_slice())));
             current_labels = None;
             let imm_int = match i_extract_imm(imm) {
-                Some(i) => i as u16,
+                Some(i) => i as u32,
                 None => panic!("Unable to parse immediate: {}", line),
             };
             text_segment.instructions.push((
@@ -397,7 +397,7 @@ fn parse_text_segment(lines: &mut Lines, text_segment: &mut TextSegment) -> Opti
             let addr = current_labels.map_or_else(|| None, |v| Some(Address::from(v.as_slice())));
             current_labels = None;
             let imm_int = match i_extract_imm(imm) {
-                Some(i) => i as u16,
+                Some(i) => i as u32,
                 None => panic!("Unable to parse immediate: {}", line),
             };
             text_segment.instructions.push((

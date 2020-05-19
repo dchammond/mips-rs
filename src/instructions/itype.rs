@@ -8,7 +8,8 @@ pub struct ITypeImm {
     pub opcode: IInst,
     pub rs: Reg,
     pub rt: Reg,
-    pub imm: u16,
+    pub imm: u32,
+    // u32 just so we can parse the "li" pseudo instruction"
 }
 
 #[derive(Clone, Debug)]
@@ -20,7 +21,13 @@ pub struct ITypeLabel {
 }
 
 impl ITypeImm {
-    pub fn new(opcode: IInst, rs: Reg, rt: Reg, imm: u16) -> ITypeImm {
+    pub fn new(opcode: IInst, rs: Reg, rt: Reg, imm: u32) -> ITypeImm {
+        match opcode {
+            IInst::li | IInst::la => {},
+            _ => if imm > u32::from(u16::MAX) {
+                panic!("imm {} for opcode {:#?} was too large", imm, opcode);
+            },
+        };
         ITypeImm {
             opcode,
             rs,
@@ -176,7 +183,7 @@ impl From<u32> for ITypeImm {
         let rs = Reg::from(n >> 21);
         let rt = Reg::from(n >> 16);
         let imm = (n & 0xFFFF) as u16;
-        ITypeImm::new(opcode, rs, rt, imm)
+        ITypeImm::new(opcode, rs, rt, imm as u32)
     }
 }
 

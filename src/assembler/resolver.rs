@@ -237,7 +237,7 @@ fn layout_text_segment(
                             i_type_label.opcode,
                             i_type_label.rs,
                             i_type_label.rt,
-                            offset,
+                            offset as u32,
                         ));
                     }
                     Inst::JLabel(j_type) => {
