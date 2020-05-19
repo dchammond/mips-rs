@@ -16,7 +16,13 @@ fn define_labels(a: &Address, addr: u32, labels: &mut SymbolTable) {
             if labels.contains_key(s) {
                 panic!(format!("Redefinition of label: {}", s));
             }
-            labels.insert(s.clone(), addr);
+            if s.ends_with("@hi") {
+                labels.insert(s.clone(), addr >> 16);
+            } else if s.ends_with("@lo") {
+                labels.insert(s.clone(), addr & 0xFFFF);
+            } else {
+                labels.insert(s.clone(), addr);
+            }
         });
     } else {
         panic!("Expected non empty labels in Address");
