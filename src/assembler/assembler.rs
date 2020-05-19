@@ -71,7 +71,6 @@ fn expand_pseudo(text_segments: Vec<TextSegment>) -> Vec<TextSegment> {
                             new_segment.instructions.push((addr, lui.into()));
                             new_segment.instructions.push((None, ori.into()));
                         },
-                        //Inst::JLabel() => ,
                         _ => new_segment.instructions.push((addr, inst)),
                     }
                 });
