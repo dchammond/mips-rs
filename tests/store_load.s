@@ -11,6 +11,10 @@ kernel:
 	add $t0, $t0, $0
 	eret
 
+.kdata
+kernel_space:
+.space 64
+
 .text
 main:   
     li  $v0, 0x1000 # $v0  = 0x1000 testing li
