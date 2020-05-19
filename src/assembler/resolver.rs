@@ -4,11 +4,13 @@ use crate::{
     parser::parser::{
         DataEntry,DataSegment, Parsed, TextSegment,
     },
+    assembler::assembler::SymbolTable,
 };
 
 use std::{collections::HashMap, convert::TryFrom, num::NonZeroU32};
 
-fn define_labels(a: &Address, addr: NonZeroU32, labels: &mut HashMap<String, NonZeroU32>) {
+
+fn define_labels(a: &Address, addr: u32, labels: &mut SymbolTable) {
     if let Some(v) = &a.label {
         v.iter().for_each(|s| {
             if labels.contains_key(s) {
@@ -23,7 +25,7 @@ fn define_labels(a: &Address, addr: NonZeroU32, labels: &mut HashMap<String, Non
 
 fn assign_text_segment_addresses(
     text_segment: &mut TextSegment,
-    labels: &mut HashMap<String, NonZeroU32>,
+    labels: &mut SymbolTable,
     max_addr: u32
 ) {
     let mut addr: u32 = text_segment
@@ -40,7 +42,7 @@ fn assign_text_segment_addresses(
         .for_each(|inst: &mut (Option<Address>, Inst)| {
             let non_zero_addr = unsafe { NonZeroU32::new_unchecked(addr) };
             if let Some(a) = &inst.0 {
-                define_labels(a, non_zero_addr, labels);
+                define_labels(a, non_zero_addr.get(), labels);
             }
             addr += 4;
             if addr >= max_addr {
@@ -69,7 +71,7 @@ fn generate_hi_lo_labels(address: &mut Address) {
 
 fn assign_data_segment_addresses(
     data_segment: &mut DataSegment,
-    labels: &mut HashMap<String, NonZeroU32>,
+    labels: &mut SymbolTable,
     max_addr: u32
 ) {
     let mut addr: u32 = data_segment
@@ -89,7 +91,7 @@ fn assign_data_segment_addresses(
                 DataEntry::CString(ref mut c) => {
                     if let Some(ref mut a) = &mut c.chars.0 {
                         generate_hi_lo_labels(a);
-                        define_labels(a, non_zero_addr, labels);
+                        define_labels(a, non_zero_addr.get(), labels);
                     }
                     addr += c.size() as u32;
                     if addr >= max_addr {
@@ -100,7 +102,7 @@ fn assign_data_segment_addresses(
                 DataEntry::Bytes(ref mut b) => {
                     if let Some(ref mut a) = &mut b.bytes.0 {
                         generate_hi_lo_labels(a);
-                        define_labels(a, non_zero_addr, labels);
+                        define_labels(a, non_zero_addr.get(), labels);
                     }
                     addr += b.size() as u32;
                     if addr >= max_addr {
@@ -111,7 +113,7 @@ fn assign_data_segment_addresses(
                 DataEntry::Halfs(ref mut h) => {
                     if let Some(ref mut a) = &mut h.halfs.0 {
                         generate_hi_lo_labels(a);
-                        define_labels(a, non_zero_addr, labels);
+                        define_labels(a, non_zero_addr.get(), labels);
                     }
                     addr += h.size() as u32;
                     if addr >= max_addr {
@@ -122,7 +124,7 @@ fn assign_data_segment_addresses(
                 DataEntry::Words(ref mut w) => {
                     if let Some(ref mut a) = &mut w.words.0 {
                         generate_hi_lo_labels(a);
-                        define_labels(a, non_zero_addr, labels);
+                        define_labels(a, non_zero_addr.get(), labels);
                     }
                     addr += w.size() as u32;
                     if addr >= max_addr {
@@ -133,7 +135,7 @@ fn assign_data_segment_addresses(
                 DataEntry::Space(ref mut s) => {
                     if let Some(ref mut a) = &mut s.spaces.0 {
                         generate_hi_lo_labels(a);
-                        define_labels(a, non_zero_addr, labels);
+                        define_labels(a, non_zero_addr.get(), labels);
                     }
                     addr += s.size() as u32;
                     if addr >= max_addr {
@@ -173,7 +175,7 @@ where T: TryFrom<u32> + std::ops::Not<Output = T> + std::ops::Add<Output = T>,
 // before passed too assign_text_segment_addresses
 fn layout_text_segment(
     text_segment_entries: &mut [TextSegment],
-    labels: &mut HashMap<String, NonZeroU32>,
+    labels: &mut SymbolTable,
     min_addr: u32,
     max_addr: u32
 ) {
@@ -222,9 +224,8 @@ fn layout_text_segment(
                     Inst::ILabel(i_type_label) => {
                         let label_addr = labels
                             .get(i_type_label.label.label.as_ref().unwrap().get(0).unwrap())
-                            .unwrap()
-                            .get();
-                        let offset = calculate_offset::<u16>(label_addr, inst_addr);
+                            .unwrap();
+                        let offset = calculate_offset::<u16>(*label_addr, inst_addr);
                         inst.1 = Inst::IImm(ITypeImm::new(
                             i_type_label.opcode,
                             i_type_label.rs,
@@ -235,9 +236,8 @@ fn layout_text_segment(
                     Inst::JLabel(j_type) => {
                         let label_addr = labels
                             .get(j_type.label.label.as_ref().unwrap().get(0).unwrap())
-                            .unwrap()
-                            .get();
-                        let offset = calculate_offset::<u32>(label_addr, inst_addr);
+                            .unwrap();
+                        let offset = calculate_offset::<u32>(*label_addr, inst_addr);
                         inst.1 = Inst::JImm(JTypeImm::new(j_type.opcode, offset));
                     }
                     _ => {}
@@ -248,7 +248,7 @@ fn layout_text_segment(
 
 fn layout_data_segment(
     data_segment_entries: &mut [DataSegment],
-    labels: &mut HashMap<String, NonZeroU32>,
+    labels: &mut SymbolTable,
     min_addr: u32,
     max_addr: u32
 ) {
@@ -290,7 +290,7 @@ fn layout_data_segment(
     });
 }
 
-pub fn assign_addresses(parsed: &mut Parsed, labels: &mut HashMap<String, NonZeroU32>) {
+pub fn assign_addresses(parsed: &mut Parsed, labels: &mut SymbolTable) {
     // STATIC_DATA has no defined size, but we allocate greedily so
     // we should have no issues with using up all of the dynamic space
     layout_data_segment(&mut parsed.data_segment, labels, STATIC_DATA_START, STACK_START);

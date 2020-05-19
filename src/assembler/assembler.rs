@@ -28,8 +28,10 @@ fn expand_pseudo(text_segments: &mut [TextSegment]) {
 }
 */
 
+pub type SymbolTable = HashMap<String, u32>;
+
 pub fn assemble(mut parsed: Parsed) {
-    let mut labels: HashMap<String, NonZeroU32> = HashMap::new();
+    let mut labels: SymbolTable = HashMap::new();
     resolver::assign_addresses(&mut parsed, &mut labels);
     //expand_pseudo(&mut parsed.text_segment);
 }
