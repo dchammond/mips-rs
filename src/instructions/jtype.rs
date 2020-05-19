@@ -91,6 +91,7 @@ impl From<JTypeImm> for u32 {
 pub enum JInst {
     j,
     jal,
+    eret,
 }
 
 impl From<JInst> for String {
@@ -98,6 +99,7 @@ impl From<JInst> for String {
         match j_ {
             JInst::j => "j",
             JInst::jal => "jal",
+            JInst::eret => "eret",
         }
         .to_owned()
     }
@@ -108,6 +110,7 @@ impl From<&str> for JInst {
         match s.to_lowercase().as_ref() {
             "j" => JInst::j,
             "jal" => JInst::jal,
+            "eret" => JInst::eret,
             _ => panic!("No such JType: {}", s),
         }
     }
@@ -120,6 +123,7 @@ macro_rules! jinst_map {
                 match num & 0x3F {
                     0x02 => JInst::j,
                     0x03 => JInst::jal,
+                    0x18 => JInst::eret,
                     _ => panic!("No match for JType op-code: 0x{:08X}", num),
                 }
             }
@@ -134,6 +138,7 @@ macro_rules! jinst_inv_map {
                 match j {
                     JInst::j => 0x02,
                     JInst::jal => 0x03,
+                    JInst::eret => 0x18,
                 }
             }
         }

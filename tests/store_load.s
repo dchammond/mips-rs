@@ -6,6 +6,11 @@ array:
 .word   1  255    1024   0xcafebabe
 array2: .word   1,255,    1024,   0xcafebabe
 
+.ktext
+kernel:
+	add $t0, $t0, $0
+	eret
+
 .text
 main:   
     li  $v0, 0x1000 # $v0  = 0x1000 testing li

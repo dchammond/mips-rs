@@ -97,6 +97,8 @@ where T: TryFrom<u32> + std::ops::Not<Output = T> + std::ops::Add<Output = T>,
 fn layout_text_segment(
     text_segment_entries: &mut [TextSegment],
     labels: &mut HashMap<String, NonZeroU32>,
+    min_addr: u32,
+    max_addr: u32
 ) {
     let positions = text_segment_entries
         .iter()
@@ -111,7 +113,7 @@ fn layout_text_segment(
             MemPosition::new(lower, None, size_bytes, Some(segment))
         })
         .collect::<Vec<MemPosition<TextSegment>>>();
-    let ranges = FirstFitAllocator::layout(&positions, TEXT_START, TEXT_END);
+    let ranges = FirstFitAllocator::layout(&positions, min_addr, max_addr);
     let mut indexes: Vec<(usize, u32)> = Vec::with_capacity(text_segment_entries.len());
     ranges.into_iter().for_each(|range| {
         if let Some(data_ref) = range.get_data() {
@@ -168,7 +170,8 @@ fn layout_text_segment(
 }
 
 fn assign_addresses(parsed: &mut Parsed, labels: &mut HashMap<String, NonZeroU32>) {
-    layout_text_segment(&mut parsed.text_segment, labels);
+    layout_text_segment(&mut parsed.text_segment, labels, TEXT_START, TEXT_END);
+    layout_text_segment(&mut parsed.ktext_segment, labels, KERNEL_TEXT_END, KERNEL_TEXT_START);
 }
 
 pub fn assemble(mut parsed: Parsed) {

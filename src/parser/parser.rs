@@ -354,6 +354,15 @@ fn parse_text_segment(lines: &mut Lines, text_segment: &mut TextSegment) -> Opti
             ));
             continue;
         }
+        if let Ok((_, inst)) = j_other(line) {
+            let addr = current_labels.map_or_else(|| None, |v| Some(Address::from(v.as_slice())));
+            current_labels = None;
+            text_segment.instructions.push((
+                addr,
+                JTypeImm::new(JInst::from(inst), 0).into(),
+            ));
+            continue;
+        }
         // it may be a new directive
         return Some(line.to_owned());
     }

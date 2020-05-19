@@ -350,6 +350,10 @@ pub fn j_label(input: &str) -> IResult<&str, (&str, Vec<&str>)> {
     pair(terminated(j_mnemonic, space1), identifier)(input)
 }
 
+pub fn j_other(input: &str) -> IResult<&str, &str> {
+    tag("eret")(input)
+}
+
 pub type DirectiveAlignResult<'a> = IResult<&'a str, (Option<&'a str>, Result<i64, ParseIntError>)>;
 
 pub fn directive_align<'a>(input: &'a str) -> DirectiveAlignResult {
