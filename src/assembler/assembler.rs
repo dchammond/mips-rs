@@ -43,6 +43,7 @@ fn define_labels(a: &Address, addr: NonZeroU32, labels: &mut HashMap<String, Non
 fn assign_text_segment_addresses(
     text_segment: &mut TextSegment,
     labels: &mut HashMap<String, NonZeroU32>,
+    max_addr: u32
 ) {
     let mut addr: u32 = text_segment
         .start_address
@@ -61,7 +62,7 @@ fn assign_text_segment_addresses(
                 define_labels(a, non_zero_addr, labels);
             }
             addr += 4;
-            if addr >= TEXT_END {
+            if addr >= max_addr {
                 panic!("Text segment too large");
             }
             inst.0 = Some(Address::from(non_zero_addr));
@@ -134,7 +135,7 @@ fn layout_text_segment(
         }
     });
     text_segment_entries.iter_mut().for_each(|t| {
-        assign_text_segment_addresses(t, labels);
+        assign_text_segment_addresses(t, labels, max_addr);
     });
     text_segment_entries.iter_mut().for_each(|t| {
         t.instructions
