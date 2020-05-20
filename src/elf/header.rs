@@ -93,6 +93,8 @@ struct E_Ehsize {
     ehsize: u16,
 }
 
+const E_EHSIZE: u16 = std::mem::size_of::<Header>() as u16;
+
 #[repr(C)]
 #[repr(packed)]
 struct E_Phentsize {
