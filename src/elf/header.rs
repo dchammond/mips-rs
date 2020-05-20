@@ -1,3 +1,5 @@
+use crate::machine::memory;
+
 #[repr(C)]
 #[repr(packed)]
 struct E_Ident {
@@ -6,9 +8,16 @@ struct E_Ident {
     endian: u8,
     version: u8,
     osabi: u8,
-    abiversion: u8,
-    padding: [u8; 7],
+    padding: [u8; 8],
 }
+
+const E_IDENT_MAGIC:         [u8; 4] = [0x7F, b'E', b'L', b'F'];
+const E_IDENT_CLASS_32:      u8      = 1;
+const E_IDENT_CLASS_64:      u8      = 2;
+const E_IDENT_ENDIAN_LE:     u8      = 1;
+const E_IDENT_ENDIAN_BE:     u8      = 2;
+const E_IDENT_VERSION:       u8      = 1;
+const E_IDENT_OSABI_SYSTEMV: u8      = 0;
 
 #[repr(C)]
 #[repr(packed)]
@@ -16,11 +25,22 @@ struct E_Type {
     type_: u16,
 }
 
+const E_TYPE_NONE:   u16 = 0;
+const E_TYPE_REL:    u16 = 1;
+const E_TYPE_EXEC:   u16 = 2;
+const E_TYPE_DYN:    u16 = 3;
+const E_TYPE_CORE:   u16 = 4;
+const E_TYPE_LOPROC: u16 = 0xFF00;
+const E_TYPE_HIPROC: u16 = 0xFFFF;
+
 #[repr(C)]
 #[repr(packed)]
 struct E_Machine {
     machine: u16,
 }
+
+const E_MACHINE_MIPS32: u16 = 8;
+const E_MACHINE_MIPS64: u16 = 10;
 
 #[repr(C)]
 #[repr(packed)]
@@ -28,11 +48,17 @@ struct E_Version {
     version: u32,
 }
 
+const E_VERSION: u32 = 1;
+
 #[repr(C)]
 #[repr(packed)]
 struct E_Entry {
     entry: u32,
 }
+
+// Don't want to start executing at null for sake of sanity
+// Eventually this will become a virtual address
+const E_ENTRY: u32 = memory::BOTTOM_RESERVED_START + 4;
 
 #[repr(C)]
 #[repr(packed)]
@@ -40,17 +66,26 @@ struct E_Phoff {
     phoff: u32,
 }
 
+const E_PHOFF: u32 = 0x34;
+
 #[repr(C)]
 #[repr(packed)]
 struct E_Shoff {
     shoff: u32,
 }
 
+// TODO: Calculated from size of text and data segments in object file
+
 #[repr(C)]
 #[repr(packed)]
 struct E_Flags {
     flags: u32,
 }
+
+const E_FLAGS_MIPS_NOREORDER: u32 = 0x0000_0001;
+const E_FLAGS_MIPS_PIC:       u32 = 0x0000_0002;
+const E_FLAGS_MIPS_CPIC:      u32 = 0x0000_0004;
+const E_FLAGS_MIPS_ARCH:      u32 = 0xF000_0000;
 
 #[repr(C)]
 #[repr(packed)]
