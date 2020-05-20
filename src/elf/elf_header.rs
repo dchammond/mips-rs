@@ -126,12 +126,15 @@ const E_SHENTSIZE: u16 = std::mem::size_of::<section_header::Section_Header>() a
 struct E_Shnum {
     shnum: u16,
 }
+// Count of section headers
 
 #[repr(C)]
 #[repr(packed)]
 struct E_Shstrndx {
     shstrndx: u16,
 }
+// Index of section header that contains section header names
+
 #[repr(C)]
 #[repr(packed)]
 pub(in crate::elf) struct Elf_Header {
