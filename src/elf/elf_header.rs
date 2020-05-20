@@ -1,4 +1,7 @@
-use crate::machine::memory;
+use crate::{
+    machine::memory,
+    elf::*,
+};
 
 #[repr(C)]
 #[repr(packed)]
@@ -101,6 +104,8 @@ struct E_Phentsize {
     phentsize: u16,
 }
 
+const E_PHENTSIZE: u16 = std::mem::size_of::<program_header::Program_Header>() as u16;
+
 #[repr(C)]
 #[repr(packed)]
 struct E_Phnum {
@@ -126,7 +131,7 @@ struct E_Shstrndx {
 }
 #[repr(C)]
 #[repr(packed)]
-pub struct Elf_Header {
+pub(in crate::elf) struct Elf_Header {
     e_ident: E_Ident,
     e_type: E_Type,
     e_machine: E_Machine,
