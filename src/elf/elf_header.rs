@@ -93,7 +93,7 @@ struct E_Ehsize {
     ehsize: u16,
 }
 
-const E_EHSIZE: u16 = std::mem::size_of::<Header>() as u16;
+const E_EHSIZE: u16 = std::mem::size_of::<Elf_Header>() as u16;
 
 #[repr(C)]
 #[repr(packed)]
@@ -126,7 +126,7 @@ struct E_Shstrndx {
 }
 #[repr(C)]
 #[repr(packed)]
-pub struct Header {
+pub struct Elf_Header {
     e_ident: E_Ident,
     e_type: E_Type,
     e_machine: E_Machine,
