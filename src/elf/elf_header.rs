@@ -111,12 +111,15 @@ const E_PHENTSIZE: u16 = std::mem::size_of::<program_header::Program_Header>() a
 struct E_Phnum {
     phnum: u16,
 }
+// Count of program headers
 
 #[repr(C)]
 #[repr(packed)]
 struct E_Shentsize {
     shentsize: u16,
 }
+
+const E_SHENTSIZE: u16 = std::mem::size_of::<section_header::Section_Header>() as u16;
 
 #[repr(C)]
 #[repr(packed)]
