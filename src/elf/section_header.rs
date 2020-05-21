@@ -52,9 +52,57 @@ struct S_Addr {
 struct S_Offset {
     offset: u32,
 }
+// Offset of the section in the file
 
+#[repr(C)]
+#[repr(packed)]
+struct S_Size {
+    size: u32,
+}
+// Size of the section in the file
+
+#[repr(C)]
+#[repr(packed)]
+struct S_Link {
+    link: u32,
+}
+// Section index of associated section
+
+#[repr(C)]
+#[repr(packed)]
+struct S_Info {
+    info: u32,
+}
+// Extra section information
+
+#[repr(C)]
+#[repr(packed)]
+struct S_Addralign {
+    addralign: u32,
+}
+// s_addr % s_addralign == 0
+
+const S_ADDRALIGN_NONE0: u32 = 0;
+const S_ADDRALIGN_NONE1: u32 = 1;
+
+#[repr(C)]
+#[repr(packed)]
+struct S_Entsize {
+    entsize: u32,
+}
+// Size of entries, in section if present
 
 #[repr(C)]
 #[repr(packed)]
 pub(in crate::elf) struct Section_Header {
+    s_name: S_Name,
+    s_type: S_Type,
+    s_flags: S_Flags,
+    s_addr: S_Addr,
+    s_offset: S_Offset,
+    s_size: S_Size,
+    s_link: S_Link,
+    s_info: S_Info,
+    s_addralign: S_Addralign,
+    s_entsize: S_Entsize,
 }
